@@ -22,7 +22,6 @@
 #include <msg/chassismotors_send_raw.hpp>
 #include <dust_adapter/can_dispatch.hpp>
 #include <dust_adapter/motor_map.hpp>
-#include <protocols/motors/dm_motor_protocol.h>
 #include <dust_adapter/thread_priorities.hpp>
 
 LOG_MODULE_REGISTER(can_dispatch, LOG_LEVEL_INF);
