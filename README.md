@@ -19,22 +19,19 @@ west zephyr-export
 
 ## 构建 EtherCAT
 
-先准备已有许可和匹配配置的 SSC 5.13 生成源码，然后本地导入：
+配置后的 SSC 5.13 已随 `external/ssc` 纳入本分支，直接构建：
 
 ```bash
-python3 dust-adapter/tools/import_ssc.py /path/to/ssc_generated/src
 ./dust-adapter/scripts/build.sh ethercat
 ```
 
-也可在构建时指定 `-- -DDUST_ADAPTER_SSC_DIR=/path/to/ssc_generated/src`。
-SSC 源码位于忽略目录 `external/ssc/`，不随本仓库发布；原始许可证适用。
-没有匹配的 SSC 文件时配置会明确失败，不会编出假从站。
+仍可通过 `-- -DDUST_ADAPTER_SSC_DIR=/path/to/ssc_generated/src` 显式选用其他匹配配置。
 ESI、PDO 与 SSC 配置要求见 [EtherCAT 基础](docs/ethercat.md)。
 
 ## CI 与授权
 
-GitHub Actions 检查脚本语法和 ESI XML。公共 CI 不包含 SSC，不声称完成固件编译。
-完整构建请在持有合法 SSC 5.13 配置源码的环境执行上述命令，禁止上传授权受限源码
-作为公共 CI 产物或提交。当前不自动发布 EtherCAT 二进制。
+Push/PR 到 `ethercat` 会完整编译 dust-hpm5e3y 从站，并上传 BIN、ELF、ESI、构建配置、
+依赖清单和校验值。CI 不自动刷写硬件，也不会创建 USB 的版本标签。
 
-拆分前已通过独立构建，记录见 `docs/build_verification.json`；未刷写硬件。
+SSC 按维护者确认的芯片厂商授权范围纳入，保留 Beckhoff 原始许可；不适用本仓库
+Apache-2.0。详见 `external/ssc/README.md`。本分支仍是计数器 PDO 从站基础。

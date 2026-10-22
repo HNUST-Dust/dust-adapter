@@ -1,0 +1,2 @@
+# Preserve imported vendor formatting and original licence headers.
+external/ssc/* -text -whitespace
