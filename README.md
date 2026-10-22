@@ -1,40 +1,57 @@
-# dust-adapter — EtherCAT slave foundation
+# dust-adapter — USB gateway
 
-`ethercat` 分支独立维护 dust-hpm5e3y 的 SSC 5.13 FreeRun 从站基础。
-USB 正式方案位于 [main](https://github.com/HNUST-Dust/dust-adapter/tree/main) 和
-[usb](https://github.com/HNUST-Dust/dust-adapter/tree/usb) 分支，`v0.1` 属于 USB 方案。
+`main` 是当前正式 USB 方案，`usb` 是 USB 开发/发布分支；`ethercat` 独立维护
+HPM5E3Y SSC FreeRun 从站基础。`v0.1` 为 USB 正式版本。
 
-本分支只有计数器 PDO、ESC/PHY 与 SII 基础，不是 CAN/UART/IMU 转发网关，也没有底盘算法。
+本分支只包含 dust-hpm6750 的 USB Bulk → CAN/UART/IMU 固件，无底盘算法。
+EtherCAT 源码、构建和 SSC 导入说明请切换到 [ethercat 分支](https://github.com/HNUST-Dust/dust-adapter/tree/ethercat)。
 
-## 初始化依赖
+## 新建 workspace
+
+需要 Python3/West/PyYAML、Zephyr 对应工具链、CMake/Ninja。依赖已在 `west.yml`
+固定版本，不需要克隆 `wbr_control` 或 `wbr_control_companion`：
 
 ```bash
-mkdir dust-workspace && cd dust-workspace
-west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr ethercat
+mkdir dust-workspace
+cd dust-workspace
+west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr main
 west update
 west zephyr-export
 ```
 
-需要 Python3/West、CMake/Ninja 和 Zephyr 对应工具链，依赖版本固定于 `west.yml`。
+UART10 修复已作为正式驱动代码提交到 `HNUST-Dust/hpm_support`，
+`west.yml` 固定到包含修复的提交。执行 `west update` 即可，不再需要手工应用补丁。
 
-## 构建 EtherCAT
-
-先准备已有许可和匹配配置的 SSC 5.13 生成源码，然后本地导入：
+## 构建 USB
 
 ```bash
-python3 dust-adapter/tools/import_ssc.py /path/to/ssc_generated/src
-./dust-adapter/scripts/build.sh ethercat
+./dust-adapter/scripts/build.sh usb
 ```
 
-也可在构建时指定 `-- -DDUST_ADAPTER_SSC_DIR=/path/to/ssc_generated/src`。
-SSC 源码位于忽略目录 `external/ssc/`，不随本仓库发布；原始许可证适用。
-没有匹配的 SSC 文件时配置会明确失败，不会编出假从站。
-ESI、PDO 与 SSC 配置要求见 [EtherCAT 基础](docs/ethercat.md)。
+默认 SDK 位于 workspace 内的 `sdk_env/hpm_sdk`。复用其他布局可设置
+`HPM_SDK_DIR` 环境变量；`DUST_HPM_SUPPORT_DIR` 是可选 CMake 参数。
 
-## CI 与授权
+```bash
+HPM_SDK_DIR=/path/to/hpm_sdk ./dust-adapter/scripts/build.sh usb
+# 只在准备部署到板子时手动刷写：
+west flash -d dust-adapter/build/usb_gateway
+```
 
-GitHub Actions 检查脚本语法和 ESI XML。公共 CI 不包含 SSC，不声称完成固件编译。
-完整构建请在持有合法 SSC 5.13 配置源码的环境执行上述命令，禁止上传授权受限源码
-作为公共 CI 产物或提交。当前不自动发布 EtherCAT 二进制。
+USB 保留现有 NUC 兼容协议、VID/PID、Bulk 128B OUT/64B IN、W/B/D 批次顺序与
+20ms 命令租约。配置目前对应六电机，命令地址有白名单，不是任意 CAN 帧隧道。
+详见 [USB 网关](docs/usb.md)。
 
-拆分前已通过独立构建，记录见 `docs/build_verification.json`；未刷写硬件。
+## CI 与版本发布
+
+Push/PR 到 `main` 或 `usb` 自动构建 dust-hpm6750 USB 固件。`v*` 标签在构建
+成功后自动生成 GitHub Release，附带 BIN、ELF、SHA256 和完整构建配置/依赖清单。
+不自动刷写硬件。依赖固定于 `west.yml`，CI 使用 Zephyr SDK 0.16.8。
+
+```bash
+git tag -a v0.1 -m "USB gateway v0.1"
+git push origin v0.1
+```
+
+详细行为和失联策略见 [USB 网关](docs/usb.md)，迁移记录见 [迁移说明](docs/migration.md)。
+历史同驱动基线下的二进制一致性核对已完成；固定依赖构建通过。新版本仍需按板卡
+部署流程验证，CI 构建成功不代表已通过硬件回归。
