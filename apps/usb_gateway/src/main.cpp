@@ -3,7 +3,6 @@
 #include <dust_adapter/can_dispatch.hpp>
 #include <dust_adapter/usb_session.hpp>
 #include <dust_adapter/motor_map.hpp>
-#include <protocols/motors/dm_motor_protocol.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
 #include <cstring>
@@ -12,6 +11,9 @@ namespace
 {
 namespace wire = wbr::bridge;
 using wire::Packet;
+// DM Exit is kept locally so loss of the host cannot prevent shutdown.
+constexpr uint8_t kJointExitPayload[8] = {0xFF, 0xFF, 0xFF, 0xFF,
+					 0xFF, 0xFF, 0xFF, 0xFD};
 constexpr unsigned kBusMotors[2][3] = {{0, 2, 3}, {1, 4, 5}}; // W/B/D
 K_MSGQ_DEFINE(peripheral_packets, sizeof(Packet), 128, 4);
 K_MSGQ_DEFINE(session_replies, sizeof(Packet), 4, 4);
@@ -33,8 +35,6 @@ bool SafeStop()
 	bool submitted = true;
 	command_lease.Reset();
 	// Physical shutdown policy remains local even if the host/USB disappears.
-	uint8_t exit[8]{};
-	protocols::GetDmControlCommandFrame(protocols::DmControlCommand::kExit, exit);
 	for (unsigned group = 0; group < 2; ++group) {
 		platform::CanStandardFrame frames[3]{};
 		for (unsigned i = 0; i < 3; ++i) {
@@ -42,9 +42,10 @@ bool SafeStop()
 			frames[i].slot = motor.tx_slot;
 			frames[i].can_id = motor.command_id;
 			frames[i].dlc = 8;
+			// Wheel payload stays zero current; joints receive DM Exit.
 			if (i)
-				std::memcpy(frames[i].data, exit,
-					    8); // wheel group defaults to zero current
+				std::memcpy(frames[i].data, kJointExitPayload,
+					    sizeof(kJointExitPayload));
 		}
 		if (platform::SubmitCanStandardFrames(group == 0 ? 3 : 2, frames, 3) != 0)
 			submitted = false;

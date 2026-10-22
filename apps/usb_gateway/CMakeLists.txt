@@ -27,7 +27,6 @@ target_sources(app PRIVATE src/main.cpp src/peripherals.cpp
  ${DUST_ADAPTER_ROOT}/drivers/can/can_dispatch.cpp
  ${DUST_ADAPTER_ROOT}/drivers/usb/usb_session.cpp
  ${DUST_ADAPTER_ROOT}/drivers/imu/onboard_imu.cpp
- ${DUST_ADAPTER_ROOT}/protocols/motors/dm_motor_protocol.cpp
  ${generated}/msg/messages_generated.cpp ${message_headers}
  ${generated}/params/motors_params_generated.h)
 target_sources_ifdef(CONFIG_WBR_UART10_LINE_IDLE app PRIVATE src/uart10_line_idle.cpp)
