@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+manifest:
+  version: "1.0"
+  remotes:
+    - name: hpmicro
+      url-base: https://github.com/hpmicro
+    - name: dust
+      url-base: https://github.com/HNUST-Dust
+    - name: upstream
+      url-base: https://github.com/zephyrproject-rtos
+    - name: usb-fork
+      url-base: https://github.com/NoneOfEver
+  projects:
+    - name: zephyr
+      remote: hpmicro
+      revision: 8c6db8fa778cf90eb93e823e513a1ab97703711d
+      west-commands: scripts/west-commands.yml
+    - name: hpm_support
+      remote: dust
+      revision: aa5cd0ea5d22b0307bbfca480ead7a9baa4f8c58
+    - name: sdk_env
+      remote: usb-fork
+      revision: 7b8cb8bb2f04f52353a6429bffb024f0a2867876
+    - name: CherryUSB
+      remote: usb-fork
+      path: cherry_usb
+      revision: 50c7e9085801e24d2d0991d0c4c1609fdbcfb90a
+    - name: fatfs
+      remote: upstream
+      revision: 427159bf95ea49b7680facffaa29ad506b42709b
+    - name: segger
+      remote: upstream
+      revision: b011c45b585e097d95d9cf93edf4f2e01588d3cd
+  self:
+    path: dust-adapter

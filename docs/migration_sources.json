@@ -1,0 +1,217 @@
+{
+  "source_repository": "https://github.com/NoneOfEver/wbr_control",
+  "source_commit": "afc2e2d2e722f152ce44dc79c9ba72e5c376d685",
+  "note": "Imported working-tree files; hashes identify actual source, including uncommitted shared-driver edits. No chassis algorithm imported. SSC implementation is external.",
+  "files": [
+    {
+      "source": "src/usb_can_bridge/main.cpp",
+      "destination": "apps/usb_gateway/src/main.cpp",
+      "source_sha256": "47c83b88e635737dbbb2d53a4d8ec000b8d64063f885475d1c71b9b4d53f889d"
+    },
+    {
+      "source": "src/usb_can_bridge/peripherals.cpp",
+      "destination": "apps/usb_gateway/src/peripherals.cpp",
+      "source_sha256": "cb08cb9ff37be3d31a7c043b8353b9b6cc005d4a4c4c53ba76992ff51daa9089"
+    },
+    {
+      "source": "src/usb_can_bridge/peripherals.h",
+      "destination": "apps/usb_gateway/src/peripherals.h",
+      "source_sha256": "ba774a91c9274123fc6f97b48f41458708f717c8025f4b5cdfbd0b89710bd21e"
+    },
+    {
+      "source": "src/usb_can_bridge/uart10_line_idle.cpp",
+      "destination": "apps/usb_gateway/src/uart10_line_idle.cpp",
+      "source_sha256": "b91a6e6ac1cc824c2db22614c4048ba9625124ffaf1db4626ab7f080c2d65f45"
+    },
+    {
+      "source": "src/usb_can_bridge/Kconfig",
+      "destination": "apps/usb_gateway/Kconfig",
+      "source_sha256": "83fc5e9adda17f1ab3f2b2255b77b8b856700f8ba730774102f31622efad16d8"
+    },
+    {
+      "source": "src/usb_can_bridge/prj.conf",
+      "destination": "apps/usb_gateway/prj.conf",
+      "source_sha256": "37887c09646af57332274ed386970f87e58a085aec70f283337e4cf09ce0822f"
+    },
+    {
+      "source": "src/usb_can_bridge/app.overlay",
+      "destination": "apps/usb_gateway/app.overlay",
+      "source_sha256": "7ff0fb679353aaa062956225fc961b714a7fc7368a54c291c561ba24a134ead8"
+    },
+    {
+      "source": "src/usb_can_bridge/boards/dust-hpm6750.conf",
+      "destination": "apps/usb_gateway/boards/dust-hpm6750.conf",
+      "source_sha256": "776ad0f06a0c07d60408a3b65d4030d8fe41f4dfd8adaa28382099336b3f1230"
+    },
+    {
+      "source": "src/usb_can_bridge/patches/hpm_uart_line_idle.patch",
+      "destination": "patches/hpm_uart_line_idle.patch",
+      "source_sha256": "dca73caff0b60f006485a0ae940868a176070a7b20f85c3b18efc8570e5c1ddd"
+    },
+    {
+      "source": "src/usb_can_bridge/patches/.gitattributes",
+      "destination": "patches/.gitattributes",
+      "source_sha256": "fb25a78a6381f5646d71aacea4486f6aeeeb03c4d71740227011024be0d20a8f"
+    },
+    {
+      "source": "src/chassis_controller/communication/can_dispatch.cpp",
+      "destination": "drivers/can/can_dispatch.cpp",
+      "source_sha256": "a18ba0054ec4b31528e359764a3fa74b23a9a0db22603294865927f56ea172c2"
+    },
+    {
+      "source": "src/chassis_controller/communication/can_dispatch.h",
+      "destination": "include/dust_adapter/can_dispatch.hpp",
+      "source_sha256": "e919f16326acc548235529583cd89cf188202c90eee006b93cb31d00d3b875cf"
+    },
+    {
+      "source": "src/chassis_controller/communication/usb_session.cpp",
+      "destination": "drivers/usb/usb_session.cpp",
+      "source_sha256": "da6909700e420c09c64f515491bc31e8ed77a555ae59ac02f5946e93383c155c"
+    },
+    {
+      "source": "src/chassis_controller/communication/usb_session.h",
+      "destination": "include/dust_adapter/usb_session.hpp",
+      "source_sha256": "9cbb3839b5acae2cd70ad73a3b99f32999d88ad0f8570be848a2b383ad16ddf4"
+    },
+    {
+      "source": "src/chassis_controller/modules/ahrs/onboard_imu_module.cpp",
+      "destination": "drivers/imu/onboard_imu.cpp",
+      "source_sha256": "fc9db2232c5a735a32d07a8efcae5e07fdbe6e78ebfbbbedfd66f83ed76c6c75"
+    },
+    {
+      "source": "src/chassis_controller/modules/ahrs/onboard_imu_module.h",
+      "destination": "include/dust_adapter/onboard_imu.hpp",
+      "source_sha256": "1052a0e704cf615ca5c43884e6d3a1006be8018a0b119322261b50945022bf31"
+    },
+    {
+      "source": "src/chassis_controller/motor_map.h",
+      "destination": "include/dust_adapter/motor_map.hpp",
+      "source_sha256": "236294b5ea5d0f5ed11d7d0de16df7f1ab494ca1ba5cbaebc22885374d3d5f73"
+    },
+    {
+      "source": "src/chassis_controller/scheduling/thread_priorities.h",
+      "destination": "include/dust_adapter/thread_priorities.hpp",
+      "source_sha256": "05bee67989f8336d912898c3d7e037e1e9b931e2f2d212028defafc280b79319"
+    },
+    {
+      "source": "src/protocols/motors/dm_motor_protocol.cpp",
+      "destination": "protocols/motors/dm_motor_protocol.cpp",
+      "source_sha256": "6ebf8a8df0df4e2e1e611ac7266a32058ab109d00dc13d223e6e2accb93c870b"
+    },
+    {
+      "source": "src/protocols/motors/dm_motor_protocol.h",
+      "destination": "include/protocols/motors/dm_motor_protocol.h",
+      "source_sha256": "4091fae02938b940fa9b93ef2382a49db2c6d736c21b58f2c8f602fa78804824"
+    },
+    {
+      "source": "src/protocols/usb_bridge/bridge_protocol.hpp",
+      "destination": "include/protocols/usb_bridge/bridge_protocol.hpp",
+      "source_sha256": "bd302e69b947d2ea3793119db5eb9de506a928a3f32dfda833a09cfa75cd38d2"
+    },
+    {
+      "source": "src/chassis_controller/motors_params.yaml",
+      "destination": "config/motors_params.yaml",
+      "source_sha256": "2a8c53123ab2e24b6306ac2ca4afe39c2547a0dfab707ffa6b734299ff6100c3"
+    },
+    {
+      "source": "src/chassis_controller/motors_params.schema.yaml",
+      "destination": "config/motors_params.schema.yaml",
+      "source_sha256": "402fd51bb641b077177d80effc283f6a655f67210e5878116a22c1a2f15e747b"
+    },
+    {
+      "source": "msg/transport/latest_value.hpp",
+      "destination": "include/msg/transport/latest_value.hpp",
+      "source_sha256": "3ec5771885e83bf62d65cc19906fd36167d841f032bb6652ecba8cb4ee22b9e0"
+    },
+    {
+      "source": "msg/transport/message_queue.hpp",
+      "destination": "include/msg/transport/message_queue.hpp",
+      "source_sha256": "17b4d0e1a3c00a0b8efb0b346e2009ea61bebf6a399ea54e9f98ce182bf0f610"
+    },
+    {
+      "source": "msg/transport/byte_stream.hpp",
+      "destination": "include/msg/transport/byte_stream.hpp",
+      "source_sha256": "909a4905d62266415600b39fa26b7d0781ca908bceb4f12c4375ee4dee8deb73"
+    },
+    {
+      "source": "tools/generate_messages.py",
+      "destination": "tools/generate_messages.py",
+      "source_sha256": "b5b54089f292966d6cd7f0584f9198b13ddc51781770987c04e18608d50b6da7"
+    },
+    {
+      "source": "tools/generate_params.py",
+      "destination": "tools/generate_params.py",
+      "source_sha256": "67f75fa97ca7cd3debe22cef92ed88645d403e4200b0c77577675d8602a25bf7"
+    },
+    {
+      "source": "test/ethercat_slave_test/src/main.c",
+      "destination": "apps/ethercat_slave/src/main.c",
+      "source_sha256": "65b67e7a265de27d45824136aa11f34c14dc67437c7f57250850fc7d77d04e41"
+    },
+    {
+      "source": "test/ethercat_slave_test/src/hpm5e_esc_hw.c",
+      "destination": "apps/ethercat_slave/src/hpm5e_esc_hw.c",
+      "source_sha256": "43d9881c37dc44515472b968477817aca642921993d39bef2005b711e22aacce"
+    },
+    {
+      "source": "test/ethercat_slave_test/src/hpm5e_esc_hw.h",
+      "destination": "apps/ethercat_slave/src/hpm5e_esc_hw.h",
+      "source_sha256": "7ae98864234a6e7848781eeb35fdefd7dac2d9bbd6a9a747af25b7408054acb3"
+    },
+    {
+      "source": "test/ethercat_slave_test/prj.conf",
+      "destination": "apps/ethercat_slave/prj.conf",
+      "source_sha256": "0bf6be995fcaa08b4b2f00513e4eee9f4ec073e0f74ded84532aa35759f0530d"
+    },
+    {
+      "source": "test/ethercat_slave_test/app.overlay",
+      "destination": "apps/ethercat_slave/app.overlay",
+      "source_sha256": "ef37847bdf099f63d97dd1f354cd185749438d62ca66c8ecb35d38530805e3f3"
+    },
+    {
+      "source": "test/ethercat_slave_test/esi/WBR_HPM5E_FreeRun.xml",
+      "destination": "apps/ethercat_slave/esi/DUST_HPM5E_FreeRun.xml",
+      "source_sha256": "abac239e64c171342042b49b3e8b92e6a9c7e2d7d41e7c538c93be4944da5ad5"
+    },
+    {
+      "source": "msg/booster_state.msg",
+      "destination": "interfaces/booster_state.msg",
+      "source_sha256": "0f8820b3bf19c8371831111ea0b96ee265d9107347f8f4c69ee0815ddffb5100"
+    },
+    {
+      "source": "msg/chassismotors_feedback_raw.msg",
+      "destination": "interfaces/chassismotors_feedback_raw.msg",
+      "source_sha256": "85e86279532c4db87dd2e8959afe1f637a42b3e6ea49ea9a524788a1b8eefde6"
+    },
+    {
+      "source": "msg/chassismotors_send_raw.msg",
+      "destination": "interfaces/chassismotors_send_raw.msg",
+      "source_sha256": "3b6bb9141c699eb1e09ce08e72f9d27a30b741e01fac9264f0a58375b5e44535"
+    },
+    {
+      "source": "msg/gimbal_state.msg",
+      "destination": "interfaces/gimbal_state.msg",
+      "source_sha256": "84fe1817dc96d363bf8885b6d05edf30c64e55177ed425c0e0191123ba73ab59"
+    },
+    {
+      "source": "msg/hi91_imu_sample.msg",
+      "destination": "interfaces/hi91_imu_sample.msg",
+      "source_sha256": "51fdded0f912cf07226ecb7fe8cfbb468d27e8fbc7d492ddfa871a0d53879782"
+    },
+    {
+      "source": "msg/pc_auto_aim_command.msg",
+      "destination": "interfaces/pc_auto_aim_command.msg",
+      "source_sha256": "e445777ba26d0b6f7c637904a4e5bebfe9c866dad5ee5343546fc82f1f7daaab"
+    },
+    {
+      "source": "msg/remote_input_state.msg",
+      "destination": "interfaces/remote_input_state.msg",
+      "source_sha256": "b5ef64821a768e904794e6f9c16eb6cdd4aab1435bba7ddbd3fc152b7e23636f"
+    },
+    {
+      "source": "msg/usb_raw_frame_queue.msg",
+      "destination": "interfaces/usb_raw_frame_queue.msg",
+      "source_sha256": "3f2477b1f13152f652c076b3b24dcdb85c701515d0ea1c44f1c4596fd7654a7f"
+    }
+  ]
+}

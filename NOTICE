@@ -1,0 +1,15 @@
+dust-adapter
+
+Adapter application sources were extracted from the wbr_control working tree,
+with source hashes recorded in docs/migration_sources.json. Existing SPDX and
+copyright notices are retained. Repository-owned sources use Apache-2.0 unless
+a file states otherwise.
+
+Zephyr, HPM support/SDK, CherryUSB, SEGGER and FatFs are external dependencies
+with their respective licences. They are not relicensed by this repository.
+
+The EtherCAT Slave Stack Code (SSC 5.13) is a separately licensed Beckhoff
+dependency. SSC implementation/generated sources are not distributed here.
+Use your locally licensed, configured source files via tools/import_ssc.py or
+DUST_ADAPTER_SSC_DIR; preserve their original notices. The root Apache-2.0
+licence does not apply to that external stack.

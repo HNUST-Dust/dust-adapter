@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-22",
+  "verification": "Fresh build in separate West workspace with only adapter and declared third-party dependencies; no original application checkout dependency. SSC supplied locally and not redistributed. No flash/hardware validation performed.",
+  "usb_matches_pre_migration_binary": true,
+  "outputs": {
+    "usb": {
+      "binary_sha256": "0082e0e04bee8696384aeb37dfaf15c467f9191da56b5fbba5c5b8e2b92746c5",
+      "config_sha256": "2cedfe0585e4b9846e36286fd9420b2f2402226d5d1ff7d6b291809fb8efd585",
+      "old_application_source_dependencies": false
+    },
+    "ethercat": {
+      "binary_sha256": "461f7456ed1a8799e210b79b888d07280da73323e7da832cb62ef2dee2312d50",
+      "config_sha256": "db310c68a11b1216f7e93547d171e87b665871fb9c87b9414fb7fb1f4f4f6e7f",
+      "old_application_source_dependencies": false
+    }
+  }
+}
