@@ -9,7 +9,11 @@
 namespace {
 namespace wire = dust::wire;
 using wire::Packet;
-K_MSGQ_DEFINE(can_packets, sizeof(platform::CanReceiveFrame), 128, 4);
+struct QueuedCan {
+  platform::CanReceiveFrame frame;
+  uint32_t session;
+};
+K_MSGQ_DEFINE(can_packets, sizeof(QueuedCan), 128, 4);
 K_MSGQ_DEFINE(peripheral_packets, sizeof(Packet), 128, 4);
 K_MSGQ_DEFINE(replies, sizeof(Packet), 16, 4);
 K_SEM_DEFINE(uplink_event, 0, 1);
@@ -63,26 +67,33 @@ void Close(wire::StopReason reason) {
   last_stop = reason;
 }
 void ReceiveCan(const platform::CanReceiveFrame &frame) {
-  if (!gateway::Session())
+  const uint32_t session = gateway::Session();
+  if (!session)
     return;
-  if (k_msgq_put(&can_packets, &frame, K_NO_WAIT))
+  const QueuedCan queued{frame, session};
+  if (k_msgq_put(&can_packets, &queued, K_NO_WAIT))
     atomic_inc(&can_drops);
   else
     k_sem_give(&uplink_event);
 }
 bool TakeCan(Packet &packet) {
-  platform::CanReceiveFrame frame{};
+  const uint32_t session = gateway::Session();
+  if (!session)
+    return false;
+  QueuedCan queued{};
   unsigned count = 0;
-  while (count < 2 && !k_msgq_get(&can_packets, &frame, K_NO_WAIT)) {
+  while (count < 2 && !k_msgq_get(&can_packets, &queued, K_NO_WAIT)) {
+    if (queued.session != session)
+      continue;
     auto *p = packet.data() + 16 + count * 24;
-    wire::Encode(p, frame.record);
-    wire::Put32(p + 16, frame.timestamp_us);
-    wire::Put32(p + 20, frame.sequence);
+    wire::Encode(p, queued.frame.record);
+    wire::Put32(p + 16, queued.frame.timestamp_us);
+    wire::Put32(p + 20, queued.frame.sequence);
     ++count;
   }
   if (!count)
     return false;
-  wire::Header(packet.data(), wire::Kind::Can, 0, gateway::Session());
+  wire::Header(packet.data(), wire::Kind::Can, 0, session);
   packet[10] = count;
   return true;
 }
@@ -102,7 +113,8 @@ void Uplink(void *, void *, void *) {
       continue;
     }
     peripheral_turn = !peripheral_turn;
-    if (wire::U32(packet.data() + 12) != gateway::Session())
+    if (!gateway::Session() ||
+        wire::U32(packet.data() + 12) != gateway::Session())
       continue;
     wire::Put32(packet.data() + 4, NowUs());
     if (platform::SendUsb(packet.data(), packet.size()) != int(packet.size()) ||
