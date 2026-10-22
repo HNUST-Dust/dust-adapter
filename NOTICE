@@ -5,7 +5,7 @@ with source hashes recorded in docs/migration_sources.json. Existing SPDX and
 copyright notices are retained. Repository-owned sources use Apache-2.0 unless
 a file states otherwise.
 
-Zephyr, HPM support/SDK, CherryUSB, SEGGER and FatFs are external dependencies
+Zephyr, HPM support/SDK, CherryUSB and SEGGER are external dependencies
 with their respective licences. They are not relicensed by this repository.
 
 The EtherCAT Slave Stack Code (SSC 5.13) is a separately licensed Beckhoff
