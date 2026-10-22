@@ -68,6 +68,7 @@ volatile bool g_vendor_tx_busy = false;
 volatile bool g_vendor_out_armed = false;
 
 K_SEM_DEFINE(g_usb_tx_complete, 0, 1);
+atomic_t g_usb_connection_epoch;
 atomic_t g_usb_received_packets;
 atomic_t g_usb_submitted_packets;
 atomic_t g_usb_completed_packets;
@@ -87,7 +88,7 @@ k_thread g_raw_rx_thread;
 
 
 static const uint8_t g_device_descriptor[] = {
-	USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0x00, 0x00, 0x00, USBD_VID, USBD_PID, 0x0100, 0x01)
+	USB_DEVICE_DESCRIPTOR_INIT(USB_2_0, 0x00, 0x00, 0x00, USBD_VID, USBD_PID, 0x0200, 0x01)
 };
 
 static const uint8_t g_config_descriptor_hs[] = {
@@ -157,7 +158,7 @@ static const uint8_t g_other_speed_config_descriptor_fs[] = {
 static const char *g_string_descriptors[] = {
 	(const char[]){0x09, 0x04},
 	"HPMicro",
-	"wbr_control USB Session",
+	"Dust USB Adapter",
 	"0001",
 };
 
@@ -250,12 +251,16 @@ void UsbEventHandler(uint8_t busid, uint8_t event)
 		(void)ArmVendorOut();
 		break;
 	case USBD_EVENT_RESET:
+		atomic_inc(&g_usb_connection_epoch);
+		msg::usb_raw_frames.Clear();
 		g_configured = false;
 		g_vendor_tx_busy = false;
 		g_vendor_out_armed = false;
 		k_sem_give(&g_raw_rx_kick);
 		break;
 	case USBD_EVENT_DISCONNECTED:
+		atomic_inc(&g_usb_connection_epoch);
+		msg::usb_raw_frames.Clear();
 		g_configured = false;
 		g_vendor_tx_busy = false;
 		g_vendor_out_armed = false;
@@ -408,6 +413,8 @@ void ReadUsbSessionStats(UsbSessionStats *stats)
 	stats->last_complete_us = atomic_get(&g_usb_last_complete_us);
 #endif
 }
+
+uint32_t UsbConnectionEpoch() { return uint32_t(atomic_get(&g_usb_connection_epoch)); }
 
 void PollUsbSession()
 {

@@ -15,6 +15,7 @@ public:
 		k_msgq_init(&queue_, buffer_, sizeof(T), Depth);
 	}
 
+	void Clear() { k_msgq_purge(&queue_); }
 	int TryPush(const T &value) { return k_msgq_put(&queue_, &value, K_NO_WAIT); }
 	int Push(const T &value, k_timeout_t timeout) { return k_msgq_put(&queue_, &value, timeout); }
 	int Pop(T &value, k_timeout_t timeout) { return k_msgq_get(&queue_, &value, timeout); }

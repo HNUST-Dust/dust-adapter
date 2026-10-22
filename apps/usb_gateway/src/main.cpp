@@ -1,244 +1,337 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "peripherals.h"
+#include <cstring>
 #include <dust_adapter/can_dispatch.hpp>
 #include <dust_adapter/usb_session.hpp>
-#include <dust_adapter/motor_map.hpp>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
-#include <cstring>
 
-namespace
-{
-namespace wire = wbr::bridge;
+namespace {
+namespace wire = dust::wire;
 using wire::Packet;
-// DM Exit is kept locally so loss of the host cannot prevent shutdown.
-constexpr uint8_t kJointExitPayload[8] = {0xFF, 0xFF, 0xFF, 0xFF,
-					 0xFF, 0xFF, 0xFF, 0xFD};
-constexpr unsigned kBusMotors[2][3] = {{0, 2, 3}, {1, 4, 5}}; // W/B/D
+K_MSGQ_DEFINE(can_packets, sizeof(platform::CanReceiveFrame), 128, 4);
 K_MSGQ_DEFINE(peripheral_packets, sizeof(Packet), 128, 4);
-K_MSGQ_DEFINE(session_replies, sizeof(Packet), 4, 4);
+K_MSGQ_DEFINE(replies, sizeof(Packet), 16, 4);
 K_SEM_DEFINE(uplink_event, 0, 1);
 K_THREAD_STACK_DEFINE(uplink_stack, 2048);
 k_thread uplink_thread;
-atomic_t session_id;
-Packet latest_can[6]{};
-uint8_t dirty_can;
-wire::CommandLease command_lease;
-uint32_t capabilities;
-uint32_t NowUs()
-{
-	return k_cyc_to_us_floor64(k_cycle_get_64());
-}
+atomic_t session_id{}, can_drops{}, peripheral_drops{}, reply_drops{},
+    usb_send_errors{};
+wire::SessionPolicy policy;
+wire::Record stop_actions[wire::kMaxRecords]{};
+size_t stop_count = 0;
+uint32_t capabilities = 0, rejected = 0, stop_errors = 0, session_epoch = 0;
+wire::StopReason last_stop = wire::StopReason::None;
+uint32_t NowUs() { return k_cyc_to_us_floor64(k_cycle_get_64()); }
 
-bool SafeStop()
-{
-	bool submitted = true;
-	command_lease.Reset();
-	// Physical shutdown policy remains local even if the host/USB disappears.
-	for (unsigned group = 0; group < 2; ++group) {
-		platform::CanStandardFrame frames[3]{};
-		for (unsigned i = 0; i < 3; ++i) {
-			const auto &motor = platform::motor_map::kMotors[kBusMotors[group][i]];
-			frames[i].slot = motor.tx_slot;
-			frames[i].can_id = motor.command_id;
-			frames[i].dlc = 8;
-			// Wheel payload stays zero current; joints receive DM Exit.
-			if (i)
-				std::memcpy(frames[i].data, kJointExitPayload,
-					    sizeof(kJointExitPayload));
-		}
-		if (platform::SubmitCanStandardFrames(group == 0 ? 3 : 2, frames, 3) != 0)
-			submitted = false;
-	}
-	return submitted;
+void QueueReply(const Packet &packet) {
+  if (k_msgq_put(&replies, &packet, K_NO_WAIT))
+    atomic_inc(&reply_drops);
+  k_sem_give(&uplink_event);
 }
-
-void ReceiveCan(const platform::CanReceiveFrame &frame, void *)
-{
-	if (!atomic_get(&session_id))
-		return;
-	// Configured motor streams are latest-state mailboxes, never an unbounded FIFO.
-	for (unsigned i = 0; i < 6; ++i) {
-		const auto &motor = platform::motor_map::kMotors[i];
-		if (motor.bus != frame.bus || motor.feedback_id != frame.can_id)
-			continue;
-		const unsigned key = irq_lock();
-		wire::CanRecord(latest_can[i].data(), frame.bus, frame.can_id, frame.data,
-				frame.dlc, frame.timestamp_us);
-		dirty_can |= uint8_t(1U << i);
-		irq_unlock(key);
-		k_sem_give(&uplink_event);
-		return;
-	}
-	Packet packet{};
-	wire::Header(packet.data(), wire::Kind::Can, 0, gateway::Session());
-	packet[10] = 1;
-	wire::CanRecord(packet.data() + 16, frame.bus, frame.can_id, frame.data, frame.dlc,
-			frame.timestamp_us);
-	gateway::PublishPeripheral(packet);
+void Result(const wire::Request &request, int result) {
+  Packet reply{};
+  wire::Header(reply.data(), wire::Kind::Result, 0, policy.Session());
+  wire::Put32(reply.data() + 16, wire::U32(request.data() + 4));
+  reply[20] = request[9];
+  reply[21] = policy.Armed();
+  wire::Put32(reply.data() + 24, uint32_t(result));
+  QueueReply(reply);
 }
-
-bool TakeCan(Packet &packet)
-{
-	const unsigned key = irq_lock();
-	unsigned count = 0;
-	static unsigned next = 0;
-	for (unsigned visited = 0; visited < 6 && count < 3; ++visited) {
-		unsigned motor = next;
-		next = (next + 1) % 6;
-		if (!(dirty_can & (1U << motor)))
-			continue;
-		std::memcpy(packet.data() + 16 + 16 * count, latest_can[motor].data(), 16);
-		dirty_can &= uint8_t(~(1U << motor));
-		++count;
-	}
-	irq_unlock(key);
-	if (!count)
-		return false;
-	wire::Header(packet.data(), wire::Kind::Can, NowUs(), gateway::Session());
-	packet[10] = count;
-	return true;
+void Close(wire::StopReason reason) {
+  // Clear publication first; old peripheral records cannot cross into a new
+  // session.
+  atomic_clear(&session_id);
+  wire::Record can[wire::kMaxRecords]{};
+  size_t count = 0;
+  for (size_t i = 0; i < stop_count; ++i)
+    if (stop_actions[i].flags != wire::kUartAction)
+      can[count++] = stop_actions[i];
+  if (policy.Armed() || stop_count) {
+    if (platform::ReplaceCanTraffic(can, count))
+      ++stop_errors;
+    gateway::DiscardUartWrites();
+  }
+  for (size_t i = 0; i < stop_count; ++i) {
+    const auto &r = stop_actions[i];
+    if (r.flags == wire::kUartAction &&
+        gateway::SubmitUart(r.channel, r.data, r.length))
+      ++stop_errors;
+  }
+  stop_count = 0;
+  policy.Close();
+  last_stop = reason;
 }
-
-void Uplink(void *, void *, void *)
-{
-	bool peripheral_turn = false;
-	for (;;) {
-		Packet packet{};
-		bool found = k_msgq_get(&session_replies, &packet, K_NO_WAIT) == 0;
-		if (!found && peripheral_turn)
-			found = k_msgq_get(&peripheral_packets, &packet, K_NO_WAIT) == 0;
-		if (!found)
-			found = TakeCan(packet);
-		if (!found)
-			found = k_msgq_get(&peripheral_packets, &packet, K_NO_WAIT) == 0;
-		if (!found) {
-			k_sem_take(&uplink_event, K_FOREVER);
-			continue;
-		}
-		peripheral_turn = !peripheral_turn;
-		if (wire::U32(packet.data() + 12) != gateway::Session())
-			continue;
-		// Refresh only the send timestamp, retaining acquisition timestamps in records.
-		wire::Put32(packet.data() + 4, NowUs());
-		if (platform::SendUsb(packet.data(), packet.size()) == int(packet.size()))
-			(void)platform::WaitUsbTxComplete(20);
-	}
+void ReceiveCan(const platform::CanReceiveFrame &frame) {
+  if (!gateway::Session())
+    return;
+  if (k_msgq_put(&can_packets, &frame, K_NO_WAIT))
+    atomic_inc(&can_drops);
+  else
+    k_sem_give(&uplink_event);
 }
-
-bool Forward(const wire::Commands &packet)
-{
-	if (!wire::ValidCommands(packet, gateway::Session()))
-		return false;
-	const uint32_t sequence = wire::U32(packet.data() + 4);
-	if (!command_lease.CanAccept(sequence))
-		return false;
-	// Validate every frame before publishing either bus. Never partly apply an invalid packet.
-	const uint8_t *records[6]{};
-	for (unsigned i = 0; i < packet[10]; ++i) {
-		const auto *record = packet.data() + 32 + 16 * i;
-		const auto &motor = platform::motor_map::kMotors[record[12]];
-		if (record[0] != motor.bus || wire::U16(record + 2) != motor.command_id)
-			return false;
-		records[record[12]] = record;
-	}
-	bool success = true;
-	k_sched_lock();
-	for (unsigned group = 0; group < 2; ++group) {
-		platform::CanStandardFrame frames[3]{};
-		unsigned count = 0;
-		for (auto motor_index : kBusMotors[group]) {
-			const auto *record = records[motor_index];
-			if (!record)
-				continue;
-			auto &frame = frames[count++];
-			frame.slot = platform::motor_map::kMotors[motor_index].tx_slot;
-			frame.can_id = wire::U16(record + 2);
-			frame.dlc = 8;
-			std::memcpy(frame.data, record + 4, 8);
-		}
-		if (count &&
-		    platform::SubmitCanStandardFrames(group == 0 ? 3 : 2, frames, count) != 0)
-			success = false;
-	}
-	k_sched_unlock();
-	if (!success) {
-		SafeStop();
-		atomic_clear(&session_id);
-		return false;
-	}
-	const uint32_t accepted_us = NowUs();
-	command_lease.Renew(sequence, accepted_us);
-	return true;
+bool TakeCan(Packet &packet) {
+  platform::CanReceiveFrame frame{};
+  unsigned count = 0;
+  while (count < 2 && !k_msgq_get(&can_packets, &frame, K_NO_WAIT)) {
+    auto *p = packet.data() + 16 + count * 24;
+    wire::Encode(p, frame.record);
+    wire::Put32(p + 16, frame.timestamp_us);
+    wire::Put32(p + 20, frame.sequence);
+    ++count;
+  }
+  if (!count)
+    return false;
+  wire::Header(packet.data(), wire::Kind::Can, 0, gateway::Session());
+  packet[10] = count;
+  return true;
+}
+void Uplink(void *, void *, void *) {
+  bool peripheral_turn = false;
+  for (;;) {
+    Packet packet{};
+    bool found = !k_msgq_get(&replies, &packet, K_NO_WAIT);
+    if (!found && peripheral_turn)
+      found = !k_msgq_get(&peripheral_packets, &packet, K_NO_WAIT);
+    if (!found)
+      found = TakeCan(packet);
+    if (!found)
+      found = !k_msgq_get(&peripheral_packets, &packet, K_NO_WAIT);
+    if (!found) {
+      k_sem_take(&uplink_event, K_FOREVER);
+      continue;
+    }
+    peripheral_turn = !peripheral_turn;
+    if (wire::U32(packet.data() + 12) != gateway::Session())
+      continue;
+    wire::Put32(packet.data() + 4, NowUs());
+    if (platform::SendUsb(packet.data(), packet.size()) != int(packet.size()) ||
+        platform::WaitUsbTxComplete(20))
+      atomic_inc(&usb_send_errors);
+  }
+}
+bool Available(const wire::Record &record) {
+  return record.flags == wire::kUartAction
+             ? gateway::UartAvailable(record.channel)
+             : platform::CanAvailable(record.channel);
+}
+int ConfigureSafety(const wire::Request &request) {
+  if (!wire::ValidRecords(request, true))
+    return -EINVAL;
+  if (!policy.Fresh(wire::U32(request.data() + 4)))
+    return -ESTALE;
+  wire::Record actions[wire::kMaxRecords]{};
+  for (unsigned i = 0; i < request[10]; ++i) {
+    actions[i] = wire::Decode(request.data() + 32 + i * 16);
+    if (!Available(actions[i]))
+      return -ENODEV;
+  }
+  if (!policy.Configure(wire::U32(request.data() + 16)))
+    return -EINVAL;
+  policy.Observe(wire::U32(request.data() + 4));
+  stop_count = request[10];
+  std::memcpy(stop_actions, actions, sizeof(actions));
+  return 0;
+}
+int Forward(const wire::Request &request) {
+  if (!policy.Armed() || policy.Expired(NowUs()))
+    return -EACCES;
+  if (!policy.Fresh(wire::U32(request.data() + 4)))
+    return -ESTALE;
+  int result;
+  if (request[9] == uint8_t(wire::Kind::UartWrite)) {
+    const size_t size = request[11];
+    if (!size || size > wire::kMaxUartWrite ||
+        !wire::Zero(request.data() + 16, 16) ||
+        !wire::Zero(request.data() + 32 + size, request.size() - 32 - size))
+      return -EINVAL;
+    result = gateway::SubmitUart(request[10], request.data() + 32, size);
+  } else {
+    if (!wire::ValidRecords(request))
+      return -EINVAL;
+    wire::Record frames[wire::kMaxRecords]{};
+    for (unsigned i = 0; i < request[10]; ++i) {
+      frames[i] = wire::Decode(request.data() + 32 + i * 16);
+      if (!platform::CanAvailable(frames[i].channel))
+        return -ENODEV;
+    }
+    result = platform::SubmitCanRecords(frames, request[10]);
+  }
+  if (!result && !policy.Accept(wire::U32(request.data() + 4), NowUs())) {
+    Close(wire::StopReason::LeaseExpired);
+    return -ETIMEDOUT;
+  }
+  return result;
+}
+void Status(const wire::Request &request) {
+  Packet reply{};
+  wire::Header(reply.data(), wire::Kind::Status, 0, policy.Session());
+  reply[10] = request[10];
+  reply[11] = request[11];
+  if (!request[10]) {
+    reply[16] = policy.Armed();
+    reply[17] = policy.Configured();
+    reply[18] = uint8_t(last_stop);
+    wire::Put32(reply.data() + 20, rejected);
+    wire::Put32(reply.data() + 24, atomic_get(&can_drops));
+    wire::Put32(reply.data() + 28, atomic_get(&peripheral_drops));
+    wire::Put32(reply.data() + 32, stop_errors);
+    wire::Put32(reply.data() + 36, atomic_get(&reply_drops));
+    wire::Put32(reply.data() + 40, atomic_get(&usb_send_errors));
+    platform::UsbSessionStats stats{};
+    platform::ReadUsbSessionStats(&stats);
+    wire::Put32(reply.data() + 44, stats.receive_queue_drops);
+    wire::Put32(reply.data() + 48, stats.endpoint_errors);
+  } else if (request[10] == 1) {
+    const auto stats = platform::ReadCanStats(request[11]);
+    const uint32_t values[] = {
+        stats.received, stats.submitted, stats.completed,
+        stats.errors,   stats.dropped,   stats.queue_depth,
+        stats.state,    stats.tx_errors, stats.rx_errors};
+    for (unsigned i = 0; i < 9; ++i)
+      wire::Put32(reply.data() + 16 + 4 * i, values[i]);
+  } else if (request[10] == 2) {
+    const auto stats = gateway::ReadUartStats(request[11]);
+    wire::Put32(reply.data() + 16, stats.received);
+    wire::Put32(reply.data() + 20, stats.dropped);
+    wire::Put32(reply.data() + 24, stats.tx_completed);
+    wire::Put32(reply.data() + 28, stats.tx_errors);
+  }
+  QueueReply(reply);
+}
+void Handle(const wire::Request &request, size_t length) {
+  if (!wire::HasHeader(request.data(), length)) {
+    ++rejected;
+    return;
+  }
+  const auto kind = wire::Kind(request[9]);
+  if (kind == wire::Kind::Hello && length == wire::kOutBytes && !request[10] &&
+      !request[11] && wire::Zero(request.data() + 16, 112)) {
+    const uint32_t session = wire::U32(request.data() + 12);
+    if (!session) {
+      ++rejected;
+      return;
+    }
+    if (policy.Session())
+      Close(wire::StopReason::Replaced);
+    policy.Open(session);
+    session_epoch = platform::UsbConnectionEpoch();
+    k_msgq_purge(&can_packets);
+    k_msgq_purge(&peripheral_packets);
+    k_msgq_purge(&replies);
+    atomic_set(&session_id, session);
+    Packet ready{};
+    wire::Header(ready.data(), wire::Kind::Ready, 0, session);
+    wire::Put32(ready.data() + 16, capabilities);
+    wire::Put32(ready.data() + 20, wire::kOutBytes);
+    wire::Put32(ready.data() + 24, wire::kInBytes);
+    wire::Put32(ready.data() + 28, platform::CanChannelMask());
+    ready[32] = wire::kMaxRecords;
+    ready[33] =
+        wire::kMaxRecords; // max records / stop actions; not motor counts
+    QueueReply(ready);
+    return;
+  }
+  if (length != wire::kOutBytes || !policy.Session() ||
+      wire::U32(request.data() + 12) != policy.Session()) {
+    ++rejected;
+    return;
+  }
+  int rc = 0;
+  switch (kind) {
+  case wire::Kind::ConfigureSafety:
+    rc = ConfigureSafety(request);
+    Result(request, rc);
+    break;
+  case wire::Kind::Arm:
+    if (request[10] || request[11] || !wire::Zero(request.data() + 16, 112) ||
+        !policy.Arm(wire::U32(request.data() + 4), NowUs()))
+      rc = -EINVAL;
+    Result(request, rc);
+    break;
+  case wire::Kind::Transmit:
+  case wire::Kind::UartWrite:
+    rc = Forward(request);
+    if (rc)
+      Result(request, rc); // successful data traffic has no periodic ACK
+    break;
+  case wire::Kind::Heartbeat:
+    if (request[10] || request[11] || !wire::Zero(request.data() + 16, 112) ||
+        !policy.Accept(wire::U32(request.data() + 4), NowUs()))
+      rc = -EINVAL;
+    break;
+  case wire::Kind::Stop:
+    Close(wire::StopReason::Explicit);
+    break;
+  case wire::Kind::Status:
+    if (request[10] > 2 || !wire::Zero(request.data() + 16, 112))
+      rc = -EINVAL;
+    else
+      Status(request);
+    break;
+  default:
+    rc = -ENOTSUP;
+    Result(request, rc);
+    break;
+  }
+  if (rc)
+    ++rejected;
+  // Queue admission failure must never silently leave an armed controller
+  // running.
+  if ((rc == -ENOSPC || rc == -EIO) && policy.Armed())
+    Close(wire::StopReason::TransportError);
 }
 } // namespace
 
-namespace gateway
-{
-uint32_t Session()
-{
-	return static_cast<uint32_t>(atomic_get(&session_id));
-}
-void PublishPeripheral(const Packet &packet)
-{
-	if (!Session())
-		return;
-	// Stream sequence numbers allow host parsers to reset if this bounded queue drops a chunk.
-	if (k_msgq_put(&peripheral_packets, &packet, K_NO_WAIT) == 0)
-		k_sem_give(&uplink_event);
+namespace gateway {
+uint32_t Session() { return uint32_t(atomic_get(&session_id)); }
+bool PublishPeripheral(const Packet &packet) {
+  if (!Session())
+    return false;
+  if (k_msgq_put(&peripheral_packets, &packet, K_NO_WAIT)) {
+    atomic_inc(&peripheral_drops);
+    return false;
+  }
+  k_sem_give(&uplink_event);
+  return true;
 }
 } // namespace gateway
 
-int main()
-{
-	k_thread_priority_set(k_current_get(), 7);
-	platform::SetCanReceiveCallback(ReceiveCan, nullptr);
-	if (platform::InitializeCanDispatch(false, true) != 0)
-		return -1;
-	SafeStop();
-	capabilities = 1 | gateway::StartPeripherals();
-	if (platform::InitializeUsbSession() != 0)
-		return -1;
-	k_thread_create(&uplink_thread, uplink_stack, K_THREAD_STACK_SIZEOF(uplink_stack), Uplink,
-			nullptr, nullptr, nullptr, 7, 0, K_NO_WAIT);
-	for (;;) {
-		wire::Commands packet{};
-		size_t length = 0;
-		if (platform::ReceiveUsb(packet.data(), packet.size(), &length, 1) == 0) {
-			if (length == 64 &&
-			    wire::HasHeader(packet.data(), length, wire::Kind::Hello)) {
-				SafeStop();
-				const uint32_t requested = wire::U32(packet.data() + 12);
-				const unsigned key = irq_lock();
-				atomic_set(&session_id, requested);
-				dirty_can = 0;
-				k_msgq_purge(&peripheral_packets);
-				k_msgq_purge(&session_replies);
-				irq_unlock(key);
-				if (requested) {
-					Packet reply{};
-					wire::Header(reply.data(), wire::Kind::Ready, NowUs(),
-						     requested);
-					wire::Put32(reply.data() + 16, capabilities);
-					wire::Put32(reply.data() + 20, wire::kOutBytes);
-					wire::Put32(reply.data() + 24, wire::kInBytes);
-					k_msgq_put(&session_replies, &reply, K_NO_WAIT);
-					k_sem_give(&uplink_event);
-				}
-			} else if (length == 128) {
-				if (gateway::Session())
-					(void)Forward(packet);
-			} else if (length == 64 &&
-				   wire::HasHeader(packet.data(), length, wire::Kind::Stop) &&
-				   wire::U32(packet.data() + 12) == gateway::Session()) {
-				SafeStop();
-				atomic_clear(&session_id);
-			}
-		}
-		const bool configured = platform::IsUsbConfigured();
-		if (command_lease.Expired(NowUs(), configured)) {
-			SafeStop();
-			atomic_clear(&session_id); // new handshake required to resume
-		}
-	}
+int main() {
+  k_thread_priority_set(k_current_get(), 7);
+  if (platform::InitializeCanDispatch(ReceiveCan))
+    return -1;
+  capabilities = 1 | gateway::StartPeripherals();
+  if (platform::InitializeUsbSession())
+    return -1;
+  k_thread_create(&uplink_thread, uplink_stack,
+                  K_THREAD_STACK_SIZEOF(uplink_stack), Uplink, nullptr, nullptr,
+                  nullptr, 7, 0, K_NO_WAIT);
+  for (;;) {
+    // Check even under continuous incoming traffic; malformed packets cannot
+    // keep a lease alive.
+    if (policy.Session() && (!platform::IsUsbConfigured() ||
+                             platform::UsbConnectionEpoch() != session_epoch))
+      Close(wire::StopReason::UsbLost);
+    else if (policy.Expired(NowUs()))
+      Close(wire::StopReason::LeaseExpired);
+    const bool output_fault =
+        platform::TakeCanFault() | gateway::TakePeripheralFault();
+    if (output_fault && policy.Armed())
+      Close(wire::StopReason::TransportError);
+    static uint32_t last_usb_errors = 0;
+    const uint32_t usb_errors = atomic_get(&usb_send_errors);
+    if (usb_errors != last_usb_errors && policy.Armed())
+      Close(wire::StopReason::TransportError);
+    last_usb_errors = usb_errors;
+    wire::Request request{};
+    size_t length = 0;
+    if (!platform::ReceiveUsb(request.data(), request.size(), &length, 1)) {
+      if (policy.Session() && platform::UsbConnectionEpoch() != session_epoch)
+        Close(wire::StopReason::UsbLost);
+      if (policy.Expired(NowUs()))
+        Close(wire::StopReason::LeaseExpired);
+      Handle(request, length);
+    }
+  }
 }

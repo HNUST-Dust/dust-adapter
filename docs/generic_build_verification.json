@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-23",
+  "scope": "generic USB protocol v2, local compile and native contracts; no flashing or motor execution",
+  "hpm_support": "335b77fb976f208ac62bba3a6db0f7b534c9028f",
+  "zephyr_sdk": "0.16.5",
+  "binary_sha256": "c699ef5641fd56d8bdfe344abb272b0da4a274e79c35a8b9fb7b4f5d92085904",
+  "config_sha256": "357d3d207e96daedc34e9b98816acbdd2c62a03b9b1b9dd2ec7cf26b0b15aad9",
+  "rom_bytes": 86708,
+  "ram_bytes": 110156,
+  "host_regressions": "8/8 in Orb Ubuntu ~/dust-control build/generic-adapter",
+  "hardware_acceptance": "pending; see GENERIC_USB_MIGRATION.md"
+}

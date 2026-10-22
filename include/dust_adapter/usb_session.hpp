@@ -42,6 +42,7 @@ void PollUsbSession();
  * @return USB 已枚举并配置时返回 `true`。
  */
 bool IsUsbConfigured();
+uint32_t UsbConnectionEpoch();
 /**
  * @brief 通过当前 USB 会话发送字节序列。
  * @param[in] data 输入字节缓冲区；长度由相邻长度参数给出。

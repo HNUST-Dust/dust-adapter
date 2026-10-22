@@ -1,59 +1,75 @@
-# dust-adapter — USB gateway
+# dust-adapter — generic USB adapter (protocol v2)
 
-`main` 是当前正式 USB 方案，`usb` 是 USB 开发/发布分支；`ethercat` 独立维护
-HPM5E3Y SSC FreeRun 从站基础。`v0.1` 为 USB 正式版本。
+`feature/generic-usb-adapter` implements the generic adapter. The released `v0.1`
+uses the older robot-specific v1 protocol. **The two protocols are not compatible.**
+Use matching `dust-control` branch `feature/generic-usb-adapter`; neither side
+silently falls back to the old protocol.
 
-本分支只包含 dust-hpm6750 的 USB Bulk → CAN/UART/IMU 固件，无底盘算法。
-EtherCAT 源码、构建和 SSC 导入说明请切换到 [ethercat 分支](https://github.com/HNUST-Dust/dust-adapter/tree/ethercat)。
+The dust-hpm6750 firmware forwards Classical CAN frames, fixed-configuration UART
+byte streams and the board-mounted raw IMU. It contains no motor address map,
+actuator slot, SBUS/HI91 parser, W/B/D ordering, MIT encoder or chassis algorithm.
+The `ethercat` branch remains the independent slave foundation.
 
-## 新建 workspace
+## Build
 
-需要 Python3/West/PyYAML、Zephyr 对应工具链、CMake/Ninja。依赖已在 `west.yml`
-固定版本，不需要克隆 `wbr_control` 或 `wbr_control_companion`：
+Python3/West/PyYAML, CMake/Ninja and a compatible Zephyr SDK are required.
 
 ```bash
-mkdir dust-workspace
-cd dust-workspace
-west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr main
+mkdir dust-workspace && cd dust-workspace
+west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr feature/generic-usb-adapter
 west update
 west zephyr-export
-```
-
-UART10 修复已作为正式驱动代码提交到 `HNUST-Dust/hpm_support`，
-`west.yml` 固定到包含修复的提交。执行 `west update` 即可，不再需要手工应用补丁。
-
-## 构建 USB
-
-```bash
 ./dust-adapter/scripts/build.sh usb
 ```
 
-默认 SDK 位于 workspace 内的 `sdk_env/hpm_sdk`。复用其他布局可设置
-`HPM_SDK_DIR` 环境变量；`DUST_HPM_SUPPORT_DIR` 是可选 CMake 参数。
+Dependencies are pinned in `west.yml`, including the UART partial-publication and
+CAN RTR software-filter fixes. No manual patch is needed. No FatFs dependency.
+The SDK defaults to `sdk_env/hpm_sdk`; `HPM_SDK_DIR` can override that path.
+
+## Board interfaces
+
+| Logical interface | Hardware | Fixed configuration |
+|---|---|---|
+| CAN channels | Enabled devicetree CAN nodes, numbered 0–3 | Classical 1 Mbps, standard/extended, data/remote frames |
+| UART port 1 | UART10 | 100000 baud, 8E2; 128-byte RX double buffer, 1000 us line-idle publication |
+| UART port 2 | UART2 | 921600 baud, 8N1; circular DMA with existing outstanding-write guard |
+| UART port 3 | UART3 | 115200 baud, 8N1; async RX double buffer |
+| Board IMU | Existing SPI2 sensor | Existing raw burst, timestamp and temperature acquisition |
+
+UART settings are MCU compile-time/devicetree configuration. There is no USB
+command to change baud rate, parity or stop bits. UART writes use async DMA and
+bounded per-port FIFO queues. Board wiring still determines which TX/RX pins
+are physically accessible; logical support does not add pins to the board.
+
+## Session and safety
+
+`Hello → Ready → ConfigureSafety → Result → Arm → Result → data/heartbeat`.
+Opening a session enables reception only. Output requires an acknowledged safety
+configuration and explicit Arm. ConfigureSafety specifies the command lease and
+up to six raw CAN/UART stop actions. Zero actions are an explicit supported choice
+for applications without actuators; there is no device-specific default.
+
+On expiry, USB reset/disconnect, explicit Stop or detected output failure, the MCU
+invalidates the session, discards software-queued writes and submits the configured
+stop actions. New output needs a fresh handshake/configuration/arm. Hardware-in-flight
+CAN frames cannot be recalled; stop actions follow those frames. A failed/offline bus
+cannot guarantee delivery or physical shutdown. Configuration is volatile and lost
+on MCU reset: devices needing independent shutdown must provide their own watchdog
+or hardware protection.
+
+See [wire protocol](docs/usb.md), [migration and commissioning](docs/GENERIC_USB_MIGRATION.md).
+Packet builders are in `host/include/dust_adapter/client.hpp`, and the canonical
+wire header is `include/dust_adapter/protocol.hpp`.
+
+## Verification and CI
 
 ```bash
-HPM_SDK_DIR=/path/to/hpm_sdk ./dust-adapter/scripts/build.sh usb
-# 只在准备部署到板子时手动刷写：
-west flash -d dust-adapter/build/usb_gateway
+./scripts/test_protocol.sh
 ```
 
-USB 保留现有 NUC 兼容协议、VID/PID、Bulk 128B OUT/64B IN、W/B/D 批次顺序与
-20ms 命令租约。配置目前对应六电机，命令地址有白名单，不是任意 CAN 帧隧道。
-详见 [USB 网关](docs/usb.md)。
-
-## CI 与版本发布
-
-Push/PR 到 `main` 或 `usb` 自动构建 dust-hpm6750 USB 固件。`v*` 标签在构建
-成功后自动生成 GitHub Release，附带 BIN、ELF、SHA256 和完整构建配置/依赖清单。
-不自动刷写硬件。依赖固定于 `west.yml`，CI 使用 Zephyr SDK 0.16.8。
-
-```bash
-git tag -a v0.1 -m "USB gateway v0.1"
-git push origin v0.1
-```
-
-详细行为和失联策略见 [USB 网关](docs/usb.md)，迁移记录见 [迁移说明](docs/migration.md)。
-历史同驱动基线下的二进制一致性核对已完成；固定依赖构建通过。新版本仍需按板卡
-部署流程验证，CI 构建成功不代表已通过硬件回归。
-
-不提供本地文件系统功能，West 不再下载 FatFs。
+The native tests check wire bounds, flag validation, session gating, replay,
+lease expiry and timestamp/sequence wrap under AddressSanitizer/UBSan.
+GitHub Actions builds the firmware and stores BIN/ELF, configuration, dependency
+manifest and checksums. Existing v0.1 is unchanged; this branch is not automatically
+flashed or promoted to a production release. Compilation and mocked USB regressions
+are not hardware acceptance or a CAN/device RTT measurement.

@@ -26,3 +26,7 @@ HPM UART 功能补丁单独保存，未把用户工作树中的 CAN 追踪实验
 2026-10-22 后续：UART RX 修复已提交到 HNUST-Dust/hpm_support，
 west.yml 固定到 a31c06940e8d11ee360b970c89523a7727b63fff；删除补丁与 CI/README 手工应用步骤。
 旧版构建与补丁记录仅为历史记录。
+
+2026-10-23：通用协议 v2 在 feature/generic-usb-adapter 独立开发，移除机器人消息、
+参数生成、电机地址和周期槽位；UART 参数仍固定。v0.1/main 保留旧协议以供回退。
+配套 dust-control 同名分支；详见 GENERIC_USB_MIGRATION.md。
