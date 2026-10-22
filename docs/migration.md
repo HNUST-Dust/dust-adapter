@@ -7,7 +7,7 @@ USB 从 src/usb_can_bridge 迁出，底层必要文件进入 drivers/ 和 includ
 旧的 PC/MPC 条件分支被移除，保留现有 raw Bulk 编译路径、调度优先级与 ABI。
 没有迁入 chassis 控制算法。迁出前后清理版本 USB bin 曾匹配 SHA256：
 0082e0e04bee8696384aeb37dfaf15c467f9191da56b5fbba5c5b8e2b92746c5。
-后续纯符号/目录整理后会重新记录最终构建哈希。
+最终独立 workspace 构建也保持同一 USB 哈希；两应用的构建哈希见 build_verification.json。
 
 EtherCAT 按用户确认，仅迁出现有 HPM5E3Y FreeRun 计数器从站基础。现有
 MPC slave core 与底盘 fallback 属于算法工程，不混作通用 EtherCAT CAN 网关。
