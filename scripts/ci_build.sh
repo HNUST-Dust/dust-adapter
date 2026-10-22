@@ -7,8 +7,6 @@ west update
 west zephyr-export
 python3 -m pip install -r zephyr/scripts/requirements-base.txt PyYAML
 # The application pins module revisions; avoid recursive SDK submodule downloads.
-git -C hpm_support apply --check "$root/patches/hpm_uart_line_idle.patch"
-git -C hpm_support apply "$root/patches/hpm_uart_line_idle.patch"
 "$root/scripts/build.sh" usb -p always
 mkdir -p "$root/dist"
 cp "$root/build/usb_gateway/zephyr/zephyr.bin" "$root/dist/dust-adapter-usb.bin"

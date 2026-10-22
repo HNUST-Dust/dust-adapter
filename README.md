@@ -19,14 +19,8 @@ west update
 west zephyr-export
 ```
 
-USB 所需的 UART10 修复尚以补丁提供。在干净的固定 HPM 支持版本中应用一次：
-
-```bash
-git -C hpm_support apply --check ../dust-adapter/patches/hpm_uart_line_idle.patch
-git -C hpm_support apply ../dust-adapter/patches/hpm_uart_line_idle.patch
-```
-
-若已含补丁，`git apply --reverse --check` 可确认，不能盲目重复应用。
+UART10 修复已作为正式驱动代码提交到 `HNUST-Dust/hpm_support`，
+`west.yml` 固定到包含修复的提交。执行 `west update` 即可，不再需要手工应用补丁。
 
 ## 构建 USB
 

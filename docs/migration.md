@@ -22,3 +22,7 @@ HPM UART 功能补丁单独保存，未把用户工作树中的 CAN 追踪实验
 
 2026-10-22 分支拆分：main/usb 仅保留 USB；EtherCAT 基础转至 ethercat 分支。
 此前双应用构建记录为拆分前的历史验证。
+
+2026-10-22 后续：UART RX 修复已提交到 HNUST-Dust/hpm_support，
+west.yml 固定到 a31c06940e8d11ee360b970c89523a7727b63fff；删除补丁与 CI/README 手工应用步骤。
+旧版构建与补丁记录仅为历史记录。
