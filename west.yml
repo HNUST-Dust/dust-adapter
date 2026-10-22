@@ -25,9 +25,6 @@ manifest:
       remote: usb-fork
       path: cherry_usb
       revision: 50c7e9085801e24d2d0991d0c4c1609fdbcfb90a
-    - name: fatfs
-      remote: upstream
-      revision: 427159bf95ea49b7680facffaa29ad506b42709b
     - name: segger
       remote: upstream
       revision: b011c45b585e097d95d9cf93edf4f2e01588d3cd

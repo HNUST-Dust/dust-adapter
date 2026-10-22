@@ -35,3 +35,5 @@ Push/PR 到 `ethercat` 会完整编译 dust-hpm5e3y 从站，并上传 BIN、ELF
 
 SSC 按维护者确认的芯片厂商授权范围纳入，保留 Beckhoff 原始许可；不适用本仓库
 Apache-2.0。详见 `external/ssc/README.md`。本分支仍是计数器 PDO 从站基础。
+
+不提供本地文件系统功能，West 不再下载 FatFs。
