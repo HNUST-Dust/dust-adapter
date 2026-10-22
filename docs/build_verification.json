@@ -1,17 +1,23 @@
 {
   "date": "2026-10-22",
-  "verification": "Fresh build in separate West workspace with only adapter and declared third-party dependencies; no original application checkout dependency. SSC supplied locally and not redistributed. No flash/hardware validation performed.",
-  "usb_matches_pre_migration_binary": true,
+  "verification": "Fresh builds in a separate West workspace using pinned HPM support plus only the shipped UART patch; no original application source dependency. SSC supplied locally and not redistributed. No flash/hardware validation performed.",
   "outputs": {
     "usb": {
-      "binary_sha256": "0082e0e04bee8696384aeb37dfaf15c467f9191da56b5fbba5c5b8e2b92746c5",
-      "config_sha256": "2cedfe0585e4b9846e36286fd9420b2f2402226d5d1ff7d6b291809fb8efd585",
-      "old_application_source_dependencies": false
+      "binary_sha256": "ac28f13d00a6c1df3d3e01e62378a7b528c9be18e6126ff3dfd290dcba1c5403",
+      "config_sha256": "d81e26f919a6f3b34e84cd3e45db13c535c336ac1e783e558ac0876c0495834f",
+      "old_application_source_dependencies": false,
+      "rom_bytes": 85668
     },
     "ethercat": {
       "binary_sha256": "461f7456ed1a8799e210b79b888d07280da73323e7da832cb62ef2dee2312d50",
-      "config_sha256": "db310c68a11b1216f7e93547d171e87b665871fb9c87b9414fb7fb1f4f4f6e7f",
-      "old_application_source_dependencies": false
+      "config_sha256": "c4331ea763cebb74add50d527ddf1ff0a963d1765536c359f61164c8bdfbff99",
+      "old_application_source_dependencies": false,
+      "rom_bytes": 96456
     }
+  },
+  "same_driver_baseline_comparison": {
+    "usb_matches_pre_migration_binary": true,
+    "usb_binary_sha256": "0082e0e04bee8696384aeb37dfaf15c467f9191da56b5fbba5c5b8e2b92746c5",
+    "note": "Comparison used the original local HPM working tree. Its experimental CAN tracing changes are not included in the pinned dependency build."
   }
 }
