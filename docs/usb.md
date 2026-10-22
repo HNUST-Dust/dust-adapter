@@ -86,6 +86,8 @@ is intentionally retained. No attitude estimator or robot frame transform runs h
 Status page0: armed16/configured17/last stop reason18; u32 counters at20 onwards:
 rejected requests, CAN uplink drops, peripheral uplink drops, stop enqueue failures,
 reply drops, USB send failures, USB OUT queue drops, endpoint errors.
+Detected OUT queue loss or endpoint errors close an armed session; invalid traffic
+cannot renew the lease.
 Page1 CAN: u32 at16 onwards: received frames, submitted frames, completed batches,
 errors, discarded/rejected frames, queued frames, controller state, TX/RX error counters.
 Page2 UART: u32 at16 onwards: received chunks, dropped chunks, TX DMA completions,

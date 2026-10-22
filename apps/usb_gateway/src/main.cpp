@@ -319,11 +319,20 @@ int main() {
         platform::TakeCanFault() | gateway::TakePeripheralFault();
     if (output_fault && policy.Armed())
       Close(wire::StopReason::TransportError);
-    static uint32_t last_usb_errors = 0;
+    static uint32_t last_usb_errors = 0, last_out_drops = 0,
+                    last_endpoint_errors = 0;
     const uint32_t usb_errors = atomic_get(&usb_send_errors);
-    if (usb_errors != last_usb_errors && policy.Armed())
+    platform::UsbSessionStats usb_stats{};
+    platform::ReadUsbSessionStats(&usb_stats);
+    const bool transport_fault =
+        usb_errors != last_usb_errors ||
+        usb_stats.receive_queue_drops != last_out_drops ||
+        usb_stats.endpoint_errors != last_endpoint_errors;
+    if (transport_fault && policy.Armed())
       Close(wire::StopReason::TransportError);
     last_usb_errors = usb_errors;
+    last_out_drops = usb_stats.receive_queue_drops;
+    last_endpoint_errors = usb_stats.endpoint_errors;
     wire::Request request{};
     size_t length = 0;
     if (!platform::ReceiveUsb(request.data(), request.size(), &length, 1)) {
