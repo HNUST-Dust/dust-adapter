@@ -2,6 +2,7 @@
 #include "peripherals.h"
 #include <cstring>
 #include <dust_adapter/can_dispatch.hpp>
+#include <dust_adapter/firmware_can_profile.hpp>
 #include <dust_adapter/usb_session.hpp>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
@@ -22,8 +23,8 @@ k_thread uplink_thread;
 atomic_t session_id{}, can_drops{}, peripheral_drops{}, reply_drops{},
     usb_send_errors{};
 wire::SessionPolicy policy;
-wire::Record stop_actions[wire::kMaxRecords]{};
-size_t stop_count = 0;
+wire::Record uart_stop_actions[wire::kMaxRecords]{};
+size_t uart_stop_count = 0;
 uint32_t capabilities = 0, rejected = 0, stop_errors = 0, session_epoch = 0;
 wire::StopReason last_stop = wire::StopReason::None;
 uint32_t NowUs() { return k_cyc_to_us_floor64(k_cycle_get_64()); }
@@ -46,23 +47,17 @@ void Close(wire::StopReason reason) {
   // Clear publication first; old peripheral records cannot cross into a new
   // session.
   atomic_clear(&session_id);
-  wire::Record can[wire::kMaxRecords]{};
-  size_t count = 0;
-  for (size_t i = 0; i < stop_count; ++i)
-    if (stop_actions[i].flags != wire::kUartAction)
-      can[count++] = stop_actions[i];
-  if (policy.Armed() || stop_count) {
-    if (platform::ReplaceCanTraffic(can, count))
-      ++stop_errors;
-    gateway::DiscardUartWrites();
-  }
-  for (size_t i = 0; i < stop_count; ++i) {
-    const auto &r = stop_actions[i];
-    if (r.flags == wire::kUartAction &&
-        gateway::SubmitUart(r.channel, r.data, r.length))
+  // Protection is MCU configuration, not disposable session/host state.
+  const auto &frames = dust::can_profile::kProtectionFrames;
+  if (platform::ReplaceCanTraffic(frames.data(), frames.size()))
+    ++stop_errors;
+  gateway::DiscardUartWrites();
+  for (size_t i = 0; i < uart_stop_count; ++i) {
+    const auto &action = uart_stop_actions[i];
+    if (gateway::SubmitUart(action.channel, action.data, action.length))
       ++stop_errors;
   }
-  stop_count = 0;
+  uart_stop_count = 0;
   policy.Close();
   last_stop = reason;
 }
@@ -122,27 +117,26 @@ void Uplink(void *, void *, void *) {
       atomic_inc(&usb_send_errors);
   }
 }
-bool Available(const wire::Record &record) {
-  return record.flags == wire::kUartAction
-             ? gateway::UartAvailable(record.channel)
-             : platform::CanAvailable(record.channel);
-}
 int ConfigureSafety(const wire::Request &request) {
-  if (!wire::ValidRecords(request, true))
-    return -EINVAL;
+  if (!dust::can_profile::AcceptsSafetyRequest(request))
+    return -EACCES;
   if (!policy.Fresh(wire::U32(request.data() + 4)))
     return -ESTALE;
-  wire::Record actions[wire::kMaxRecords]{};
+  wire::Record uart_actions[wire::kMaxRecords]{};
+  size_t uart_count = 0;
   for (unsigned i = 0; i < request[10]; ++i) {
-    actions[i] = wire::Decode(request.data() + 32 + i * 16);
-    if (!Available(actions[i]))
+    const auto action = wire::Decode(request.data() + 32 + i * 16);
+    if (action.flags != wire::kUartAction)
+      continue;
+    if (!gateway::UartAvailable(action.channel))
       return -ENODEV;
+    uart_actions[uart_count++] = action;
   }
   if (!policy.Configure(wire::U32(request.data() + 16)))
     return -EINVAL;
+  uart_stop_count = uart_count;
+  std::memcpy(uart_stop_actions, uart_actions, sizeof(uart_actions));
   policy.Observe(wire::U32(request.data() + 4));
-  stop_count = request[10];
-  std::memcpy(stop_actions, actions, sizeof(actions));
   return 0;
 }
 int Forward(const wire::Request &request) {
@@ -194,6 +188,8 @@ void Status(const wire::Request &request) {
     platform::ReadUsbSessionStats(&stats);
     wire::Put32(reply.data() + 44, stats.receive_queue_drops);
     wire::Put32(reply.data() + 48, stats.endpoint_errors);
+    wire::Put32(reply.data() + 52, dust::can_profile::kProtectionSignature);
+    wire::Put32(reply.data() + 56, dust::can_profile::kCommandTimeoutUs);
   } else if (request[10] == 1) {
     const auto stats = platform::ReadCanStats(request[11]);
     const uint32_t values[] = {
@@ -239,8 +235,10 @@ void Handle(const wire::Request &request, size_t length) {
     wire::Put32(ready.data() + 24, wire::kInBytes);
     wire::Put32(ready.data() + 28, platform::CanChannelMask());
     ready[32] = wire::kMaxRecords;
-    ready[33] =
-        wire::kMaxRecords; // max records / stop actions; not motor counts
+    ready[33] = dust::can_profile::kProtectionFrames.size();
+    ready[34] = wire::kFirmwareCanProtection;
+    wire::Put32(ready.data() + 36, dust::can_profile::kProtectionSignature);
+    wire::Put32(ready.data() + 40, dust::can_profile::kCommandTimeoutUs);
     QueueReply(ready);
     return;
   }
@@ -313,6 +311,11 @@ int main() {
   k_thread_priority_set(k_current_get(), 7);
   if (platform::InitializeCanDispatch(ReceiveCan))
     return -1;
+  if (dust::can_profile::kProtectOnBoot) {
+    const auto &frames = dust::can_profile::kProtectionFrames;
+    if (platform::ReplaceCanTraffic(frames.data(), frames.size()))
+      ++stop_errors;
+  }
   capabilities = 1 | gateway::StartPeripherals();
   if (platform::InitializeUsbSession())
     return -1;

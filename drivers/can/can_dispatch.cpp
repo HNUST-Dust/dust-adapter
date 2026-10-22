@@ -2,6 +2,7 @@
 #include <cstring>
 #include <drivers/can/hpmicro_can_batch.h>
 #include <dust_adapter/can_dispatch.hpp>
+#include <dust_adapter/firmware_can_profile.hpp>
 #include <zephyr/drivers/can.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
@@ -115,12 +116,14 @@ void Worker(void *user, void *, void *) {
   }
 }
 int Publish(const dust::wire::Record *records, size_t count, bool replace) {
-  if (count > dust::wire::kMaxRecords || (count && !records))
+  if (count > (replace ? 32U : dust::wire::kMaxRecords) || (count && !records))
     return -EINVAL;
   unsigned required[kBusCount]{};
   for (size_t i = 0; i < count; ++i) {
     if (!platform::CanAvailable(records[i].channel))
       return -ENODEV;
+    if (!dust::can_profile::AllowsTransmit(records[i]))
+      return -EACCES;
     ++required[records[i].channel];
   }
   k_mutex_lock(&admission_mutex, K_FOREVER);
@@ -159,13 +162,14 @@ int Publish(const dust::wire::Record *records, size_t count, bool replace) {
 namespace platform {
 int InitializeCanDispatch(CanReceiveCallback callback) {
   receive_callback = callback;
-  for (unsigned i = 0; i < kBusCount; ++i) {
+  for (const auto &configured : dust::can_profile::kBuses) {
+    const unsigned i = configured.channel;
     auto &bus = buses[i];
     bus.index = i;
     bus.dev = FindDevice(i);
     if (!bus.dev || !device_is_ready(bus.dev)) {
       bus.dev = nullptr;
-      continue;
+      return -ENODEV;
     }
     k_mutex_init(&bus.mutex);
     k_sem_init(&bus.wake, 0, 1);
@@ -174,18 +178,22 @@ int InitializeCanDispatch(CanReceiveCallback callback) {
     if (rc)
       return rc;
     // Board capability, not a device/motor property.
-    rc = can_set_bitrate(bus.dev, 1000000);
+    rc = can_set_bitrate(bus.dev, configured.bitrate);
     if (rc)
       return rc;
     rc = can_start(bus.dev);
     if (rc && rc != -EALREADY)
       return rc;
-    for (unsigned extended = 0; extended < 4; ++extended) {
+    for (const auto &address : dust::can_profile::kReceiveFilters) {
+      if (address.channel != i)
+        continue;
       const can_filter filter{
-          .id = 0,
-          .mask = 0,
-          .flags = uint8_t(((extended & 1) ? CAN_FILTER_IDE : 0) |
-                           ((extended & 2) ? CAN_FRAME_RTR : 0))};
+          .id = address.id,
+          .mask =
+              (address.flags & dust::wire::kExtended) ? 0x1fffffffU : 0x7ffU,
+          .flags = uint8_t(
+              ((address.flags & dust::wire::kExtended) ? CAN_FILTER_IDE : 0) |
+              ((address.flags & dust::wire::kRemote) ? CAN_FRAME_RTR : 0))};
       rc = can_add_rx_filter(bus.dev, Receive, &bus, &filter);
       if (rc < 0)
         return rc;

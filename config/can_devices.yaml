@@ -1,0 +1,41 @@
+# Compiled into the MCU; no filesystem or host upload is required.
+schema_version: 1
+command_timeout_us: 20000
+protect_on_boot: true
+can_buses:
+  - channel: 3
+    bitrate: 1000000
+    devices:
+      - name: left_wheel
+        command_id: 0x200
+        feedback_ids: [0x201]
+        protection_frame:
+          data: [0, 0, 0, 0, 0, 0, 0, 0]
+      - name: left_joint_b
+        command_id: 0x000
+        feedback_ids: [0x010]
+        protection_frame:
+          data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
+      - name: left_joint_d
+        command_id: 0x003
+        feedback_ids: [0x013]
+        protection_frame:
+          data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
+  - channel: 2
+    bitrate: 1000000
+    devices:
+      - name: right_wheel
+        command_id: 0x200
+        feedback_ids: [0x201]
+        protection_frame:
+          data: [0, 0, 0, 0, 0, 0, 0, 0]
+      - name: right_joint_b
+        command_id: 0x001
+        feedback_ids: [0x011]
+        protection_frame:
+          data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
+      - name: right_joint_d
+        command_id: 0x002
+        feedback_ids: [0x012]
+        protection_frame:
+          data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]

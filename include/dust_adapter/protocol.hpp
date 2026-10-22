@@ -13,6 +13,7 @@ constexpr size_t kRecordBytes = 16,
                  kMaxRecords = (kOutBytes - 32) / kRecordBytes;
 constexpr size_t kMaxUartWrite = kOutBytes - 32;
 constexpr uint8_t kExtended = 1, kRemote = 2, kUartAction = 4;
+constexpr uint8_t kFirmwareCanProtection = 1;
 using Packet = std::array<uint8_t, kInBytes>;
 using Request = std::array<uint8_t, kOutBytes>;
 enum class Kind : uint8_t {
@@ -116,6 +117,27 @@ inline bool ValidRecords(const Request &p, bool safety = false) {
       return false;
   return Zero(p.data() + 32 + p[10] * kRecordBytes,
               p.size() - 32 - p[10] * kRecordBytes);
+}
+// Signature covers the MCU's default lease and serialized protection actions in
+// file order. This is configuration identity, not cryptographic authentication
+// or a CAN checksum.
+inline uint32_t ProtectionSignature(uint32_t timeout_us, const Record *records,
+                                    size_t count) {
+  uint32_t crc = 0xffffffffU;
+  const auto consume = [&crc](uint8_t byte) {
+    crc ^= byte;
+    for (unsigned bit = 0; bit < 8; ++bit)
+      crc = (crc >> 1) ^ ((crc & 1U) ? 0xedb88320U : 0U);
+  };
+  for (unsigned i = 0; i < 4; ++i)
+    consume(uint8_t(timeout_us >> (8 * i)));
+  for (size_t i = 0; i < count; ++i) {
+    uint8_t encoded[16]{};
+    Encode(encoded, records[i]);
+    for (auto byte : encoded)
+      consume(byte);
+  }
+  return crc ^ 0xffffffffU;
 }
 // Session policy is hardware independent so lease/sequence behavior is testable
 // on a host.

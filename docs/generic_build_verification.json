@@ -1,12 +1,15 @@
 {
   "date": "2026-10-23",
-  "scope": "generic USB protocol v2, local compile and native contracts; no flashing or motor execution",
+  "scope": "configuration-owned CAN protection, generic USB protocol v2; compile/native tests only; no flashing or motor execution",
   "hpm_support": "335b77fb976f208ac62bba3a6db0f7b534c9028f",
   "zephyr_sdk": "0.16.5",
-  "binary_sha256": "f49cde69ae430b4adf55348997e8ce2016d65a07947a847aa83f144b15102451",
+  "binary_sha256": "b36a55befef56cf3cc4159b2bcac07c52f587c5ce6825775409b8cffa29f02a5",
   "config_sha256": "357d3d207e96daedc34e9b98816acbdd2c62a03b9b1b9dd2ec7cf26b0b15aad9",
-  "rom_bytes": 86804,
+  "rom_bytes": 87484,
   "ram_bytes": 110668,
   "host_regressions": "8/8 in Orb Ubuntu ~/dust-control build/generic-adapter",
-  "hardware_acceptance": "pending; see GENERIC_USB_MIGRATION.md"
+  "hardware_acceptance": "pending; see GENERIC_USB_MIGRATION.md",
+  "can_profile_sha256": "768bac86a801e241bbb23e605223a9e06415f12ce73552ecd971b299ff56744c",
+  "profile_contracts": "11 Python generator cases plus sanitized C++ wire/session and firmware profile contracts passed",
+  "large_profile": "32 protection frames compiled successfully"
 }

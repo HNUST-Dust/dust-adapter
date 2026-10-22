@@ -28,6 +28,11 @@ inline wire::Request SafetyConfiguration(uint32_t sequence, uint32_t session,
     throw std::invalid_argument("Invalid stop action");
   return request;
 }
+// Selects the MCU's compiled protection table; zero count does not disable it.
+inline wire::Request SelectFirmwareSafety(uint32_t sequence, uint32_t session,
+                                          uint32_t lease_us) {
+  return SafetyConfiguration(sequence, session, lease_us, nullptr, 0);
+}
 inline wire::Request CanTransmit(uint32_t sequence, uint32_t session,
                                  const wire::Record *records, size_t count) {
   if (count > wire::kMaxRecords || (count && !records))

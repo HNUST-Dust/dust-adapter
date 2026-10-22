@@ -30,3 +30,7 @@ west.yml 固定到 a31c06940e8d11ee360b970c89523a7727b63fff；删除补丁与 CI
 2026-10-23：通用协议 v2 在 feature/generic-usb-adapter 独立开发，移除机器人消息、
 参数生成、电机地址和周期槽位；UART 参数仍固定。v0.1/main 保留旧协议以供回退。
 配套 dust-control 同名分支；详见 GENERIC_USB_MIGRATION.md。
+
+2026-10-23 后续：按维护者要求引入 config/can_devices.yaml，构建时生成设备地址、
+接收过滤器和默认 CAN 保护表；上位机不得清除或覆盖 CAN 基线。UART 参数仍固定，
+电机协议解析和控制算法仍在 NUC。历史“完全原始全接收/主机上传保护”描述由此策略替代。

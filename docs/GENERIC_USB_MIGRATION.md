@@ -1,16 +1,18 @@
 # v1 robot gateway → v2 generic adapter
 
-The firmware no longer contains six-motor configuration, actuator slot names,
-feedback-ID routing, DM Exit constants, MIT encoding, W/B/D scheduling or robot
-message/parameter generation. UART settings remain fixed to the board's current
+The driver no longer contains actuator slot names, MIT encoding or robot control
+logic. Device IDs, feedback filters and protection frames are now compiled from
+config/can_devices.yaml; the default profile retains the current six devices.
+W/B/D protection order is YAML order, not embedded driver logic. UART settings remain fixed to the board's current
 100000 8E2 / 921600 8N1 / 115200 8N1 configuration.
 
 The paired host is Orb Ubuntu `~/dust-control`, branch `feature/generic-usb-adapter`.
-Its device application owns motor mapping, per-cycle deduplication, W/B/D record
-ordering, sensor parsing and six raw stop actions (wheel zero current, joint Exit).
+Its device application owns motor mapping, per-cycle deduplication, W/B/D command
+ordering and sensor parsing. It verifies the MCU's protection signature against its
+expected wheel-zero/joint-Exit frames and selects the firmware baseline.
 The existing remote/IMU freshness and explicit output-enable policy remains there.
-Open posts four IN transfers before Hello, then verifies Ready, configures a20ms
-lease with the robot's stop actions, waits for Result, explicitly arms and waits
+Open posts four IN transfers before Hello, then verifies Ready, selects a lease of at most20ms
+without uploading/replacing the MCU protection baseline, waits for Result, explicitly arms and waits
 for Result before returning to the control loop. Arming the adapter is permission
 to forward bytes, not an instruction to enable a motor.
 
@@ -30,8 +32,9 @@ Both feature branches must be reviewed and commissioned as a pair before promoti
 
 1. Use a stop-only host with matching firmware first; verify fixed UART stream
    continuity, timestamps, CAN ID forwarding and host sensor decoding.
-2. Exercise non-motor CAN IDs, extended/RTR frames on a simulator/bench peer;
-   check FIFO order, overflow counters, and whole-packet rejection.
+2. Exercise declared/nondeclared IDs on a bench peer; check exact RX filters, TX
+   rejection, FIFO order and overflow. Extended/RTR tests need those formats explicitly
+   declared in a dedicated profile. Nondeclared IDs must not reach the bus/host.
 3. Verify continuous UART TX with a loopback/peer, especially across DMA boundaries;
    verify UART10 TX pin availability before relying on it.
 4. Configure known stop-only actions; terminate/freeze the host and disconnect USB
@@ -43,3 +46,8 @@ Both feature branches must be reviewed and commissioned as a pair before promoti
    chassis tests with the operator's explicit enable-output flag.
 
 No test/build script flashes hardware, enables an actuator or starts a real run.
+
+Configuration and persistent protection details: config/README.md. Verify boot
+protection and host-profile mismatch refusal as well as disconnect behavior. The
+native suite tests generation errors and rejection of host attempts to weaken the
+baseline; the real CAN delivery/stop behavior remains a hardware acceptance item.

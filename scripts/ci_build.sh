@@ -14,5 +14,5 @@ cp "$root/build/usb_gateway/zephyr/zephyr.elf" "$root/dist/dust-adapter-usb.elf"
 cp "$root/build/usb_gateway/zephyr/.config" "$root/dist/build.config"
 west manifest --freeze > "$root/dist/west-frozen.yml"
 git -C "$root" rev-parse HEAD > "$root/dist/COMMIT"
-cp "$root/LICENSE" "$root/NOTICE" "$root/dist/"
-(cd "$root/dist" && sha256sum dust-adapter-usb.bin dust-adapter-usb.elf build.config west-frozen.yml COMMIT LICENSE NOTICE > SHA256SUMS)
+cp "$root/LICENSE" "$root/NOTICE" "$root/config/can_devices.yaml" "$root/dist/"
+(cd "$root/dist" && sha256sum dust-adapter-usb.bin dust-adapter-usb.elf build.config west-frozen.yml COMMIT LICENSE NOTICE can_devices.yaml > SHA256SUMS)

@@ -14,11 +14,20 @@ add_custom_command(OUTPUT ${generated}/msg/messages_generated.cpp ${message_head
  --output-dir ${generated}/msg --source-output ${generated}/msg/messages_generated.cpp ${message_inputs}
  DEPENDS ${DUST_ADAPTER_ROOT}/tools/generate_messages.py ${message_inputs}
  VERBATIM)
+set(DUST_ADAPTER_CAN_CONFIG "${DUST_ADAPTER_ROOT}/config/can_devices.yaml" CACHE FILEPATH "MCU CAN device/protection configuration")
+add_custom_command(OUTPUT ${generated}/can_profile_generated.hpp
+ COMMAND ${PYTHON_EXECUTABLE} ${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py
+ --input ${DUST_ADAPTER_CAN_CONFIG}
+ --output ${generated}/can_profile_generated.hpp
+ DEPENDS ${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py
+ ${DUST_ADAPTER_CAN_CONFIG}
+ VERBATIM)
 target_sources(app PRIVATE src/main.cpp src/peripherals.cpp
  ${DUST_ADAPTER_ROOT}/drivers/can/can_dispatch.cpp
  ${DUST_ADAPTER_ROOT}/drivers/usb/usb_session.cpp
  ${DUST_ADAPTER_ROOT}/drivers/imu/onboard_imu.cpp
- ${generated}/msg/messages_generated.cpp ${message_headers})
+ ${generated}/msg/messages_generated.cpp ${message_headers}
+ ${generated}/can_profile_generated.hpp)
 target_sources_ifdef(CONFIG_WBR_UART10_LINE_IDLE app PRIVATE src/uart10_line_idle.cpp)
 target_include_directories(app PRIVATE ${DUST_ADAPTER_ROOT}/include ${generated})
 target_compile_definitions(app PRIVATE WBR_USB_RAW_OUT_BYTES=128)

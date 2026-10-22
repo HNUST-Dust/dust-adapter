@@ -14,6 +14,7 @@ struct CanStats {
 int InitializeCanDispatch(CanReceiveCallback callback);
 uint32_t CanChannelMask();
 bool CanAvailable(uint8_t bus);
+// Transmit IDs/flags and RX filters come from config/can_devices.yaml.
 // Whole packet admission is checked before publishing. FIFO; no ID-based
 // overwrite.
 int SubmitCanRecords(const dust::wire::Record *records, size_t count);

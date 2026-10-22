@@ -32,7 +32,9 @@ not have semantic value. Channel existence is checked against Ready's CAN mask.
 Transmit (kind 3): count at byte10, byte11 zero, bytes16–31 zero, 0–6 records
 starting at32. All trailing bytes are zero. Empty Transmit is a heartbeat.
 The entire request is validated before admission. Per-bus queues are bounded FIFO;
-there is no latest-value overwrite, address whitelist or motor slot. Same-bus FIFO
+there is no latest-value overwrite or motor slot. Transmit address/format/RTR must
+match the MCU configuration; all records are checked before publication. Receive
+filters are exact matches from the same configuration. Same-bus FIFO
 order is retained by software; hardware scheduling/arbitration remains applicable.
 Queue overflow rejects admission and closes an armed session, replacing queued
 business traffic with configured stop actions. Across buses, publication is not
@@ -67,11 +69,16 @@ is intentionally retained. No attitude estimator or robot frame transform runs h
   applying its configured stop behavior. Begins reception, not output.
 - Ready (kind2): capabilities at16 (CAN=1/UART10=2/UART2=4/IMU=8/UART3=16),
   OUT size128 at20, IN size64 at24, CAN availability mask at28,
-  max TX records6 at32 and max stop actions6 at33.
-- ConfigureSafety (kind8): only while disarmed; lease_us u32 at16, range1000–1000000;
-  count at10 and raw action records at32. Flags4 selects UART action (port1–3,
-  ID0, length1–8). CAN actions use ordinary CAN flags. The config must be acknowledged
-  before Arm. Up to6 actions; this limit derives from USB transfer size, not motor count.
+  max TX records6 at32, compiled CAN protection count at33, firmware-protection
+  capability bit0 at34, protection signature u32 at36 and maximum lease u32 at40.
+  The compiled table can exceed the USB six-record limit; count0 selects it.
+- ConfigureSafety (kind8): only while disarmed; lease_us u32 at16, range1000 to the
+  MCU-configured maximum. Count0 selects the MCU's default CAN protection table.
+  It never clears protection. A nonempty CAN list must confirm the entire default
+  table in order, without changing bytes/addresses/flags. Flags4 UART actions may
+  supplement the table (port1–3, ID0, length1–8), subject to transfer capacity.
+  Startup, disconnect and lease protection use the compiled CAN table independently
+  of host registration. The config must be acknowledged before Arm.
 - Arm (kind9): zero payload. Starts lease immediately; successful data/Heartbeat
   renew it only with a strictly newer sequence. Expired leases cannot be revived.
 - Heartbeat (kind10): zero payload, no ACK. Does not enable an unarmed session.
@@ -86,6 +93,7 @@ is intentionally retained. No attitude estimator or robot frame transform runs h
 Status page0: armed16/configured17/last stop reason18; u32 counters at20 onwards:
 rejected requests, CAN uplink drops, peripheral uplink drops, stop enqueue failures,
 reply drops, USB send failures, USB OUT queue drops, endpoint errors.
+Protection signature is at52 and maximum lease at56.
 Detected OUT queue loss or endpoint errors close an armed session; invalid traffic
 cannot renew the lease.
 Page1 CAN: u32 at16 onwards: received frames, submitted frames, completed batches,
