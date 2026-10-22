@@ -1,0 +1,27 @@
+name: EtherCAT source checks
+on:
+  push:
+    branches: [ethercat]
+  pull_request:
+    branches: [ethercat]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check scripts and ESI
+        run: |
+          bash -n scripts/build.sh
+          python -m py_compile tools/import_ssc.py
+          python -c "import xml.etree.ElementTree as ET; ET.parse('apps/ethercat_slave/esi/DUST_HPM5E_FreeRun.xml')"
+          git diff --check
+      - name: Explain licensed build requirement
+        run: |
+          echo 'Public CI validates sources and ESI only; it does not compile the slave firmware.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Full builds require locally licensed configured SSC 5.13 sources; see docs/ethercat.md.' >> "$GITHUB_STEP_SUMMARY"
