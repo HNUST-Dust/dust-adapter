@@ -1,6 +1,11 @@
 # dust-adapter / dust-control 重构交接
 
-更新日期：2026-10-23。本文供下一位 agent 直接接手。当前是成对重构的功能分支，尚未完成新版本硬件验收，不能当作已部署正式版。
+更新日期：2026-10-23（晚）。本文供下一位 agent 直接接手。当前是成对重构的功能分支，尚未完成新版本硬件验收，不能当作已部署正式版。
+
+截至本文更新，MCU 代码提交（不含紧随其后的文档提交）为 `671add2`
+（`feature/generic-usb-adapter`），依赖 `hpm_support` 固定到 `d85eefb`；两仓库
+均已推送，MCU CI 通过。看最新 HEAD 请直接 `git log`。详见 §7 和文末
+「当前状态与提交」。
 
 ## 1. 用户目标和已确认约束
 
@@ -22,25 +27,30 @@
 | MCU west 工作区 | `/Users/panpoming/Documents/zephyr_projects/dust-adapter-ws` |
 | MCU Git 仓库 | 上述目录的 `dust-adapter/`，不是工作区根目录 |
 | MCU remote | https://github.com/HNUST-Dust/dust-adapter.git |
-| MCU 当前分支 | `feature/generic-usb-adapter`，代码 HEAD `a685ebe` |
+| MCU 当前分支 | `feature/generic-usb-adapter`，代码 HEAD `671add2`（文档更新前；最新以 `git log` 为准） |
 | MCU 草稿 PR | https://github.com/HNUST-Dust/dust-adapter/pull/4 |
 | 上位机 Orb Ubuntu 路径 | `/home/panpoming/dust-control`，即 `~/dust-control` |
 | 上位机 Mac 挂载路径 | `/Users/panpoming/OrbStack/ubuntu/home/panpoming/dust-control` |
 | 上位机 remote | https://github.com/HNUST-Dust/dust-control.git |
 | 上位机当前分支 | `feature/generic-usb-adapter`，代码 HEAD `c540a55` |
 | 上位机草稿 PR | https://github.com/HNUST-Dust/dust-control/pull/4 |
+| MCU 依赖 hpm_support | `main` HEAD `d85eefb`，已包含 UART/CAN/PLIC 修复与 UART10 板级空闲检测 |
 
 两个功能分支都已经推送；不要未经验收直接合入正式分支。
 
-**工作区纠正记录：**前一位 agent 曾误在旧目录 `/Users/panpoming/Documents/zephyr_projects/wbr_control_ws/dust-adapter` 开发和构建。代码已推送，正确工作区的仓库现已切到同一功能分支和 `a685ebe`。之后只能以 `dust-adapter-ws/dust-adapter` 为 MCU 主工作目录。旧目录和 `/tmp` 构建目录仅供追溯，不能继续当主工程。
+**工作区纠正记录：**前一位 agent 曾误在旧目录 `/Users/panpoming/Documents/zephyr_projects/wbr_control_ws/dust-adapter` 开发和构建。代码已推送，正确工作区的仓库现已切到同一功能分支和 `671add2`。之后只能以 `dust-adapter-ws/dust-adapter` 为 MCU 主工作目录。旧目录、旧构建缓存（`build/usb_gateway`、`build/native-uart`）和 `/tmp` 目录仅供追溯，不能继续当主工程。
 
 不要误改旧的 Orb `~/wbr_control_companion`；那是另一份旧工程，可能有其他 agent 的改动。NUC 历史目录是 `~/wbr_realtime_lab/src/wbr_control_companion`，不能未经核对将其视为已迁移的 dust-control。
 
-## 3. 第一件事：校准新工作区依赖
+## 3. 依赖状态与校准命令（已完成）
 
 正确工作区的 `hpm_support` 已同步到 `west.yml` 固定的
 `d85eefba7aacdae79c9beaaf7a4378f8cd5f9572`，工作区干净。该提交同时把此前只在
-fix 分支上的 UART/CAN/PLIC 修复带入 `main`（`main` 已快进到该提交）。
+fix 分支上的 UART/CAN/PLIC 修复带入 `main`：`main` 已从 `74b6678` 快进到
+`d85eefb`，本地与远程一致。`west update` 会把依赖置于 detached HEAD，需要时用
+`git -C hpm_support checkout main` 回到分支；不要 reset/clean 掉本地改动。
+
+换新工作区或新机器时按下面顺序校准：
 
 ```bash
 cd ~/Documents/zephyr_projects/dust-adapter-ws
@@ -49,7 +59,7 @@ west update
 west list
 cd dust-adapter
 bash scripts/test_protocol.sh
-bash scripts/build.sh usb
+bash scripts/build.sh          # 旧调用 `build.sh usb` 仍兼容
 ```
 
 若只更新 HPM 依赖可用 `west update hpm_support`，但仍需检查其他依赖是否与清单一致。先保留任何已有本地改动，不要 reset/clean 覆盖。
@@ -139,7 +149,7 @@ MCU 入口：
 
 - UART10/SBUS：100000 8E2；UART2/HI91：921600 8N1；UART3：115200 8N1，参数固定。
 - UART10 原先积攒到 128 字节，造成约 84 ms 更新间隔。DMA 清除 FIFO timeout 条件，单独启用 PLIC 或调整 FIFO 阈值不能可靠修复。
-- 已利用板上反相 RX 同接 PC04/UART10 和 PB13/TRGM1_P03，经 TRGM1→GPTMR2 检测 1000 µs 无边沿，发布 DMA 已到达的部分区间。
+- 已利用板上反相 RX 同接 PC04/UART10 和 PB13/TRGM1_P03，经 TRGM1→GPTMR2 检测 1000 µs 无边沿，发布 DMA 已到达的部分区间。检测器实现现位于 `hpm_support` 的 `drivers/serial/uart_hpmicro_line_idle.c`，由 `CONFIG_UART_HPMICRO_RX_LINE_IDLE`（dust-hpm6750 默认 y）启用，DT 节点 `uart10_idle_timer` 在板级 DTS；应用只调用 `uart_hpm_rx_line_idle_prepare()/start()`。不要把这些板级/驱动代码再搬回 `dust-adapter/src/board`。
 - 保留 128 字节异步双缓冲、非缓存内存、offset/generation 边界约束；DMA 满仍负责切换。
 - SBUS 实际更新约 14 ms，1000 µs 空闲门限不等于遥控 1 kHz。
 - HI91 的长尾主要曾由 IN 预提交晚于 Hello 引起；必须保留先 prepost 再 Hello。
@@ -150,16 +160,18 @@ MCU 入口：
 
 当前提交的 GitHub CI 都通过：
 
-- MCU https://github.com/HNUST-Dust/dust-adapter/actions/runs/39830159867
-- 主机 https://github.com/HNUST-Dust/dust-control/actions/runs/39830161233
+- MCU（最新，`671add2`）：https://github.com/HNUST-Dust/dust-adapter/actions/runs/39960902468
+- MCU（同一提交的 PR 触发）：https://github.com/HNUST-Dust/dust-adapter/actions/runs/39960913389
+- MCU（历史 `a685ebe`）：https://github.com/HNUST-Dust/dust-adapter/actions/runs/39830159867
+- 主机（`c540a55`）：https://github.com/HNUST-Dust/dust-control/actions/runs/39830161233
 
-本机离线验证：
+本机离线验证（2026-10-23 晚，正确工作区）：
 
-- MCU dust-hpm6750 固件成功构建，ROM 87484 B、RAM 110668 B；详细哈希见 `docs/generic_build_verification.json`。
-- 11 个 Python 配置生成测试通过；带 ASan/UBSan 的协议/会话与保护策略 C++ 合约测试通过。
-- 单独 32 保护帧配置构建成功。
-- Orb 主机 `build/generic-adapter` 8/8 CTest 通过，包括握手/拒绝/不匹配配置/重连及原有逻辑回归。
-- 这些 MCU 本机构建在旧目录/临时目录完成，**正确 dust-adapter-ws 尚未重新构建**。
+- 依赖 `hpm_support` `d85eefb`；`scripts/test_protocol.sh` 的 11 个 Python 配置生成测试和两组带 ASan/UBSan 的 C++ 合约测试通过。
+- dust-hpm6750 固件干净重建成功（`scripts/build.sh -p always`）：ROM 86612 B、RAM 107672 B；`uart_hpm_rx_line_idle_*` 与 `line_idle_isr` 已链接。
+- 另以 `CONFIG_UART_HPMICRO_RX_LINE_IDLE=n` 构建验证无检测器路径：ROM 85460 B，检测器代码未链接，stub 返回 0。
+- 旧记录中的 87484/110668 B 来自旧目录/临时目录构建，仅作历史参考；`docs/generic_build_verification.json` 也是旧数据。
+- Orb 主机 `build/generic-adapter` 8/8 CTest 通过（`c540a55`，本轮未改主机）。
 - 当前通用 v2 功能分支未刷板、未做硬件连机/延迟/停机验证。
 
 主机离线验证命令（Orb Ubuntu）：
@@ -178,8 +190,8 @@ Mac 可用 `/usr/local/bin/orb -m ubuntu ...` 在虚拟机执行命令。不要�
 
 ## 8. 下一步推荐顺序
 
-1. 在正确工作区核对分支和未提交改动，同步 manifest 依赖，重做固件构建/native 测试。
-2. 审查两个草稿 PR 的协议边界、并发/生命周期、保护路径、实时循环分配/阻塞和代码可读性；优先修正确性问题，避免边改边测、无法归因。
+1. ~~在正确工作区核对分支和未提交改动，同步 manifest 依赖，重做固件构建/native 测试。~~ 已完成（2026-10-23 晚，见 §3、§7）。
+2. 审查两个草稿 PR 的协议边界、并发/生命周期、保护路径、实时循环分配/阻塞和代码可读性；优先修正确性问题，避免边改边测、无法归因。MCU 侧本轮为根目录重构 + UART 统一 + 板级检测器下沉，建议按提交逐个 review。
 3. 配对硬件验收先用停止态：UART/SBUS/HI91/IMU 流完整性、六路 CAN 映射和时间戳；不要使用旧 v1 主机。
 4. 用台架 CAN 对端测试声明/未声明 ID、IDE/RTR、FIFO、溢出；UART TX 做跨 DMA 边界连续流/回环，尤其核对 UART10 TX 引脚条件。
 5. MCU 独立供电，做主机退出/kill/freeze、USB 断开、会话替换、超时保护、配置不匹配拒绝、启动保护测试。分别确认软件提交、CAN 实际 TX 完成与设备停机。
@@ -194,35 +206,32 @@ Mac 可用 `/usr/local/bin/orb -m ubuntu ...` 在虚拟机执行命令。不要�
 - 读每个仓库适用的 AGENTS.md 后再修改；尊重其他 agent 的现有未提交改动。
 - 新增有价值的合约/验收即可，不恢复已撤掉的大量一次性压测和诊断产品代码。
 - 当前依赖修复是正式 hpm_support 提交，不要恢复手工 patch 工作流。
-- 本文两仓库各放一份 `docs/REFACTOR_HANDOFF_2026-10-23.md`；后续若只维护一份，请明确另一份的指向。
+- UART10 空闲检测属于板级/驱动代码，归 hpm_support；应用侧只保留 `src/peripherals.cpp` 的调用，不要再引入 `src/board/`。
+- hpm_support 的改动会影响所有 pin 该提交的工程，修改 `include/drivers/uart_hpmicro.h` 或 UART Kconfig 后要同步更新 `west.yml` 并重跑 MCU 构建。
+- 本文 MCU 侧为跟踪版本；上位机 `docs/REFACTOR_HANDOFF_2026-10-23.md` 目前仍是旧副本（未跟踪），如需以 MCU 侧为准，请删除或替换上位机副本。
 
-## UART 统一接收更新（2026-10-23）
+## 当前状态与提交（2026-10-23 晚）
 
-三路 UART 已统一异步 DMA 128 字节双缓冲；UART2 循环 DMA、16 字节保护区
-和轮询线程已移除。所有 RX 缓冲使用非缓存存储。UART10 已验证过的
-TRGM1/GPTMR2 路径保留，现已下沉到 hpm_support 的 UART 驱动
-（`drivers/serial/uart_hpmicro_line_idle.c`，开关
-`CONFIG_UART_HPMICRO_RX_LINE_IDLE`，DT 节点 `uart10_idle_timer` 在
-dust-hpm6750 板级 DTS 中）；其他板卡使用驱动默认空实现。板级 overlay 已迁入
-boards/，旧构建缓存需 pristine。UART2/3 当前使用驱动原生超时，不能将
-1000 us API 参数视为实际部分缓冲发布时限。本次改动尚未做硬件验收，原循环
-DMA 的验收结论不适用。
+MCU 仓库 `feature/generic-usb-adapter` 依次包含：
 
-## 2026-10-23 晚补记：正确工作区重建与提交
+1. `5b22c9f` `refactor!: rebuild the firmware as a root Zephyr application`
+   —— 应用迁到仓库根目录，源码收拢到 `src/`/`src/drivers/`，移除 message
+   生成器和旧 `apps/`、`drivers/`、`host/`、`include/dust_adapter/` 目录，
+   应用 `.clang-format`；此提交保留旧 UART 行为。
+2. `a7a8a3c` `feat(uart): unify all RX ports on asynchronous DMA double buffering`
+   —— 三路 UART 统一异步 128 字节双缓冲/非缓存内存，移除 UART2 循环 DMA、
+   轮询线程和 16 字节保护区；UART2/3 仍用驱动原生超时。
+3. `b5faffc` `docs: describe the root application layout and add the refactor handoff`
+   —— README/协议文档、迁移来源说明和本文。
+4. `671add2` `refactor(uart): consume UART line-idle detection from hpm_support`
+   —— 删除 `src/board/` 与 `CONFIG_WBR_UART10_LINE_IDLE`，改用 hpm_support 的
+   `uart_hpm_rx_line_idle_prepare()/start()`；`west.yml` 固定 `hpm_support`
+   `d85eefb`（该提交同时进入 hpm_support `main`，并 fast-forward 带入此前
+   UART/CAN/PLIC 修复）。
 
-- 已在正确工作区把 `hpm_support` 从 `a31c069` 更新到 `335b77f`，随后又更新到
-  `d85eefb`，各依赖与 `west.yml` 一致，工作区无未提交改动。
-- 在该工作区执行 `scripts/test_protocol.sh`：11 个配置生成测试和两组带
-  ASan/UBSan 的 C++ 合约测试通过；`scripts/build.sh` 成功构建 dust-hpm6750
-  固件，ROM 86612 B、RAM 107672 B。§7 记录的 87484/110668 B 来自旧目录构建，
-  不作为本工作区的度量。
-- 根目录重构（含移除 message 生成器、代码格式化）与 UART 统一异步 DMA 接收
-  已作为两个独立提交落库，提交信息分别为 `refactor!: rebuild the firmware as
-  a root Zephyr application` 和 `feat(uart): unify all RX ports on asynchronous
-  DMA double buffering`。本文 §2 的 HEAD 和 §7 的“尚未重新构建”是撰写时状态。
-- UART10 的 TRGM1/GPTMR2 空闲检测已从应用 `src/board/` 下沉到 hpm_support
-  UART 驱动：应用只调用 `uart_hpm_rx_line_idle_prepare()` /
-  `uart_hpm_rx_line_idle_start()`，板级 DTS 提供 `uart10_idle_timer`，配置项为
-  `CONFIG_UART_HPMICRO_RX_LINE_IDLE`（dust-hpm6750 默认 y）。hpm_support
-  `main` 和 `west.yml` 均固定到 `d85eefb`。
-- 本次仍未刷板、未使能电机、未做硬件连机/延迟/停机验收；§8 的验收顺序不变。
+提交 `5b22c9f` 用旧 UART 实现单独构建通过（ROM 87456 B / RAM 110672 B），
+`a7a8a3c` 和 `671add2` 也分别构建通过；当前 HEAD 的构建结果为
+ROM 86612 B / RAM 107672 B。以上均非硬件验收。
+
+后续如需继续拆分提交，保持「结构迁移 / 行为变更 / 文档」分开，避免一个提交
+同时改变 wire 协议、控制算法和目录结构而无法归因。
