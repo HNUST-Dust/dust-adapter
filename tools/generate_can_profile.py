@@ -143,7 +143,7 @@ def header(profile):
 // Generated from config/can_devices.yaml; do not edit.
 #pragma once
 #include <array>
-#include <dust_adapter/protocol.hpp>
+#include "protocol.hpp"
 namespace dust::can_profile {
 struct Bus { uint8_t channel; uint32_t bitrate; };
 struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
