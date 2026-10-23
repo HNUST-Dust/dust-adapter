@@ -1,4 +1,4 @@
-# dust-adapter — generic USB adapter (protocol v2)
+# dust-adapter — generic USB adapter (protocol v4)
 
 `feature/generic-usb-adapter` implements the generic adapter. The released `v0.1`
 uses the older robot-specific v1 protocol. **The two protocols are not compatible.**
@@ -35,7 +35,9 @@ The repository root is the single Zephyr application: `CMakeLists.txt`,
 are in `src/drivers/`; protocol and packet builders are in `src/`. USB receive frames
 and their bounded queue are defined directly inside the USB driver; no message
 schema or message-header generator is required. Build output defaults
-to `build/firmware`; do not reuse caches configured with the former app path.
+to `build`; do not reuse caches configured with the former app path.
+The project `.clangd` reads `build/compile_commands.json`. Its C++ system include
+paths match the local Zephyr SDK 0.16.5 installation; update them when moving the SDK.
 
 ## Board interfaces
 
@@ -86,8 +88,8 @@ Frames already in CAN hardware cannot be recalled; bus faults can prevent protec
 delivery. These actions do not prove physical shutdown. See [configuration reference](config/README.md).
 
 See [wire protocol](docs/usb.md), [migration and commissioning](docs/GENERIC_USB_MIGRATION.md).
-Packet builders are in `src/client.hpp`, and the canonical
-wire header is `src/protocol.hpp`.
+Message structures are defined in `src/usb_protocol.hpp`; use the explicit
+`Encode()` / `Decode()` interfaces implemented in `src/usb_protocol_codec.hpp`.
 
 ## Verification and CI
 
