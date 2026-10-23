@@ -29,6 +29,13 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(profile['stops'][1][4], [255]*7+[253])
         self.assertEqual(profile['signature'], 0x9fb5fef5)
 
+    def test_idle_buses_do_not_widen_permissions(self):
+        profile = generator.compile_profile(self.config)
+        self.assertEqual({bus[0] for bus in profile['buses']}, {0, 1, 2, 3})
+        self.assertTrue(all(item[0] in (2, 3) for item in profile['filters']))
+        self.assertTrue(all(item[0] in (2, 3) for item in profile['addresses']))
+        self.assertTrue(all(item[0] in (2, 3) for item in profile['stops']))
+
     def test_duplicate_channels(self):
         self.config['can_buses'][1]['channel'] = 3
         with self.assertRaises(ValueError): generator.compile_profile(self.config)

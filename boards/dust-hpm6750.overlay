@@ -1,1 +1,47 @@
 &cherryusb_usb0 { status = "okay"; };
+
+/ {
+    aliases {
+        dust-uart-1 = &uart10;
+        dust-uart-2 = &uart2;
+        dust-uart-3 = &uart3;
+        dust-uart-4 = &uart11;
+        dust-uart-5 = &uart12;
+        dust-uart-6 = &uart15;
+        dust-can-0 = &can0;
+        dust-can-1 = &can1;
+        dust-can-2 = &can2;
+        dust-can-3 = &can3;
+        dust-usb = &cherryusb_usb0;
+    };
+};
+
+&uart11 {
+    dmas = <&xdma 4 30>, <&xdma 5 31>;
+    dma-names = "rx", "tx";
+};
+&uart15 {
+    dmas = <&xdma 6 38>, <&xdma 7 39>;
+    dma-names = "rx", "tx";
+};
+/ {
+    aliases { dust-buzzer = &dust_buzzer; };
+    dust_outputs {
+        compatible = "pwm-leds";
+        dust_buzzer: buzzer { pwms = <&pwm0 6 PWM_HZ(2000) PWM_POLARITY_NORMAL>; };
+    };
+};
+
+&pinctrl {
+    dust_led_pins: dust_led_pins {
+        group0 {
+            pinmux = <HPMICRO_PINMUX(HPMICRO_PIN(HPMICRO_PORTC, 12), IOC_TYPE_IOC, 0, 0)>,
+                     <HPMICRO_PINMUX(HPMICRO_PIN(HPMICRO_PORTC, 13), IOC_TYPE_IOC, 0, 0)>,
+                     <HPMICRO_PINMUX(HPMICRO_PIN(HPMICRO_PORTC, 16), IOC_TYPE_IOC, 0, 0)>;
+        };
+    };
+};
+&gpioc {
+    pinctrl-0 = <&dust_led_pins>;
+    pinctrl-names = "default";
+};

@@ -82,3 +82,5 @@ Protection is an attempted transmission, not proof of delivery or physical stopp
 Already in-flight CAN frames cannot be recalled. Physical bus/electrical faults can
 prevent delivery. Repeating protection indefinitely is not implemented: one set is
 submitted on each trigger (and on startup when enabled).
+
+空闲总线可声明 `devices: []`：初始化总线，但不添加发送白名单、接收转发过滤器或保护帧。

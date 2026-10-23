@@ -67,8 +67,8 @@ def compile_profile(source):
         bitrate = integer(bus.get('bitrate'), 10000, 1000000, 'bitrate')
         buses.append((channel, bitrate))
         devices = bus.get('devices')
-        if not isinstance(devices, list) or not devices:
-            raise ValueError('each bus must declare devices')
+        if not isinstance(devices, list):
+            raise ValueError('each bus must declare a devices list')
         for dev in devices:
             keys(dev, ('name', 'frame_format', 'command_id', 'command_remote',
                        'feedback_ids', 'feedback_remote', 'protection_frame'), 'device')
@@ -143,7 +143,7 @@ def header(profile):
 // Generated from config/can_devices.yaml; do not edit.
 #pragma once
 #include <array>
-#include "protocol.hpp"
+#include "usb_protocol.hpp"
 namespace dust::can_profile {
 struct Bus { uint8_t channel; uint32_t bitrate; };
 struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
@@ -154,7 +154,7 @@ struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
     result += array('kBuses', 'Bus', [f'{{{ch}, {rate}U}}' for ch, rate in profile['buses']])
     for name, key in [('kReceiveFilters', 'filters'), ('kTransmitAddresses', 'addresses')]:
         result += array(name, 'Address', [f'{{{ch}, 0x{can_id:x}U, {flags}}}' for ch, can_id, flags in profile[key]])
-    result += array('kProtectionFrames', 'wire::Record', [
+    result += array('kProtectionFrames', 'wire::CanFrame', [
         f'{{{ch}, {length}, {flags}, 0x{can_id:x}U, {{{", ".join(hex(v) for v in data)}}}}}'
         for ch, length, flags, can_id, data in profile['stops']])
     return result + '} // namespace dust::can_profile\n'

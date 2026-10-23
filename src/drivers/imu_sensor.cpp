@@ -1,12 +1,11 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /**
- * @file onboard_imu.cpp
- * @brief Implements onboard IMU initialization, INT1 handling, and asynchronous
- * SPI acquisition.
+ * @file imu_sensor.cpp
+ * @brief 实现板载 IMU 初始化、INT1 处理和异步 SPI 采集。
  */
 
-#include "drivers/onboard_imu.hpp"
+#include "drivers/imu_sensor.hpp"
 
 #include <errno.h>
 #include <string.h>
@@ -16,8 +15,7 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/timing/timing.h>
 
-#if defined(CONFIG_WBR_CONTROL_MODULE_AHRS) || \
-    defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
 
 #define ONBOARD_IMU_SPI_NODE DT_CHOSEN(wbr_control_onboard_imu_spi)
 #define ONBOARD_IMU_CS_NODE DT_ALIAS(onboard_imu_cs)
@@ -59,13 +57,17 @@ constexpr size_t kBurstPayloadSize = 24U;
 constexpr size_t kBurstTransferSize = kBurstPayloadSize + 1U;
 constexpr uint32_t kTransferTimeoutUs = 1500U;
 
-uint8_t __nocache __aligned(64) g_onboard_imu_tx[kBurstTransferSize];
-uint8_t __nocache __aligned(64) g_onboard_imu_rx[kBurstTransferSize];
-uint8_t __nocache __aligned(64) g_onboard_imu_control_tx[2];
-uint8_t __nocache __aligned(64) g_onboard_imu_control_rx[2];
+uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+    g_onboard_imu_tx[kBurstTransferSize];
+uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+    g_onboard_imu_rx[kBurstTransferSize];
+uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+    g_onboard_imu_control_tx[2];
+uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+    g_onboard_imu_control_rx[2];
 
 /**
- * @brief Decode two readable sensor bytes as a signed big-endian value.
+ * @brief 将两个可读传感器字节解码为大端有符号值。
  */
 int16_t DecodeBigEndian(const uint8_t* bytes) {
     return static_cast<int16_t>((static_cast<uint16_t>(bytes[0]) << 8U) |
@@ -103,10 +105,9 @@ const struct spi_config g_onboard_imu_spi_config = {
 namespace modules {
 
 /**
- * @brief Initialize sensor registers, SPI and DRDY state; return zero or
- * negative errno.
+ * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
  */
-int OnboardImu::Init() {
+int ImuSensor::Init() {
     spi_dev_ = DEVICE_DT_GET(ONBOARD_IMU_SPI_NODE);
     cs_ = GPIO_DT_SPEC_GET(ONBOARD_IMU_CS_NODE, gpios);
     data_ready_ = GPIO_DT_SPEC_GET(ONBOARD_IMU_DRDY_NODE, gpios);
@@ -120,10 +121,9 @@ int OnboardImu::Init() {
 }
 
 /**
- * @brief Configure SPI, reset sensor registers and enable data-ready GPIO;
- * return zero or negative errno.
+ * @brief 配置 SPI、重置传感器寄存器并启用数据就绪 GPIO；返回零或负 errno。
  */
-int OnboardImu::InitializeHardware() {
+int ImuSensor::InitializeHardware() {
     int rc = gpio_pin_configure_dt(&cs_, GPIO_OUTPUT_INACTIVE);
     if (rc != 0) {
         return rc;
@@ -179,9 +179,8 @@ int OnboardImu::InitializeHardware() {
         return rc;
     }
 
-    /* Route DRDY only after the MCU callback is armed so the first edge cannot
-     * be lost between sensor configuration and GPIO interrupt setup.
-     */
+    /* MCU 回调就绪后才开启 DRDY 路由，避免首个边沿在传感器配置与 GPIO
+     * 中断设置之间丢失。 */
     rc = WriteRegister(kIntConfig1Register, kDataReadyGyroOnInt1);
     if (rc != 0) {
         return rc;
@@ -193,10 +192,9 @@ int OnboardImu::InitializeHardware() {
         return (rc != 0) ? rc : -EIO;
     }
 
-    /* DRDY may already be asserted before edge detection becomes effective.
-     * Seed one non-blocking acquisition in that case so reading the output
-     * registers can release INT1 and allow subsequent rising edges through.
-     */
+    /* 边沿检测生效前 DRDY
+     * 可能已经置位。此时先启动一次非阻塞采集，读取输出寄存器以释放
+     * INT1，让后续上升沿正常到达。 */
     const int data_ready_level = gpio_pin_get_dt(&data_ready_);
     if (data_ready_level < 0) {
         return data_ready_level;
@@ -208,10 +206,9 @@ int OnboardImu::InitializeHardware() {
 }
 
 /**
- * @brief Read one sensor register into value; return zero or negative SPI
- * errno.
+ * @brief 将一个传感器寄存器读入 value；返回零或负 SPI errno。
  */
-int OnboardImu::ReadRegister(uint8_t reg, uint8_t* value) {
+int ImuSensor::ReadRegister(uint8_t reg, uint8_t* value) {
     g_onboard_imu_control_tx[0] = static_cast<uint8_t>(kReadMask | reg);
     g_onboard_imu_control_tx[1] = 0U;
     g_onboard_imu_control_rx[0] = 0U;
@@ -236,9 +233,9 @@ int OnboardImu::ReadRegister(uint8_t reg, uint8_t* value) {
 }
 
 /**
- * @brief Write one sensor register; return zero or negative SPI errno.
+ * @brief 写入一个传感器寄存器；返回零或负 SPI errno。
  */
-int OnboardImu::WriteRegister(uint8_t reg, uint8_t value) {
+int ImuSensor::WriteRegister(uint8_t reg, uint8_t value) {
     g_onboard_imu_control_tx[0] = static_cast<uint8_t>(reg & ~kReadMask);
     g_onboard_imu_control_tx[1] = value;
     const struct spi_buf tx_buf = {
@@ -251,21 +248,21 @@ int OnboardImu::WriteRegister(uint8_t reg, uint8_t value) {
 }
 
 /**
- * @brief Capture the DRDY cycle timestamp in GPIO interrupt context.
+ * @brief 在 GPIO 中断上下文中记录 DRDY 周期时间戳。
  */
-void OnboardImu::DataReadyCallback(const struct device* port,
-                                   struct gpio_callback* callback,
-                                   gpio_port_pins_t pins) {
+void ImuSensor::DataReadyCallback(const struct device* port,
+                                  struct gpio_callback* callback,
+                                  gpio_port_pins_t pins) {
     ARG_UNUSED(port);
     ARG_UNUSED(pins);
-    auto* imu = CONTAINER_OF(callback, OnboardImu, data_ready_callback_);
+    auto* imu = CONTAINER_OF(callback, ImuSensor, data_ready_callback_);
     imu->QueueLatestDataReady(k_cycle_get_32());
 }
 
 /**
- * @brief Replace any queued stale DRDY timestamp without waiting.
+ * @brief 无等待替换队列中过时的 DRDY 时间戳。
  */
-void OnboardImu::QueueLatestDataReady(uint32_t data_ready_cycle) {
+void ImuSensor::QueueLatestDataReady(uint32_t data_ready_cycle) {
     if (k_msgq_put(&data_ready_queue_, &data_ready_cycle, K_NO_WAIT) != 0) {
         uint32_t obsolete_cycle;
         (void)k_msgq_get(&data_ready_queue_, &obsolete_cycle, K_NO_WAIT);
@@ -274,10 +271,9 @@ void OnboardImu::QueueLatestDataReady(uint32_t data_ready_cycle) {
 }
 
 /**
- * @brief Start an asynchronous DMA burst for the selected sample; return zero
- * or negative errno.
+ * @brief 为选定样本启动异步 DMA 突发传输；返回零或负 errno。
  */
-int OnboardImu::StartBurstRead() {
+int ImuSensor::StartBurstRead() {
     if (!atomic_cas(&transfer_in_flight_, 0, 1)) {
         return -EBUSY;
     }
@@ -299,22 +295,20 @@ int OnboardImu::StartBurstRead() {
 }
 
 /**
- * @brief Latch SPI completion status for later consumption; does not publish a
- * sample.
+ * @brief 锁存 SPI 完成状态供后续读取，不发布样本。
  */
-void OnboardImu::TransferCallback(const struct device* dev, int status,
-                                  void* userdata) {
+void ImuSensor::TransferCallback(const struct device* dev, int status,
+                                 void* userdata) {
     ARG_UNUSED(dev);
-    auto* imu = static_cast<OnboardImu*>(userdata);
+    auto* imu = static_cast<ImuSensor*>(userdata);
     atomic_set(&imu->transfer_status_, status);
     atomic_set(&imu->transfer_complete_, 1);
 }
 
 /**
- * @brief Copy a successful completed burst into burst without waiting; return
- * true only on success.
+ * @brief 无等待将成功完成的突发数据复制到 burst；仅成功时返回 true。
  */
-bool OnboardImu::TryTakeCompleted(Burst& burst) {
+bool ImuSensor::TryTakeCompleted(Burst& burst) {
     if (!atomic_cas(&transfer_complete_, 1, 0)) {
         return false;
     }
@@ -326,9 +320,9 @@ bool OnboardImu::TryTakeCompleted(Burst& burst) {
     }
     memcpy(burst.rx, g_onboard_imu_rx, sizeof(burst.rx));
     burst.data_ready_cycle = active_data_ready_cycle_;
-    /* TEMP_H/TEMP_L are at 0x22/0x23; the burst starts at 0x0C. */
+    /* TEMP_H/TEMP_L 位于 0x22/0x23；突发读取从 0x0C 开始。 */
     const int16_t temperature_raw = DecodeBigEndian(&burst.rx[23U]);
-    /* HXY manual: T = signed16(raw) / 512 + 23 degC. */
+    /* HXY 手册公式：T = signed16(raw) / 512 + 23 摄氏度。 */
     burst.temperature_c = 23.0F + static_cast<float>(temperature_raw) / 512.0F;
     atomic_clear(&transfer_in_flight_);
     atomic_clear(&timeout_recovery_started_);
@@ -336,11 +330,11 @@ bool OnboardImu::TryTakeCompleted(Burst& burst) {
 }
 
 /**
- * @brief Start the latest queued DRDY burst or recover a timed-out transfer.
- * @return Zero on submission, -EBUSY while active, -EAGAIN without a sample, or
- * driver error.
+ * @brief 启动最新排队的 DRDY 突发传输，或恢复超时传输。
+ * @return 提交成功返回零；正在传输返回 -EBUSY，无样本返回
+ * -EAGAIN，否则返回驱动错误。
  */
-int OnboardImu::TryStartAsync() {
+int ImuSensor::TryStartAsync() {
     if (atomic_get(&transfer_in_flight_) != 0) {
         const uint32_t elapsed_us =
             k_cyc_to_us_floor32(k_cycle_get_32() - transfer_start_cycle_);
@@ -371,55 +365,66 @@ int OnboardImu::TryStartAsync() {
 namespace modules {
 
 /**
- * @brief Initialize sensor registers, SPI and DRDY state; return zero or
- * negative errno.
+ * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
  */
-int OnboardImu::Init() { return -ENOTSUP; }
+int ImuSensor::Init() {
+    return -ENOTSUP;
+}
 
 /**
- * @brief Copy a successful completed burst into burst without waiting; return
- * true only on success.
+ * @brief 无等待将成功完成的突发数据复制到 burst；仅成功时返回 true。
  */
-bool OnboardImu::TryTakeCompleted(Burst&) { return false; }
+bool ImuSensor::TryTakeCompleted(Burst&) {
+    return false;
+}
 
 /**
- * @brief Start the latest queued DRDY burst or recover a timed-out transfer.
- * @return Zero on submission, -EBUSY while active, -EAGAIN without a sample, or
- * driver error.
+ * @brief 启动最新排队的 DRDY 突发传输，或恢复超时传输。
+ * @return 提交成功返回零；正在传输返回 -EBUSY，无样本返回
+ * -EAGAIN，否则返回驱动错误。
  */
-int OnboardImu::TryStartAsync() { return -ENOTSUP; }
+int ImuSensor::TryStartAsync() {
+    return -ENOTSUP;
+}
 
 /**
- * @brief Capture the DRDY cycle timestamp in GPIO interrupt context.
+ * @brief 在 GPIO 中断上下文中记录 DRDY 周期时间戳。
  */
-void OnboardImu::DataReadyCallback(const struct device*, struct gpio_callback*,
-                                   gpio_port_pins_t) {}
+void ImuSensor::DataReadyCallback(const struct device*, struct gpio_callback*,
+                                  gpio_port_pins_t) {}
 
 /**
- * @brief Latch SPI completion status for later consumption; does not publish a
- * sample.
+ * @brief 锁存 SPI 完成状态供后续读取，不发布样本。
  */
-void OnboardImu::TransferCallback(const struct device*, int, void*) {}
+void ImuSensor::TransferCallback(const struct device*, int, void*) {}
 
 /**
- * @brief Configure SPI, reset sensor registers and enable data-ready GPIO;
- * return zero or negative errno.
+ * @brief 配置 SPI、重置传感器寄存器并启用数据就绪 GPIO；返回零或负 errno。
  */
-int OnboardImu::InitializeHardware() { return -ENOTSUP; }
+int ImuSensor::InitializeHardware() {
+    return -ENOTSUP;
+}
+
 /**
- * @brief Read one sensor register into value; return zero or negative SPI
- * errno.
+ * @brief 将一个传感器寄存器读入 value；返回零或负 SPI errno。
  */
-int OnboardImu::ReadRegister(uint8_t, uint8_t*) { return -ENOTSUP; }
+int ImuSensor::ReadRegister(uint8_t, uint8_t*) {
+    return -ENOTSUP;
+}
+
 /**
- * @brief Write one sensor register; return zero or negative SPI errno.
+ * @brief 写入一个传感器寄存器；返回零或负 SPI errno。
  */
-int OnboardImu::WriteRegister(uint8_t, uint8_t) { return -ENOTSUP; }
+int ImuSensor::WriteRegister(uint8_t, uint8_t) {
+    return -ENOTSUP;
+}
+
 /**
- * @brief Start an asynchronous DMA burst for the selected sample; return zero
- * or negative errno.
+ * @brief 为选定样本启动异步 DMA 突发传输；返回零或负 errno。
  */
-int OnboardImu::StartBurstRead() { return -ENOTSUP; }
+int ImuSensor::StartBurstRead() {
+    return -ENOTSUP;
+}
 
 }  // namespace modules
 

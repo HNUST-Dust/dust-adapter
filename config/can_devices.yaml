@@ -39,3 +39,9 @@ can_buses:
         feedback_ids: [0x012]
         protection_frame:
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
+  - channel: 0
+    bitrate: 1000000
+    devices: []
+  - channel: 1
+    bitrate: 1000000
+    devices: []

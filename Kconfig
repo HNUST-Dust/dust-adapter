@@ -1,11 +1,51 @@
 source "Kconfig.zephyr"
 
 config WBR_CONTROL_ONBOARD_IMU_RAW
-    bool "Acquire raw onboard IMU bursts without a controller or AHRS"
-    default y
+    bool "Acquire raw HXY onboard IMU bursts"
+    default n
 
 config WBR_CONTROL_ONBOARD_IMU_SPI_FREQUENCY_HZ
     int "Onboard IMU SPI frequency"
     default 8000000
     range 100000 24000000
     depends on WBR_CONTROL_ONBOARD_IMU_RAW
+
+config DUST_DMA_BUFFER_ALIGNMENT
+    int "DMA buffer alignment in bytes (power of two)"
+    default 4
+    range 4 4096
+
+config DUST_BOARD_OUTPUTS
+    bool "Board LEDs, buzzer and IMU heater"
+    depends on PWM && GPIO
+    default n
+
+config DUST_IMU_HEATER_ENABLE
+    bool "Enable IMU heater output (requires bench tuning)"
+    depends on DUST_BOARD_OUTPUTS
+    default n
+
+config DUST_IMU_TARGET_C
+    int "IMU target temperature in Celsius"
+    default 45
+    range 25 50
+
+config DUST_IMU_HEATER_KP_MILLI
+    int "Heater proportional gain, multiplied by 1000"
+    default 100
+    range 0 1000
+
+config DUST_IMU_HEATER_KI_MILLI
+    int "Heater integral gain, multiplied by 1000"
+    default 5
+    range 0 1000
+
+config DUST_IMU_HEATER_KD_MILLI
+    int "Heater derivative gain, multiplied by 1000"
+    default 0
+    range 0 1000
+
+config DUST_IMU_HEATER_MAX_PERMILLE
+    int "Maximum heater duty in permille"
+    default 1000
+    range 0 1000

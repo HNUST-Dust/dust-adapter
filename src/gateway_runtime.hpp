@@ -1,15 +1,19 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-/** @file gateway_runtime.hpp
- * @brief Firmware runtime entry and ownership contract.
+
+/**
+ * @file gateway_runtime.hpp
+ * @brief 固件运行入口及所有权约定。
  */
 #ifndef DUST_ADAPTER_GATEWAY_RUNTIME_HPP_
 #define DUST_ADAPTER_GATEWAY_RUNTIME_HPP_
 namespace gateway {
+
 /**
- * @brief Initialize hardware and run the single-owner session request loop.
- * @details Owns lease and protection policy. Callbacks communicate through
- * bounded queues and must not mutate policy. Boot protection precedes USB.
- * @return -1 on initialization failure; otherwise does not return.
+ * @brief 初始化硬件并运行由单一线程拥有的会话请求循环。
+ * @details
+ * 此线程独占租约和保护策略。回调通过有界队列通信，不得修改策略。启动保护先于
+ * USB 初始化。
+ * @return 初始化失败返回 -1；成功后不返回。
  */
 int RunGateway();
 }  // namespace gateway

@@ -3,8 +3,8 @@
  */
 
 /**
- * @file usb_session.hpp
- * @brief 管理 USB 通信会话及其收发状态。
+ * @file usb_transport.hpp
+ * @brief USB 原始字节收发及连接状态。
  * @details 这是业务层可见的平台边界。返回负 errno
  * 表示参数、设备或传输失败；调用方不得绕过该接口直接依赖具体驱动实例。
  */
@@ -18,7 +18,7 @@ namespace platform {
 
 /** 传输层诊断，不包含上层协议或请求/响应匹配。时间戳使用单调时钟微秒低 32 位。
  */
-struct UsbSessionStats {
+struct UsbTransportStats {
     uint32_t received_packets = 0;
     uint32_t submitted_packets = 0;
     uint32_t completed_packets = 0;
@@ -27,31 +27,29 @@ struct UsbSessionStats {
     uint32_t last_receive_us = 0;
     uint32_t last_complete_us = 0;
 };
-/**
- * @brief Copy current atomic transport counters into stats; a null pointer is
- * ignored.
- */
-void ReadUsbSessionStats(UsbSessionStats* stats);
 
 /**
- * @brief 初始化 USB 设备会话。
- * @param polling true 时不创建通用接收线程；仅支持 raw 模式，由唯一主循环轮询。
+ * @brief 将当前原子传输计数器复制到 stats；空指针被忽略。
+ */
+void ReadUsbTransportStats(UsbTransportStats* stats);
+
+/**
+ * @brief 初始化 USB 设备传输。
  * @return 成功返回 0，参数无效或底层操作失败时返回负 errno 错误码。
  */
-int InitializeUsbSession(bool polling = false);
-/** Raw transport only: rearm OUT from a single polling owner outside the ISR.
- */
-void PollUsbSession();
+int InitializeUsbTransport();
+
 /**
  * @brief 判断 USB 主机是否已完成设备配置。
  * @return USB 已枚举并配置时返回 `true`。
  */
 bool IsUsbConfigured();
+
 /**
- * @brief Return the connection generation used to reject data from an earlier
- * USB connection.
+ * @brief 返回连接代次，用于拒绝旧 USB 连接的数据。
  */
 uint32_t UsbConnectionEpoch();
+
 /**
  * @brief 通过当前 USB 会话发送字节序列。
  * @param[in] data 输入字节缓冲区；长度由相邻长度参数给出。
@@ -59,8 +57,10 @@ uint32_t UsbConnectionEpoch();
  * @return 成功返回提交字节数；失败返回负 errno。提交不表示传输完成。
  */
 int SendUsb(const uint8_t* data, size_t len);
+
 /** 单发送者模式下等待最近提交的 IN 完成；不得与业务发送 worker 同时使用。 */
 int WaitUsbTxComplete(int32_t timeout_ms);
+
 /**
  * @brief 在指定超时时间内接收一帧 USB 数据。
  * @details 回调将数据复制入有界队列，接收线程负责 OUT

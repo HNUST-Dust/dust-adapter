@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-/** @file onboard_imu.hpp
- * @brief Board IMU transport and nonblocking sample acquisition.
+
+/**
+ * @file imu_sensor.hpp
+ * @brief HXY 板载 IMU 传输与非阻塞采样；原始突发格式固定。
  */
 
 #pragma once
@@ -14,59 +16,74 @@
 
 namespace modules {
 
-/** Board-mounted IMU transport and non-blocking sample acquisition. */
-class OnboardImu final {
+/**
+ * HXY 板载 IMU 传输与非阻塞采样；原始突发格式固定。
+ */
+class ImuSensor final {
    public:
-    /* 0x0C..0x23 inclusive: accel/gyro plus the temperature registers. */
+    /* 0x0C..0x23（含端点）：加速度、角速度及温度寄存器。 */
     static constexpr size_t kBurstTransferSize = 25U;
 
-    /** @brief Raw SPI burst, DRDY timestamp and decoded sensor temperature. */
+    /**
+     * @brief 原始 SPI 突发数据、DRDY 时间戳及解码后的传感器温度。
+     */
     struct Burst {
         uint8_t rx[kBurstTransferSize];
         uint32_t data_ready_cycle;
         float temperature_c;
     };
 
-    /** Initialize the sensor, SPI transport, and data-ready interrupt. */
+    /**
+     * 初始化传感器、SPI 传输和数据就绪中断。
+     */
     int Init();
-    /** Copy a completed DMA transfer without waiting. */
+
+    /**
+     * 无等待复制已完成的 DMA 传输。
+     */
     bool TryTakeCompleted(Burst& burst);
-    /** Submit the latest pending DRDY sample without waiting. */
+
+    /**
+     * 无等待提交最新待处理的 DRDY 样本。
+     */
     int TryStartAsync();
 
    private:
     /**
-     * @brief Capture the DRDY cycle timestamp in GPIO interrupt context.
+     * @brief 在 GPIO 中断上下文中记录 DRDY 周期时间戳。
      */
     static void DataReadyCallback(const struct device* port,
                                   struct gpio_callback* callback,
                                   gpio_port_pins_t pins);
+
     /**
-     * @brief Latch SPI completion status for later consumption; does not
-     * publish a sample.
+     * @brief 锁存 SPI 完成状态供后续读取，不发布样本。
      */
     static void TransferCallback(const struct device* dev, int status,
                                  void* userdata);
 
     /**
-     * @brief Configure SPI, reset sensor registers and enable data-ready GPIO;
-     * return zero or negative errno.
+     * @brief 配置 SPI、重置传感器寄存器并启用数据就绪 GPIO；返回零或负 errno。
      */
     int InitializeHardware();
-    /** Replace any stale queued DRDY timestamp without waiting. */
-    void QueueLatestDataReady(uint32_t data_ready_cycle);
+
     /**
-     * @brief Read one sensor register into value; return zero or negative SPI
-     * errno.
+     * 无等待替换队列中过时的 DRDY 时间戳。
+     */
+    void QueueLatestDataReady(uint32_t data_ready_cycle);
+
+    /**
+     * @brief 将一个传感器寄存器读入 value；返回零或负 SPI errno。
      */
     int ReadRegister(uint8_t reg, uint8_t* value);
+
     /**
-     * @brief Write one sensor register; return zero or negative SPI errno.
+     * @brief 写入一个传感器寄存器；返回零或负 SPI errno。
      */
     int WriteRegister(uint8_t reg, uint8_t value);
+
     /**
-     * @brief Start an asynchronous DMA burst for the selected sample; return
-     * zero or negative errno.
+     * @brief 为选定样本启动异步 DMA 突发传输；返回零或负 errno。
      */
     int StartBurstRead();
 

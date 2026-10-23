@@ -17,11 +17,22 @@ add_custom_command(OUTPUT ${generated}/can_profile_generated.hpp
  DEPENDS ${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py
  ${DUST_ADAPTER_CAN_CONFIG}
  VERBATIM)
-target_sources(app PRIVATE src/main.cpp src/gateway_runtime.cpp src/peripherals.cpp
- src/drivers/can_dispatch.cpp
- src/drivers/usb_session.cpp
- src/drivers/onboard_imu.cpp
+target_sources(app PRIVATE
+ src/main.cpp
+ src/gateway_runtime.cpp
+ src/usb_reports.cpp
+ src/imu_reports.cpp
+ src/drivers/uart_port.cpp
+ src/drivers/board_indicators.cpp
+ src/drivers/imu_heater.cpp
+ src/drivers/uart_receive.cpp
+ src/drivers/can_port.cpp
+ src/drivers/usb_identity.cpp
+ src/drivers/usb_transport.cpp
+ src/drivers/imu_sensor.cpp
  ${generated}/can_profile_generated.hpp)
 target_include_directories(app PRIVATE ${DUST_ADAPTER_ROOT}/src ${generated})
-target_compile_definitions(app PRIVATE WBR_USB_RAW_OUT_BYTES=128)
-zephyr_include_directories(${DUST_HPM_SUPPORT_DIR}/samples/cherryusb/config)
+target_compile_definitions(app PRIVATE DUST_USB_OUT_BUFFER_BYTES=128)
+if(CONFIG_CHERRYUSB_DEVICE_HPM)
+  zephyr_include_directories(${DUST_HPM_SUPPORT_DIR}/samples/cherryusb/config)
+endif()
