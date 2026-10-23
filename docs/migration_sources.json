@@ -2,6 +2,7 @@
   "source_repository": "https://github.com/NoneOfEver/wbr_control",
   "source_commit": "afc2e2d2e722f152ce44dc79c9ba72e5c376d685",
   "note": "Imported working-tree files; hashes identify actual source, including uncommitted shared-driver edits. No chassis algorithm imported. SSC implementation is external.",
+  "layout_note": "Destination paths record the pre-2026-10-23 layout. The firmware application now lives at the repository root: src/, src/drivers/, boards/ and root build files. The message schema, its generator and the generic transport helpers listed here were removed.",
   "files": [
     {
       "source": "src/usb_can_bridge/main.cpp",

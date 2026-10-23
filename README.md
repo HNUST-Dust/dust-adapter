@@ -1,59 +1,105 @@
-# dust-adapter — USB gateway
+# dust-adapter — generic USB adapter (protocol v4)
 
-`main` 是当前正式 USB 方案，`usb` 是 USB 开发/发布分支；`ethercat` 独立维护
-HPM5E3Y SSC FreeRun 从站基础。`v0.1` 为 USB 正式版本。
+`feature/generic-usb-adapter` implements the generic adapter. The released `v0.1`
+uses the older robot-specific v1 protocol. **The two protocols are not compatible.**
+Use matching `dust-control` branch `feature/generic-usb-adapter`; neither side
+silently falls back to the old protocol.
 
-本分支只包含 dust-hpm6750 的 USB Bulk → CAN/UART/IMU 固件，无底盘算法。
-EtherCAT 源码、构建和 SSC 导入说明请切换到 [ethercat 分支](https://github.com/HNUST-Dust/dust-adapter/tree/ethercat)。
+The dust-hpm6750 firmware forwards Classical CAN frames, fixed-configuration UART
+byte streams and the board-mounted raw IMU. MCU device addresses, RX filters and
+default protection writes now come from [config/can_devices.yaml](config/can_devices.yaml).
+It contains no actuator-slot logic, SBUS/HI91 parser, MIT decoder or chassis algorithm.
+The generic driver does not interpret device payloads; it enforces the configured
+addresses and applies raw protection bytes independently of the host.
+The `ethercat` branch remains the independent slave foundation.
 
-## 新建 workspace
+## Build
 
-需要 Python3/West/PyYAML、Zephyr 对应工具链、CMake/Ninja。依赖已在 `west.yml`
-固定版本，不需要克隆 `wbr_control` 或 `wbr_control_companion`：
+Python3/West/PyYAML, CMake/Ninja and a compatible Zephyr SDK are required.
 
 ```bash
-mkdir dust-workspace
-cd dust-workspace
-west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr main
+mkdir dust-workspace && cd dust-workspace
+west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr feature/generic-usb-adapter
 west update
 west zephyr-export
+./dust-adapter/scripts/build.sh
 ```
 
-UART10 修复已作为正式驱动代码提交到 `HNUST-Dust/hpm_support`，
-`west.yml` 固定到包含修复的提交。执行 `west update` 即可，不再需要手工应用补丁。
+Dependencies are pinned in `west.yml`, including the UART partial-publication,
+board line-idle detection and CAN RTR software-filter fixes. No manual patch is
+needed. No FatFs dependency.
+The SDK defaults to `sdk_env/hpm_sdk`; `HPM_SDK_DIR` can override that path.
 
-## 构建 USB
+The repository root is the single Zephyr application: `CMakeLists.txt`,
+`Kconfig`, `prj.conf`, `boards/` and `src/`. Platform drivers and their interfaces
+are in `src/drivers/`; protocol and packet builders are in `src/`. USB receive frames
+and their bounded queue are defined directly inside the USB driver; no message
+schema or message-header generator is required. Build output defaults
+to `build`; do not reuse caches configured with the former app path.
+The project `.clangd` reads `build/compile_commands.json`. Its C++ system include
+paths match the local Zephyr SDK 0.16.5 installation; update them when moving the SDK.
+
+## Board interfaces
+
+| Logical interface | Hardware | Fixed configuration |
+|---|---|---|
+| CAN channels | Enabled devicetree CAN nodes, numbered 0–3 | Profile-configured bitrate and exact ID/format/RTR filters |
+| UART port 1 | UART10 | 100000 baud, 8E2; 128-byte RX double buffer, 1000 us line-idle publication |
+| UART port 2 | UART2 | 921600 baud, 8N1; 128-byte asynchronous RX double buffer |
+| UART port 3 | UART3 | 115200 baud, 8N1; async RX double buffer |
+| Board IMU | Existing SPI2 sensor | Existing raw burst, timestamp and temperature acquisition |
+
+All three ports use the same asynchronous RX callback and separate pairs of
+128-byte noncached DMA buffers. UART2 no longer uses circular DMA or polling.
+Board-specific partial-buffer publication lives in the `hpm_support` UART
+driver and is selected by `CONFIG_UART_HPMICRO_RX_LINE_IDLE`.
+The V3 DBUS input is inverted by Q2 and reaches UART10 RX/PC04 and the
+PB13/TRGM1_P03 auxiliary input. The optional detector uses TRGM1/GPTMR2;
+its source, devicetree node and configuration default are provided by the
+dust-hpm6750 board in `hpm_support`.
+Other boards use the driver's default no-op support and their native UART timeout.
+UART10 TX is not exposed on the DBUS connector; software write support does not
+imply a physical TX connection there.
+
+UART2 and UART3 currently retain the HPM driver's native timeout behavior. The
+1000 us API argument does not guarantee partial-buffer delivery at that interval
+on this driver. Continuous RX, buffer turnover, and short-burst latency after this
+change require hardware acceptance, particularly UART2 at 921600 baud.
+After moving the overlay, rebuild an existing cache with `scripts/build.sh -p always`.
+
+UART settings are MCU compile-time/devicetree configuration. There is no USB
+command to change baud rate, parity or stop bits. UART writes use async DMA and
+bounded per-port FIFO queues. Board wiring still determines which TX/RX pins
+are physically accessible; logical support does not add pins to the board.
+
+## Session and safety
+
+`Hello → Ready → ConfigureSafety → Result → Arm → Result → data/heartbeat`.
+Opening a session enables reception only. The MCU owns a persistent CAN protection
+baseline compiled from its device configuration. The host acknowledges/selects this
+baseline and a lease no longer than the MCU maximum, then explicitly Arms.
+Zero records in ConfigureSafety mean "use MCU defaults", never "remove protection".
+
+On expiry, USB reset/disconnect, explicit Stop or detected output failure, the MCU
+invalidates the session, discards queued business writes and submits its configured
+CAN protection frames. They are not erased on session close. Startup also submits
+them by default. Optional host-registered UART stop actions remain per-session.
+Frames already in CAN hardware cannot be recalled; bus faults can prevent protection
+delivery. These actions do not prove physical shutdown. See [configuration reference](config/README.md).
+
+See [wire protocol](docs/usb.md), [migration and commissioning](docs/GENERIC_USB_MIGRATION.md).
+Message structures are defined in `src/usb_protocol.hpp`; use the explicit
+`Encode()` / `Decode()` interfaces implemented in `src/usb_protocol_codec.hpp`.
+
+## Verification and CI
 
 ```bash
-./dust-adapter/scripts/build.sh usb
+./scripts/test_protocol.sh
 ```
 
-默认 SDK 位于 workspace 内的 `sdk_env/hpm_sdk`。复用其他布局可设置
-`HPM_SDK_DIR` 环境变量；`DUST_HPM_SUPPORT_DIR` 是可选 CMake 参数。
-
-```bash
-HPM_SDK_DIR=/path/to/hpm_sdk ./dust-adapter/scripts/build.sh usb
-# 只在准备部署到板子时手动刷写：
-west flash -d dust-adapter/build/usb_gateway
-```
-
-USB 保留现有 NUC 兼容协议、VID/PID、Bulk 128B OUT/64B IN、W/B/D 批次顺序与
-20ms 命令租约。配置目前对应六电机，命令地址有白名单，不是任意 CAN 帧隧道。
-详见 [USB 网关](docs/usb.md)。
-
-## CI 与版本发布
-
-Push/PR 到 `main` 或 `usb` 自动构建 dust-hpm6750 USB 固件。`v*` 标签在构建
-成功后自动生成 GitHub Release，附带 BIN、ELF、SHA256 和完整构建配置/依赖清单。
-不自动刷写硬件。依赖固定于 `west.yml`，CI 使用 Zephyr SDK 0.16.8。
-
-```bash
-git tag -a v0.1 -m "USB gateway v0.1"
-git push origin v0.1
-```
-
-详细行为和失联策略见 [USB 网关](docs/usb.md)，迁移记录见 [迁移说明](docs/migration.md)。
-历史同驱动基线下的二进制一致性核对已完成；固定依赖构建通过。新版本仍需按板卡
-部署流程验证，CI 构建成功不代表已通过硬件回归。
-
-不提供本地文件系统功能，West 不再下载 FatFs。
+The native tests check wire bounds, flag validation, session gating, replay,
+lease expiry and timestamp/sequence wrap under AddressSanitizer/UBSan.
+GitHub Actions builds the firmware and stores BIN/ELF, configuration, dependency
+manifest and checksums. Existing v0.1 is unchanged; this branch is not automatically
+flashed or promoted to a production release. Compilation and mocked USB regressions
+are not hardware acceptance or a CAN/device RTT measurement.
