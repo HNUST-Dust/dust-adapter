@@ -38,8 +38,9 @@
 
 ## 3. 第一件事：校准新工作区依赖
 
-正确工作区中的 `hpm_support` 实际 HEAD 仍为 `a31c06940e8d11ee360b970c89523a7727b63fff`，最后检查时干净。
-当前 `west.yml` 要求 `335b77fb976f208ac62bba3a6db0f7b534c9028f`。需要在正确工作区同步依赖后重新构建，不能因为旧目录构建过就省略。
+正确工作区的 `hpm_support` 已同步到 `west.yml` 固定的
+`d85eefba7aacdae79c9beaaf7a4378f8cd5f9572`，工作区干净。该提交同时把此前只在
+fix 分支上的 UART/CAN/PLIC 修复带入 `main`（`main` 已快进到该提交）。
 
 ```bash
 cd ~/Documents/zephyr_projects/dust-adapter-ws
@@ -56,7 +57,7 @@ bash scripts/build.sh usb
 固定依赖：
 
 - Zephyr：`8c6db8fa778cf90eb93e823e513a1ab97703711d`。
-- HNUST-Dust/hpm_support：`335b77fb976f208ac62bba3a6db0f7b534c9028f`，包含 UART 正式修复和 CAN RTR 过滤匹配修复，不需手工补丁。
+- HNUST-Dust/hpm_support：`d85eefba7aacdae79c9beaaf7a4378f8cd5f9572`，包含 UART 正式修复、UART10 板级空闲检测和 CAN RTR 过滤匹配修复，不需手工补丁。
 - sdk_env：`7b8cb8bb2f04f52353a6429bffb024f0a2867876`。
 - CherryUSB：`50c7e9085801e24d2d0991d0c4c1609fdbcfb90a`。
 - segger：`b011c45b585e097d95d9cf93edf4f2e01588d3cd`。
@@ -120,7 +121,6 @@ MCU 入口：
 - `src/drivers/can_dispatch.cpp`：CAN 过滤、FIFO、三帧硬件批次。
 - `src/drivers/usb_session.cpp`：USB 会话、传输、断连。
 - `src/peripherals.cpp`：UART 外设及转发。
-- `src/board/dust_hpm6750_uart.cpp`：UART10 独立空闲发布。
 - `src/drivers/onboard_imu.cpp`：板载 IMU。
 
 主机入口：
@@ -200,15 +200,18 @@ Mac 可用 `/usr/local/bin/orb -m ubuntu ...` 在虚拟机执行命令。不要�
 
 三路 UART 已统一异步 DMA 128 字节双缓冲；UART2 循环 DMA、16 字节保护区
 和轮询线程已移除。所有 RX 缓冲使用非缓存存储。UART10 已验证过的
-TRGM1/GPTMR2 路径保留，隔离在 src/board，开关由 boards/dust-hpm6750.conf
-选择；其他板卡使用默认支持模块。板级 overlay 已迁入 boards/，旧构建缓存需
-pristine。UART2/3 当前使用驱动原生超时，不能将 1000 us API 参数视为实际
-部分缓冲发布时限。本次改动尚未做硬件验收，原循环 DMA 的验收结论不适用。
+TRGM1/GPTMR2 路径保留，现已下沉到 hpm_support 的 UART 驱动
+（`drivers/serial/uart_hpmicro_line_idle.c`，开关
+`CONFIG_UART_HPMICRO_RX_LINE_IDLE`，DT 节点 `uart10_idle_timer` 在
+dust-hpm6750 板级 DTS 中）；其他板卡使用驱动默认空实现。板级 overlay 已迁入
+boards/，旧构建缓存需 pristine。UART2/3 当前使用驱动原生超时，不能将
+1000 us API 参数视为实际部分缓冲发布时限。本次改动尚未做硬件验收，原循环
+DMA 的验收结论不适用。
 
 ## 2026-10-23 晚补记：正确工作区重建与提交
 
-- 已在正确工作区把 `hpm_support` 从 `a31c069` 更新到 `335b77f`，各依赖与
-  `west.yml` 一致，工作区无未提交改动。
+- 已在正确工作区把 `hpm_support` 从 `a31c069` 更新到 `335b77f`，随后又更新到
+  `d85eefb`，各依赖与 `west.yml` 一致，工作区无未提交改动。
 - 在该工作区执行 `scripts/test_protocol.sh`：11 个配置生成测试和两组带
   ASan/UBSan 的 C++ 合约测试通过；`scripts/build.sh` 成功构建 dust-hpm6750
   固件，ROM 86612 B、RAM 107672 B。§7 记录的 87484/110668 B 来自旧目录构建，
@@ -217,4 +220,9 @@ pristine。UART2/3 当前使用驱动原生超时，不能将 1000 us API 参数
   已作为两个独立提交落库，提交信息分别为 `refactor!: rebuild the firmware as
   a root Zephyr application` 和 `feat(uart): unify all RX ports on asynchronous
   DMA double buffering`。本文 §2 的 HEAD 和 §7 的“尚未重新构建”是撰写时状态。
+- UART10 的 TRGM1/GPTMR2 空闲检测已从应用 `src/board/` 下沉到 hpm_support
+  UART 驱动：应用只调用 `uart_hpm_rx_line_idle_prepare()` /
+  `uart_hpm_rx_line_idle_start()`，板级 DTS 提供 `uart10_idle_timer`，配置项为
+  `CONFIG_UART_HPMICRO_RX_LINE_IDLE`（dust-hpm6750 默认 y）。hpm_support
+  `main` 和 `west.yml` 均固定到 `d85eefb`。
 - 本次仍未刷板、未使能电机、未做硬件连机/延迟/停机验收；§8 的验收顺序不变。

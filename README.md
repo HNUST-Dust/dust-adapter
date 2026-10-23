@@ -25,8 +25,9 @@ west zephyr-export
 ./dust-adapter/scripts/build.sh
 ```
 
-Dependencies are pinned in `west.yml`, including the UART partial-publication and
-CAN RTR software-filter fixes. No manual patch is needed. No FatFs dependency.
+Dependencies are pinned in `west.yml`, including the UART partial-publication,
+board line-idle detection and CAN RTR software-filter fixes. No manual patch is
+needed. No FatFs dependency.
 The SDK defaults to `sdk_env/hpm_sdk`; `HPM_SDK_DIR` can override that path.
 
 The repository root is the single Zephyr application: `CMakeLists.txt`,
@@ -48,11 +49,13 @@ to `build/firmware`; do not reuse caches configured with the former app path.
 
 All three ports use the same asynchronous RX callback and separate pairs of
 128-byte noncached DMA buffers. UART2 no longer uses circular DMA or polling.
-Board-specific partial-buffer publication is behind `src/board/uart_rx_support.hpp`.
+Board-specific partial-buffer publication lives in the `hpm_support` UART
+driver and is selected by `CONFIG_UART_HPMICRO_RX_LINE_IDLE`.
 The V3 DBUS input is inverted by Q2 and reaches UART10 RX/PC04 and the
 PB13/TRGM1_P03 auxiliary input. The optional detector uses TRGM1/GPTMR2;
-its source and overlay are selected by the dust-hpm6750 board configuration.
-Other boards use the default support implementation and their native UART timeout.
+its source, devicetree node and configuration default are provided by the
+dust-hpm6750 board in `hpm_support`.
+Other boards use the driver's default no-op support and their native UART timeout.
 UART10 TX is not exposed on the DBUS connector; software write support does not
 imply a physical TX connection there.
 

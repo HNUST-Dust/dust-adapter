@@ -4,6 +4,7 @@
  */
 #include "peripherals.h"
 
+#include <drivers/uart_hpmicro.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/uart.h>
@@ -13,7 +14,6 @@
 #include <algorithm>
 #include <cstring>
 
-#include "board/uart_rx_support.hpp"
 #include "drivers/onboard_imu.hpp"
 
 namespace {
@@ -242,9 +242,9 @@ uint32_t StartPeripherals() {
         k_msgq_init(&tx.queue, tx.storage, sizeof(UartWrite), 8);
     for (auto* port : ports) {
         if (!port || !device_is_ready(port->dev)) continue;
-        if (board::PrepareUartReceive(port->dev)) continue;
+        if (uart_hpm_rx_line_idle_prepare(port->dev)) continue;
         if (!StartAsync(*port)) continue;
-        if (board::StartUartReceive(port->dev, kUartRxTimeoutUs)) {
+        if (uart_hpm_rx_line_idle_start(port->dev, kUartRxTimeoutUs)) {
             (void)uart_rx_disable(port->dev);
             continue;
         }
