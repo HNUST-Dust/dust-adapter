@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+/** @file dust_hpm6750_uart.cpp
+ * @brief UART10 partial DMA publication using TRGM1 and GPTMR2 idle detection.
+ */
 #include <drivers/uart_hpmicro.h>
 #include <hpm_clock_drv.h>
 #include <hpm_gptmr_drv.h>
@@ -9,12 +12,18 @@
 
 #include <cerrno>
 
+#include "board/uart_rx_support.hpp"
+
 namespace {
 constexpr unsigned kCompare = 0, kCapture = 2;
 constexpr unsigned kIrq = DT_IRQN(DT_NODELABEL(uart10_idle_timer));
 const device* receiver;
 uint32_t idle_ticks;
 
+/**
+ * @brief Publish DMA progress after a quiet RX interval and rearm idle
+ * detection in ISR context.
+ */
 void IdleIsr(const void*) {
     const unsigned key = irq_lock();
     constexpr uint32_t cmp = GPTMR_CH_CMP_STAT_MASK(kCompare, 0);
@@ -47,6 +56,10 @@ void IdleIsr(const void*) {
 }
 }  // namespace
 
+/**
+ * @brief Configure the UART10 idle detector with a microsecond threshold;
+ * return zero or negative errno.
+ */
 int Uart10LineIdleStart(const device* dev, uint32_t timeout_us) {
     receiver = dev;
     clock_add_to_group(clock_gptmr2, 0);
@@ -83,3 +96,17 @@ int Uart10LineIdleStart(const device* dev, uint32_t timeout_us) {
     gptmr_start_counter(HPM_GPTMR2, kCompare);
     return 0;
 }
+
+namespace board {
+/** @brief Enable external idle publication only for the wired DBUS receiver. */
+int PrepareUartReceive(const device* dev) {
+    if (dev != DEVICE_DT_GET(DT_NODELABEL(uart10))) return 0;
+    return uart_hpm_rx_line_idle_enable(dev);
+}
+/** @brief Start the board detector; other UARTs retain native timeout handling.
+ */
+int StartUartReceive(const device* dev, uint32_t timeout_us) {
+    if (dev != DEVICE_DT_GET(DT_NODELABEL(uart10))) return 0;
+    return Uart10LineIdleStart(dev, timeout_us);
+}
+}  // namespace board

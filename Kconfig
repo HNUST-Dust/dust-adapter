@@ -2,7 +2,7 @@ source "Kconfig.zephyr"
 
 config WBR_UART10_LINE_IDLE
     bool "Dust V3 UART10 RX-line idle via TRGM1 and GPTMR2"
-    default y
+    default n
     depends on BOARD_DUST_HPM6750 && UART_ASYNC_API && UART_INTERRUPT_DRIVEN
     help
       Uses PB13/TRGM1_P03 (wired to UART10_RXD), GPTMR2 channels 0/2,

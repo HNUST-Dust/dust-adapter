@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include <drivers/uart_hpmicro.h>
-#include <hpm_l1c_drv.h>
+/** @file peripherals.cpp
+ * @brief Fixed UART DMA streams, queued UART writes and raw IMU publication.
+ */
+#include "peripherals.h"
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/uart.h>
@@ -10,28 +13,20 @@
 #include <algorithm>
 #include <cstring>
 
+#include "board/uart_rx_support.hpp"
 #include "drivers/onboard_imu.hpp"
-#include "peripherals.h"
-
-#ifdef CONFIG_WBR_UART10_LINE_IDLE
-int Uart10LineIdleStart(const device*, uint32_t);
-#endif
 
 namespace {
 namespace wire = dust::wire;
-constexpr size_t kChunkBytes = 40, kBufferBytes = 128, kRingBytes = 4096;
+constexpr size_t kChunkBytes = 40, kBufferBytes = 128;
 constexpr int32_t kUartRxTimeoutUs = 1000;
+// All RX DMA buffers use the same noncached, cache-line-aligned storage.
 __attribute__((section(".nocache"),
-               aligned(64))) uint8_t uart2_ring[kRingBytes];
-__attribute__((aligned(64))) uint8_t uart_buffers[2][2][kBufferBytes];
-#ifdef CONFIG_WBR_UART10_LINE_IDLE
-__attribute__((section(".nocache"),
-               aligned(64))) uint8_t uart10_idle_buffers[2][kBufferBytes];
-#endif
-K_THREAD_STACK_DEFINE(uart_stack, 2048);
+               aligned(64))) uint8_t uart_buffers[3][2][kBufferBytes];
 K_THREAD_STACK_DEFINE(imu_stack, 2048);
-k_thread uart_thread, imu_thread;
+k_thread imu_thread;
 modules::OnboardImu onboard;
+/** @brief UART DMA buffers, stream sequencing and atomic transport counters. */
 struct UartPort {
     const device* dev = nullptr;
     wire::Port port{};
@@ -39,12 +34,16 @@ struct UartPort {
     uint32_t sequence = 0;
     atomic_t received{}, dropped{}, tx_errors{}, tx_completed{};
     bool available = false;
+    /**
+     * @brief Return the selected DMA buffer; index must be zero or one.
+     */
     uint8_t* Buffer(unsigned index) const {
-#ifdef CONFIG_WBR_UART10_LINE_IDLE
-        if (port == wire::Port::Uart10) return uart10_idle_buffers[index];
-#endif
         return uart_buffers[buffer_set][index];
     }
+    /**
+     * @brief Split a UART byte stream into session-tagged packets without
+     * blocking.
+     */
     void Publish(const uint8_t* data, size_t size) {
         while (size) {
             const size_t count = std::min(size, kChunkBytes);
@@ -66,13 +65,20 @@ struct UartPort {
     }
 };
 UartPort uart10{DEVICE_DT_GET(DT_NODELABEL(uart10)), wire::Port::Uart10, 0};
-UartPort uart2{DEVICE_DT_GET(DT_NODELABEL(uart2)), wire::Port::Uart2, 0};
+UartPort uart2{DEVICE_DT_GET(DT_NODELABEL(uart2)), wire::Port::Uart2, 1};
 #if DT_NODE_HAS_STATUS(DT_NODELABEL(uart3), okay)
-UartPort uart3{DEVICE_DT_GET(DT_NODELABEL(uart3)), wire::Port::Uart3, 1};
+UartPort uart3{DEVICE_DT_GET(DT_NODELABEL(uart3)), wire::Port::Uart3, 2};
 #endif
 
+/**
+ * @brief Latch TX completion or error and wake the single UART transmit worker.
+ */
 void UartTransmitDone(UartPort&, bool);
 
+/**
+ * @brief Handle asynchronous RX buffers and TX completion in driver callback
+ * context.
+ */
 void AsyncUart(const device* dev, uart_event* event, void* user) {
     auto& port = *static_cast<UartPort*>(user);
     switch (event->type) {
@@ -82,13 +88,6 @@ void AsyncUart(const device* dev, uart_event* event, void* user) {
             break;
         case UART_RX_RDY: {
             const auto* data = event->data.rx.buf + event->data.rx.offset;
-            const uint32_t begin =
-                HPM_L1C_CACHELINE_ALIGN_DOWN(reinterpret_cast<uint32_t>(data));
-            const uint32_t end = HPM_L1C_CACHELINE_ALIGN_UP(
-                reinterpret_cast<uint32_t>(data) + event->data.rx.len);
-            if (!(IS_ENABLED(CONFIG_WBR_UART10_LINE_IDLE) &&
-                  port.port == wire::Port::Uart10))
-                l1c_dc_invalidate(begin, end - begin);
             port.Publish(data, event->data.rx.len);
             break;
         }
@@ -116,45 +115,20 @@ void AsyncUart(const device* dev, uart_event* event, void* user) {
     }
 }
 
+/**
+ * @brief Install the UART callback and start double-buffered RX; return whether
+ * both succeed.
+ */
 bool StartAsync(UartPort& port) {
     return device_is_ready(port.dev) &&
            uart_callback_set(port.dev, AsyncUart, &port) == 0 &&
            uart_rx_enable(port.dev, port.Buffer(0), kBufferBytes,
                           kUartRxTimeoutUs) == 0;
 }
-void Uart2Loop(void*, void*, void*) {
-    size_t read = 0, observed = 0, available = 0;
-    uint32_t previous_poll = k_uptime_get_32();
-    for (;;) {
-        size_t position = 0;
-        const uint32_t now = k_uptime_get_32();
-        if (now - previous_poll > 20) {
-            // A whole ring can be overwritten after a prolonged scheduling
-            // stall; do not forward mixed old/new bytes as a valid stream.
-            ++uart2.sequence;
-            if (uart_hpm_rx_circular_get_position(uart2.dev, &position) == 0)
-                read = observed = position % kRingBytes;
-            available = 0;
-        }
-        previous_poll = now;
-        if (uart_hpm_rx_circular_get_position(uart2.dev, &position) == 0 &&
-            position <= kRingBytes) {
-            position %= kRingBytes;
-            available += (position + kRingBytes - observed) % kRingBytes;
-            observed = position;
-            // Retain the proven DMA outstanding-write guard from production.
-            size_t consume = available > 16 ? available - 16 : 0;
-            while (consume) {
-                const size_t count = std::min(consume, kRingBytes - read);
-                uart2.Publish(uart2_ring + read, count);
-                read = (read + count) % kRingBytes;
-                available -= count;
-                consume -= count;
-            }
-        }
-        k_sleep(K_MSEC(1));
-    }
-}
+/**
+ * @brief Consume raw IMU bursts and publish session-tagged packets from a
+ * dedicated thread.
+ */
 void ImuLoop(void*, void*, void*) {
     uint32_t sequence = 0;
     for (;;) {
@@ -202,6 +176,9 @@ UartPort* ports[] = {&uart10, &uart2,
                      nullptr
 #endif
 };
+/**
+ * @brief Latch TX completion or error and wake the single UART transmit worker.
+ */
 void UartTransmitDone(UartPort& port, bool error) {
     auto& tx = transmitters[unsigned(port.port) - 1];
     if (error) {
@@ -212,6 +189,10 @@ void UartTransmitDone(UartPort& port, bool error) {
     atomic_clear(&tx.busy);
     k_sem_give(&tx_wake);
 }
+/**
+ * @brief Drain queued UART writes and wait for transmitter idle before reusing
+ * DMA storage.
+ */
 void UartTransmitLoop(void*, void*, void*) {
     for (;;) {
         k_sem_take(&tx_wake, K_MSEC(1));
@@ -251,37 +232,27 @@ void UartTransmitLoop(void*, void*, void*) {
 }  // namespace
 
 namespace gateway {
+/**
+ * @brief Start fixed UART and IMU producers; return capability bits CAN=1,
+ * UART10=2, UART2=4, IMU=8, UART3=16.
+ */
 uint32_t StartPeripherals() {
     uint32_t capabilities = 0;
     for (auto& tx : transmitters)
         k_msgq_init(&tx.queue, tx.storage, sizeof(UartWrite), 8);
-#ifdef CONFIG_WBR_UART10_LINE_IDLE
-    if (!device_is_ready(uart10.dev) ||
-        uart_hpm_rx_line_idle_enable(uart10.dev) != 0)
-        return 0;
-#endif
-    if (StartAsync(uart10)) {
-        uart10.available = true;
-        capabilities |= 2;
-#ifdef CONFIG_WBR_UART10_LINE_IDLE
-        if (Uart10LineIdleStart(uart10.dev, kUartRxTimeoutUs) != 0) return 0;
-#endif
+    for (auto* port : ports) {
+        if (!port || !device_is_ready(port->dev)) continue;
+        if (board::PrepareUartReceive(port->dev)) continue;
+        if (!StartAsync(*port)) continue;
+        if (board::StartUartReceive(port->dev, kUartRxTimeoutUs)) {
+            (void)uart_rx_disable(port->dev);
+            continue;
+        }
+        port->available = true;
+        capabilities |= port->port == wire::Port::Uart3
+                            ? 16U
+                            : (1U << unsigned(port->port));
     }
-    if (device_is_ready(uart2.dev) &&
-        uart_callback_set(uart2.dev, AsyncUart, &uart2) == 0 &&
-        uart_hpm_rx_circular_enable(uart2.dev, uart2_ring, kRingBytes) == 0) {
-        uart2.available = true;
-        capabilities |= 4;
-        k_thread_create(&uart_thread, uart_stack,
-                        K_THREAD_STACK_SIZEOF(uart_stack), Uart2Loop, nullptr,
-                        nullptr, nullptr, 7, 0, K_NO_WAIT);
-    }
-#if DT_NODE_HAS_STATUS(DT_NODELABEL(uart3), okay)
-    if (StartAsync(uart3)) {
-        uart3.available = true;
-        capabilities |= 16;
-    }
-#endif
     if (onboard.Init() == 0) {
         capabilities |= 8;
         k_thread_create(&imu_thread, imu_stack,
@@ -293,11 +264,22 @@ uint32_t StartPeripherals() {
                     K_NO_WAIT);
     return capabilities;
 }
+/**
+ * @brief Atomically consume the latched UART output fault.
+ */
 bool TakePeripheralFault() { return atomic_cas(&peripheral_fault, 1, 0); }
+/**
+ * @brief Return whether the requested logical UART channel is initialized.
+ */
 bool UartAvailable(uint8_t channel) {
     return channel >= 1 && channel <= 3 && ports[channel - 1] &&
            ports[channel - 1]->available;
 }
+/**
+ * @brief Copy a UART payload into its bounded output queue.
+ * @return Zero on admission, or negative errno for invalid, unavailable or full
+ * output.
+ */
 int SubmitUart(uint8_t channel, const uint8_t* data, size_t length) {
     if (!UartAvailable(channel)) return -ENODEV;
     if (!data || !length || length > wire::kMaxUartWrite) return -EINVAL;
@@ -312,6 +294,10 @@ int SubmitUart(uint8_t channel, const uint8_t* data, size_t length) {
     k_sem_give(&tx_wake);
     return rc ? -ENOSPC : 0;
 }
+/**
+ * @brief Discard software-queued UART writes; already active hardware transfers
+ * cannot be recalled.
+ */
 void DiscardUartWrites() {
     k_mutex_lock(&tx_mutex, K_FOREVER);
     for (unsigned i = 0; i < 3; ++i) {
@@ -322,6 +308,10 @@ void DiscardUartWrites() {
     }
     k_mutex_unlock(&tx_mutex);
 }
+/**
+ * @brief Return a snapshot of per-channel counters; unknown channels yield zero
+ * counters.
+ */
 UartStats ReadUartStats(uint8_t channel) {
     UartStats stats{};
     if (!UartAvailable(channel)) return stats;

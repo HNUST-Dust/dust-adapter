@@ -24,6 +24,8 @@ target_sources(app PRIVATE src/main.cpp src/gateway_runtime.cpp src/peripherals.
  ${generated}/can_profile_generated.hpp)
 if(CONFIG_WBR_UART10_LINE_IDLE)
     target_sources(app PRIVATE src/board/dust_hpm6750_uart.cpp)
+else()
+    target_sources(app PRIVATE src/board/uart_rx_support.cpp)
 endif()
 target_include_directories(app PRIVATE ${DUST_ADAPTER_ROOT}/src ${generated})
 target_compile_definitions(app PRIVATE WBR_USB_RAW_OUT_BYTES=128)
