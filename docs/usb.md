@@ -13,7 +13,7 @@ There is no periodic successful-data ACK.
 | 0 | 4 | Magic `0x31425257` |
 | 4 | 4 | OUT request sequence; IN software submission timestamp, MCU us low32 |
 | 8 | 1 | Version 2 |
-| 9 | 1 | Kind; see `dust_adapter/protocol.hpp` |
+| 9 | 1 | Kind; see `src/protocol.hpp` |
 | 10–11 | 2 | Kind-specific count/channel |
 | 12 | 4 | Nonzero host-selected session nonce |
 

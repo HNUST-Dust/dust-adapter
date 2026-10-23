@@ -22,12 +22,19 @@ mkdir dust-workspace && cd dust-workspace
 west init -m https://github.com/HNUST-Dust/dust-adapter.git --mr feature/generic-usb-adapter
 west update
 west zephyr-export
-./dust-adapter/scripts/build.sh usb
+./dust-adapter/scripts/build.sh
 ```
 
 Dependencies are pinned in `west.yml`, including the UART partial-publication and
 CAN RTR software-filter fixes. No manual patch is needed. No FatFs dependency.
 The SDK defaults to `sdk_env/hpm_sdk`; `HPM_SDK_DIR` can override that path.
+
+The repository root is the single Zephyr application: `CMakeLists.txt`,
+`Kconfig`, `prj.conf`, `boards/` and `src/`. Platform drivers and their interfaces
+are in `src/drivers/`; protocol and packet builders are in `src/`. USB receive frames
+and their bounded queue are defined directly inside the USB driver; no message
+schema or message-header generator is required. Build output defaults
+to `build/firmware`; do not reuse caches configured with the former app path.
 
 ## Board interfaces
 
@@ -35,9 +42,25 @@ The SDK defaults to `sdk_env/hpm_sdk`; `HPM_SDK_DIR` can override that path.
 |---|---|---|
 | CAN channels | Enabled devicetree CAN nodes, numbered 0–3 | Profile-configured bitrate and exact ID/format/RTR filters |
 | UART port 1 | UART10 | 100000 baud, 8E2; 128-byte RX double buffer, 1000 us line-idle publication |
-| UART port 2 | UART2 | 921600 baud, 8N1; circular DMA with existing outstanding-write guard |
+| UART port 2 | UART2 | 921600 baud, 8N1; 128-byte asynchronous RX double buffer |
 | UART port 3 | UART3 | 115200 baud, 8N1; async RX double buffer |
 | Board IMU | Existing SPI2 sensor | Existing raw burst, timestamp and temperature acquisition |
+
+All three ports use the same asynchronous RX callback and separate pairs of
+128-byte noncached DMA buffers. UART2 no longer uses circular DMA or polling.
+Board-specific partial-buffer publication is behind `src/board/uart_rx_support.hpp`.
+The V3 DBUS input is inverted by Q2 and reaches UART10 RX/PC04 and the
+PB13/TRGM1_P03 auxiliary input. The optional detector uses TRGM1/GPTMR2;
+its source and overlay are selected by the dust-hpm6750 board configuration.
+Other boards use the default support implementation and their native UART timeout.
+UART10 TX is not exposed on the DBUS connector; software write support does not
+imply a physical TX connection there.
+
+UART2 and UART3 currently retain the HPM driver's native timeout behavior. The
+1000 us API argument does not guarantee partial-buffer delivery at that interval
+on this driver. Continuous RX, buffer turnover, and short-burst latency after this
+change require hardware acceptance, particularly UART2 at 921600 baud.
+After moving the overlay, rebuild an existing cache with `scripts/build.sh -p always`.
 
 UART settings are MCU compile-time/devicetree configuration. There is no USB
 command to change baud rate, parity or stop bits. UART writes use async DMA and
@@ -60,8 +83,8 @@ Frames already in CAN hardware cannot be recalled; bus faults can prevent protec
 delivery. These actions do not prove physical shutdown. See [configuration reference](config/README.md).
 
 See [wire protocol](docs/usb.md), [migration and commissioning](docs/GENERIC_USB_MIGRATION.md).
-Packet builders are in `host/include/dust_adapter/client.hpp`, and the canonical
-wire header is `include/dust_adapter/protocol.hpp`.
+Packet builders are in `src/client.hpp`, and the canonical
+wire header is `src/protocol.hpp`.
 
 ## Verification and CI
 
