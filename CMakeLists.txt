@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 cmake_minimum_required(VERSION 3.20.0)
+# 直接在仓库根目录构建 5E 板时，也必须加载 EtherCAT 应用及其配置。
+# 在 find_package(Zephyr) 前选择，避免加载根目录的 USB prj.conf。
+if(BOARD MATCHES "^dust-hpm5e(31|3y)(/|$)")
+  set(APPLICATION_CONFIG_DIR "${CMAKE_CURRENT_LIST_DIR}/apps/ethercat_slave")
+  include(${CMAKE_CURRENT_LIST_DIR}/apps/ethercat_slave/CMakeLists.txt)
+  return()
+endif()
 # Export compiler flags and include paths for clangd.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/prepare.cmake)

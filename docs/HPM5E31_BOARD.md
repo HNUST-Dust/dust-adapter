@@ -1,6 +1,9 @@
 # HPM5E31 原理图板级迁移
 
 默认构建 `./scripts/build.sh ethercat -p always` 选择 `dust-hpm5e31`。
+在仓库根目录直接执行 `west build -b dust-hpm5e31 -p always` 也会加载同一
+EtherCAT 应用及其 prj.conf，默认输出到 `build`；不会编译根目录 USB 应用。
+
 板级定义位于工作区 hpm_support 的 `boards/hpmicro/dust-hpm5e31`，由 west.yml
 固定版本。[引脚表与原理图待确认项](https://github.com/HNUST-Dust/hpm_support/blob/6a920426cce52a3d50650d1cfe1d3e63da1c3691/boards/hpmicro/dust-hpm5e31/README.md)。
 
