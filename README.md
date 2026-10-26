@@ -20,8 +20,8 @@ USB 基线保留在根目录 `src/`，旧 EtherCAT 从站保留在 `apps/etherca
 
 不带目标参数时默认 ethercat。默认输出分别为 build/ethercat_slave、build/usb_gateway，
 避免覆盖旧 build 缓存；可用 BUILD_DIR 指定独立目录，WEST 指定 west 可执行文件。
-现有 EtherCAT 板名 dust-hpm5e3y 是历史配置名称，是否完全适合目标 HPM5E31 接线仍需核对，
-不靠改名字宣称完成板级移植。
+现有 EtherCAT 板名 dust-hpm5e3y 是历史配置名称；已确认 DTS/Kconfig 使用 HPM5E31。
+引脚复用及网关接口接线仍需核对，不靠改名字宣称完成板级网关移植。
 
 ## 开发边界
 
@@ -34,3 +34,5 @@ USB 基线保留在根目录 `src/`，旧 EtherCAT 从站保留在 `apps/etherca
 [旧 EtherCAT 基础](docs/ethercat.md)、[USB generic 基线](docs/USB_GENERIC_BASELINE.md)、
 [CAN YAML 配置](config/README.md)、[维护风格](docs/CPP_STYLE_HANDOFF.md)。
 SSC 按原许可与维护者授权记录保留，见 external/ssc/README.md；不重新许可为 Apache-2.0。
+
+开发顺序与主机协议基线见 [HPM5E31 网关起点](docs/HPM5E31_GATEWAY_BASELINE.md)。
