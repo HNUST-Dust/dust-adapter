@@ -120,24 +120,35 @@ static void phy_config_dump(void)
 	       base->ESC_DL_STAT, base->EEPROM_CTRL_STAT,
 	       ESC_PDI_INFO_PDIA_GET(base->PDI_INFO),
 	       ESC_PDI_INFO_PDICN_GET(base->PDI_INFO));
+#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	const uint16_t pads[] = { IOC_PAD_PW21, IOC_PAD_PV12, IOC_PAD_PW17,
 		IOC_PAD_PA27, IOC_PAD_PA28, IOC_PAD_PA29, IOC_PAD_PA30,
 		IOC_PAD_PA31, IOC_PAD_PA20, IOC_PAD_PA21, IOC_PAD_PA22, IOC_PAD_PA23 };
 	const char *names[] = { "PW21", "PV12", "PW17", "PA27", "PA28",
 		"PA29", "PA30", "PA31", "PA20", "PA21", "PA22", "PA23" };
+#else
+    const uint16_t pads[] = { IOC_PAD_PA09, IOC_PAD_PA16, IOC_PAD_PA21,
+        IOC_PAD_PA28, IOC_PAD_PA30, IOC_PAD_PA31, IOC_PAD_PF09,
+        IOC_PAD_PF13, IOC_PAD_PF26, IOC_PAD_PF28 };
+    const char *names[] = { "PA09", "PA16", "PA21", "PA28", "PA30",
+        "PA31", "PF09", "PF13", "PF26", "PF28" };
+#endif
 	printk("ESC cfg: GPR0=%08x GPR1=%08x GPR2=%08x PHY0=%08x PHY1=%08x\n",
 	       base->GPR_CFG0, base->GPR_CFG1, base->GPR_CFG2,
 	       base->PHY_CFG0, base->PHY_CFG1);
+#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	printk("PHY reset: PV12 output=%u input=%u; PA28 level=%u\n",
 	       gpio_get_pin_output_status(HPM_GPIO0, GPIO_DO_GPIOV, 12),
 	       gpio_read_pin(HPM_GPIO0, GPIO_DI_GPIOV, 12),
 	       gpio_read_pin(HPM_GPIO0, GPIO_DI_GPIOA, 28));
+#endif
 	for (size_t i = 0; i < ARRAY_SIZE(pads); i++) {
 		printk("IOC %s FUNC=%08x PAD=%08x\n", names[i],
 		       HPM_IOC->PAD[pads[i]].FUNC_CTL, HPM_IOC->PAD[pads[i]].PAD_CTL);
 	}
 }
 
+#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 static void sip_phy_prepare(void)
 {
 	/* HPM5E00 SIP PHY guide v1.1: PHY0 MII is connected to PV internally. */
@@ -171,6 +182,8 @@ static void sip_phy_prepare(void)
 	HPM_IOC->PAD[IOC_PAD_PA28].PAD_CTL &= ~IOC_PAD_PAD_CTL_PE_MASK;
 	HPM_IOC->PAD[IOC_PAD_PA29].PAD_CTL &= ~IOC_PAD_PAD_CTL_PE_MASK;
 }
+
+#endif
 
 /* The SDK takes PDI ownership for each MDIO read. Always return it to ESC,
  * including failed reads, so autonomous link monitoring can continue. */
@@ -325,7 +338,9 @@ int main(void)
 	}
 
 	memcpy(sii_image, aEepromData, sizeof(sii_image));
+#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	sip_phy_prepare();
+#endif
 	if (hpm_ethercat_set_eeprom_ops(esc, &eeprom_ops) != 0 ||
 	    hpm_ethercat_set_callbacks(esc, &callbacks) != 0 ||
 	    hpm_ethercat_start(esc) != 0) {
@@ -337,6 +352,7 @@ int main(void)
 	     irq <= HPM_ETHERCAT_IRQ_RESET; irq++) {
 		hpm_ethercat_irq_enable(esc, irq, false);
 	}
+#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	/* ESC start enabled the shared 25 MHz reference; release SIP reset now. */
 	k_msleep(100);
 	printk("SIP strap experiment: PA28/PA29 analog, internal pulls off; release PV12\n");
@@ -346,6 +362,10 @@ int main(void)
 	HPM_IOC->PAD[IOC_PAD_PA28].PAD_CTL =
 		IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
 	printk("SIP PHY0: PV12 released, PW21 REFCK, PA28 CTR1; PHY1 held reset\n");
+#else
+    printk("HPM5E31: external RTL8201F/TJA1101B MII; "
+           "PHY reset handled by board DTS\n");
+#endif
 	phy_config_dump();
 	phy_scan();
 	phy_poll(true);

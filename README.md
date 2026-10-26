@@ -20,15 +20,15 @@ USB 基线保留在根目录 `src/`，旧 EtherCAT 从站保留在 `apps/etherca
 
 不带目标参数时默认 ethercat。默认输出分别为 build/ethercat_slave、build/usb_gateway，
 避免覆盖旧 build 缓存；可用 BUILD_DIR 指定独立目录，WEST 指定 west 可执行文件。
-现有 EtherCAT 板名 dust-hpm5e3y 是历史配置名称；已确认 DTS/Kconfig 使用 HPM5E31。
-引脚复用及网关接口接线仍需核对，不靠改名字宣称完成板级网关移植。
+EtherCAT 默认板为 dust-hpm5e31，按 HPM5E31.pdf 原理图独立定义，使用两颗外置 PHY。
+SPI3 IMU 与加热暂时关闭；接线与待验证项见 [板级迁移说明](docs/HPM5E31_BOARD.md)。
 
 ## 开发边界
 
 - 根目录 USB 应用与其固件协议保持基线，先复用 CAN/UART 及本地保护，不迁入主机控制算法。
 - apps/ethercat_slave 保留片上 ESC/PHY、SSC 5.13、SII 和旧计数器 ESI。
 - 原 ESI 的实验 Vendor ID=0、计数器 PDO 不能用于新主机动态网关。
-- 依赖继续由 west.yml 固定；不自动改动 hpm_support/SDK 的工作树。
+- 依赖由 west.yml 固定，新板定义在 hpm_support；SDK 保持原版本。
 - 不自动刷写、使能电机、启动机器人或烧写 OTP。编译通过不等于硬件验收。
 
 [旧 EtherCAT 基础](docs/ethercat.md)、[USB generic 基线](docs/USB_GENERIC_BASELINE.md)、

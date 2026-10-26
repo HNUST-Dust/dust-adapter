@@ -1,6 +1,9 @@
 # HPM5E31 网关开发起点
 
 日期：2026-10-26。基线合并：f70e6f5。
+
+新板适配已随后落实，当前默认 dust-hpm5e31，见 [板级迁移说明](HPM5E31_BOARD.md)。
+下文“本次验证”记录原基线，不能当作新板的硬件验证。
 feature/generic-usb-adapter 75acdfb 已合入 ethercat，未改动 USB v4 wire 与保护行为，
 未更改外部 hpm_support/SDK/SSC 实现，不自动刷写。
 
@@ -8,7 +11,7 @@ feature/generic-usb-adapter 75acdfb 已合入 ethercat，未改动 USB v4 wire �
 
 - 根目录 USB 应用保留通用 CAN、UART、IMU、温控、指示与保护配置，作为复用基础。
 - apps/ethercat_slave 保留旧 ESC/PHY 与 SSC FreeRun 计数器；external/ssc 保留原许可。
-- 板名 dust-hpm5e3y 实际 include hpm5e31.dtsi 并 select SOC_HPM5E31，已检查确认。
+- 默认板为按新原理图定义的 dust-hpm5e31；旧 dust-hpm5e3y 保留作参考。
 - scripts/build.sh 默认 ethercat，显式 usb 可验证原基线；两个输出目录分离。
 
 ## 主机对齐依据
@@ -30,8 +33,8 @@ feature/generic-usb-adapter 75acdfb 已合入 ethercat，未改动 USB v4 wire �
    先核实 ESC RAM/三缓冲与邮箱布局；现有 main.c 的 0x1800 RAM 写探针须在新映射前移除或关闭。
 3. 从 USB 应用抽出实际可复用的 CAN/UART/原始 IMU 交付，替换 USB 报告发布依赖；
    保持设备数据不在 MCU 解析，继承本地保护和温控兜底。
-4. 核对 HPM5E31 接线与引脚复用。当前 EtherCAT overlay 禁用 UART4/6 来避开 SIP PHY1；
-   不能直接启用它们，或照搬 HPM6750 的 UART10/11/12/15。逻辑编号与物理外设映射应分离。
+4. 新板引脚已按原理图定义，旧 SIP PHY overlay 已隔离到旧板。后续实板核验
+   外置 PHY 地址/链路、CAN/UART 物理收发；逻辑编号与物理外设映射继续分离。
 5. 跨主从编解码向量、启动/SAFEOP/INIT/断线/复位/旧目标/队满故障测试；
    先无输出单板，再三板，再由现场操作人员执行使能验收。
 

@@ -1,6 +1,7 @@
 # EtherCAT 从站基础迁移
 
-板卡 dust-hpm5e3y，非 HPM6750。使用片上 ESC 与 SSC 5.13。
+默认板卡 dust-hpm5e31，使用片上 ESC 与 SSC 5.13，外接 RTL8201F/TJA1101B。
+[新板接线与 SPI IMU 禁用说明](HPM5E31_BOARD.md)。旧 dust-hpm5e3y 仍可显式构建。
 这是原 `ethercat_slave_test` 基础的独立化，不是新增 EtherCAT-to-CAN 功能。
 
 当前 ABI：实验 Vendor ID=0、Product=0x57425231、Revision=0x00010000；

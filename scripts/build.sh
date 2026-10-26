@@ -7,7 +7,7 @@ if [[ $# -gt 0 && "$1" != -* ]]; then
   shift
 fi
 case "$transport" in
-  ethercat) source_dir="$root/apps/ethercat_slave"; board=dust-hpm5e3y; output=ethercat_slave ;;
+  ethercat) source_dir="$root/apps/ethercat_slave"; board=dust-hpm5e31; output=ethercat_slave ;;
   usb) source_dir="$root"; board=dust-hpm6750; output=usb_gateway ;;
   *) echo "Usage: $0 [ethercat|usb] [west build arguments]" >&2; exit 2 ;;
 esac
