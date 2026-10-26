@@ -1,0 +1,13 @@
+CompileFlags:
+  CompilationDatabase: build
+  Add:
+    - --target=riscv32-unknown-elf
+    - -isystem/Users/panpoming/Documents/zephyr_projects/zephyr-sdk-0.16.5/riscv64-zephyr-elf/riscv64-zephyr-elf/include/c++/12.2.0
+    - -isystem/Users/panpoming/Documents/zephyr_projects/zephyr-sdk-0.16.5/riscv64-zephyr-elf/riscv64-zephyr-elf/include/c++/12.2.0/riscv64-zephyr-elf/rv32imafd_zicsr_zifencei/ilp32d
+    - -isystem/Users/panpoming/Documents/zephyr_projects/zephyr-sdk-0.16.5/riscv64-zephyr-elf/riscv64-zephyr-elf/include/c++/12.2.0/backward
+  Remove:
+    - -fcheck-new
+    - -fno-reorder-functions
+    - -fno-defer-pop
+    - --param=*
+    - --specs=*

@@ -42,7 +42,7 @@ jobs:
           echo "ZEPHYR_SDK_INSTALL_DIR=$PWD" >> "$GITHUB_ENV"
           echo 'ZEPHYR_TOOLCHAIN_VARIANT=zephyr' >> "$GITHUB_ENV"
       - name: Build EtherCAT slave firmware
-        run: bash dust-adapter/scripts/ci_build.sh
+        run: bash dust-adapter/scripts/ci_build.sh ethercat
       - uses: actions/upload-artifact@v4
         with:
           name: dust-adapter-ethercat-${{ github.sha }}
