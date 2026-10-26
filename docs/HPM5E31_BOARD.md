@@ -5,7 +5,7 @@
 EtherCAT 应用及其 prj.conf，默认输出到 `build`；不会编译根目录 USB 应用。
 
 板级定义位于工作区 hpm_support 的 `boards/hpmicro/dust-hpm5e31`，由 west.yml
-固定版本。[引脚表与原理图待确认项](https://github.com/HNUST-Dust/hpm_support/blob/6a920426cce52a3d50650d1cfe1d3e63da1c3691/boards/hpmicro/dust-hpm5e31/README.md)。
+固定版本。[引脚表与原理图待确认项](https://github.com/HNUST-Dust/hpm_support/blob/04968e525086b57a6bdd8b02669c82d50e2fb82a/boards/hpmicro/dust-hpm5e31/README.md)。
 
 ## 本次落实
 
@@ -36,3 +36,14 @@ PHY 地址先按电阻配置使用 RTL8201F=1、TJA1101B=0。RTL 复位仅有硬
 ```sh
 west build -s apps/ethercat_slave -b dust-hpm5e3y -d build/ethercat_legacy -p always
 ```
+
+## JTAG 连接
+
+U1 使用自定义针序：3=TDI、4=TDO、5=nTRST、6=TMS、7=TCK、8=GND、9=3.3V；
+10 为 5V，不能作为 3.3V 参考。nTRST 与 MCU RESET 不是同一信号。
+OpenOCD 脚本已固定从当前 West 工作区 SDK 获取，初次联调默认 500 kHz。
+路径修正后需要 `west build -b dust-hpm5e31 -p always` 清除旧缓存再生成配置。
+
+TAP 识别失败发生在写入 Flash 之前。若同时出现 CMSIS-DAP 0x12 未实现和
+0x14 响应错位，先核对实际接线及探针固件/后端通信，不能仅按全 1 的 ID 判断芯片故障。
+配置和编译验证不代表 JTAG 已连接成功，尚未自动连接探针、复位或刷写。
