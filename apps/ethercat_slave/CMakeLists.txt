@@ -17,6 +17,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(dust_ethercat_slave)
 # 核心暂不绑定 SSC/硬件；独立库同时验证目标工具链兼容性。
 add_library(dust_ecat_protocol STATIC
+ ${DUST_ADAPTER_ROOT}/src/ethercat/pdo_dictionary.cpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/layout.cpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/core.cpp)
 target_include_directories(dust_ecat_protocol PUBLIC ${DUST_ADAPTER_ROOT}/src)

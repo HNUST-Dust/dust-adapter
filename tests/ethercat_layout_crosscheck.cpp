@@ -4,6 +4,7 @@
 #include <random>
 #include <stdexcept>
 
+#include "ethercat/pdo_dictionary.hpp"
 #include "ethercat/protocol.hpp"
 #include "hardware/ethercat/pdo_config.hpp"
 #include "hardware/ethercat/wire.hpp"
@@ -25,6 +26,27 @@ static void Compare(const slave::ImageLayout& a,
         }
     }
     assert(n == a.count);
+}
+static void Replay(slave::PdoDictionary& dictionary,
+                   const host::ProcessImageLayout& image, uint16_t assignment) {
+    assert(dictionary.Write(assignment, 0, 1, 0) == slave::Error::None);
+    unsigned pdo = 0;
+    for (const auto& mapping : image.mappings) {
+        assert(dictionary.Write(mapping.index, 0, 1, 0) == slave::Error::None);
+        unsigned sub = 0;
+        for (const auto& entry : mapping.entries) {
+            const uint32_t value = (uint32_t(entry.object_index) << 16) |
+                                   (uint32_t(entry.subindex) << 8) |
+                                   entry.bit_length;
+            assert(dictionary.Write(mapping.index, ++sub, 4, value) ==
+                   slave::Error::None);
+        }
+        assert(dictionary.Write(mapping.index, 0, 1, sub) ==
+               slave::Error::None);
+        assert(dictionary.Write(assignment, ++pdo, 2, mapping.index) ==
+               slave::Error::None);
+    }
+    assert(dictionary.Write(assignment, 0, 1, pdo) == slave::Error::None);
 }
 int main() {
     std::mt19937 random(0x5e31);
@@ -77,6 +99,39 @@ int main() {
             assert(result == slave::Error::None);
             Compare(actual.rx, expected.rx);
             Compare(actual.tx, expected.tx);
+            slave::PdoDictionary dictionary;
+            Replay(dictionary, expected.rx, 0x1c12);
+            Replay(dictionary, expected.tx, 0x1c13);
+            slave::ImageLayout mapped_rx, mapped_tx;
+            assert(dictionary.Snapshot(mapped_rx, mapped_tx) ==
+                   slave::Error::None);
+            Compare(mapped_rx, expected.rx);
+            Compare(mapped_tx, expected.tx);
+            slave::ConfigurationTransaction transaction;
+            const uint32_t parameters[] = {
+                actual.signature,   c.cycle_us,         c.watchdog_us,
+                c.can_tx[0],        c.can_tx[1],        c.can_rx[0],
+                c.can_rx[1],        c.can_rx[2],        c.can_rx[3],
+                c.uart[0].tx_bytes, c.uart[0].rx_bytes, c.uart[1].tx_bytes,
+                c.uart[1].rx_bytes, c.uart[2].tx_bytes, c.uart[2].rx_bytes,
+                c.uart[3].tx_bytes, c.uart[3].rx_bytes, c.uart[4].tx_bytes,
+                c.uart[4].rx_bytes, c.uart[5].tx_bytes, c.uart[5].rx_bytes,
+                uint32_t(c.imu)};
+            for (unsigned sub = 22; sub > 0; --sub) {
+                assert(transaction.Write(sub, parameters[sub - 1]) ==
+                       slave::Error::None);
+            }
+            slave::Layout committed;
+            assert(transaction.Commit({4096, 4096, 24576, 15, 63, 63, true},
+                                      mapped_rx, mapped_tx,
+                                      committed) == slave::Error::None);
+            assert(committed.signature == expected.layout_signature);
+            mapped_rx.entries[0].index ^= 1;
+            assert(transaction.Commit({4096, 4096, 24576, 15, 63, 63, true},
+                                      mapped_rx, mapped_tx,
+                                      committed) == slave::Error::Mapping);
+            dictionary.Freeze();
+            assert(dictionary.Write(0x1c12, 0, 1, 0) == slave::Error::State);
             if (actual.signature != expected.layout_signature) {
                 std::fprintf(
                     stderr, "case %u signature mismatch slave=%08x host=%08x\n",
