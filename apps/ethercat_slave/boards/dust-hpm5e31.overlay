@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/ { aliases {
+    dust-can-0 = &mcan0; dust-can-1 = &mcan1;
+    dust-can-2 = &mcan2; dust-can-3 = &mcan3;
+    dust-uart-1 = &uart1; dust-uart-2 = &uart2;
+    dust-uart-3 = &uart3; dust-uart-4 = &uart4;
+    dust-uart-5 = &uart5; dust-uart-6 = &uart6;
+}; };

@@ -215,6 +215,9 @@ class Core {
     uint64_t session() const {
         return session_;
     }
+    uint32_t active_sources() const {
+        return source_mask_;
+    }
     uint32_t AcceptedCan(unsigned source) const;
     uint32_t UartAck(unsigned port) const;
     bool UartAckValid(unsigned port) const;

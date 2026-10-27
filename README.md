@@ -4,8 +4,8 @@
 白名单与保护、原始 IMU、温控及测试为后续 HPM5E31 网关固件的基础。
 USB 基线保留在根目录 `src/`，EtherCAT 应用位于 `apps/ethercat_slave/`。
 
-**当前为 DTC1 网关实验固件：已接入 SSC 动态 PDO、0x2100 配置和周期协议，Arm 禁用。**
-CAN/UART 后端、本地保护和跨上电唯一 boot_id 尚未接入，未完成新协议实板验收。
+**当前为 DTC1 网关实验固件：已接入 SSC 动态 PDO、CAN/UART 后端、本地保护与持久启动计数。**
+初始化全部成功后允许 Arm；实验 VID=0 限制仍保留，尚未完成新协议实板验收。
 接口、内存边界和实验 ESI 见 [SSC 网关接入](docs/ETHERCAT_SSC_GATEWAY.md)。
 
 ## 构建
@@ -42,4 +42,4 @@ SSC 按原许可与维护者授权记录保留，见 external/ssc/README.md；�
 开发顺序与主机协议基线见 [HPM5E31 网关起点](docs/HPM5E31_GATEWAY_BASELINE.md)。
 
 独立 EtherCAT 协议核心及验证方式见 [协议核心](docs/ETHERCAT_PROTOCOL_CORE.md)。
-SSC 已调用核心进行配置提交和周期交换；硬件业务后端仍待实现。
+SSC 已接入配置提交、周期交换及实际 CAN/UART 后端；验证边界见上述接入文档。

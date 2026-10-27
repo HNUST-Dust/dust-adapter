@@ -10,6 +10,7 @@
 #include "ethercat/pdo_dictionary.hpp"
 #include "gateway_config.h"
 #include "hpm5e_esc_hw.h"
+#include "io_backend.hpp"
 extern "C" {
 #include "coeappl.h"
 #include "ecat_def.h"
@@ -51,7 +52,8 @@ Core::Feedback feedback;
 Actions actions;
 bool mapping_ready;
 bool new_output;
-uint64_t lab_generation;
+uint64_t last_publish = 0;
+BusinessState published_state = BusinessState::Unconfigured;
 const UCHAR kObjectName[] = "DTC1 gateway\0\xff";
 
 uint64_t Now() {
@@ -260,13 +262,16 @@ extern "C" int dust_gateway_init(void) {
     if (core) {
         core->~Core();
     }
-    // 实验发现阶段的标识，仅保证本次上电内重新初始化时变化。
-    // 未实现持久唯一 boot_id 和本地保护前，绝不提供 bit31，也不允许 Arm。
-    if (++lab_generation == 0) {
-        core = nullptr;
+    core = nullptr;
+    uint64_t boot = 0;
+    const int initialized = InitializeIo(boot);
+    if (initialized || !boot) {
+        printk("Gateway IO/boot identity failed: %d\n", initialized);
         return -1;
     }
-    core = new (core_storage) Core(lab_generation);
+    core = new (core_storage) Core(boot, IoProtection());
+    last_publish = 0;
+    published_state = BusinessState::Unconfigured;
     transaction.Clear();
     dictionary.Clear();
     parameters.fill(0);
@@ -290,6 +295,7 @@ extern "C" int dust_gateway_init(void) {
               0x2f,
               0x3f,
               false};
+    ApplyIoLimits(limits);
     // 固定 SII 分区各自仍有更严格的三缓冲上限。
     if (DUST_RX_ADDRESS + 3U * limits.rx_bytes > DUST_TX_ADDRESS ||
         DUST_TX_ADDRESS + 3U * limits.tx_bytes > ram_end) {
@@ -317,7 +323,8 @@ extern "C" int dust_gateway_init(void) {
     sSyncManOutPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
     sSyncManInPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
     printk(
-        "DTC1 LAB dictionary ready; RAM=%u KiB, Rx<=%u Tx<=%u; Arm disabled\n",
+        "DTC1 LAB dictionary ready; RAM=%u KiB, Rx<=%u Tx<=%u; IO protection "
+        "installed\n",
         ram_kib, limits.rx_bytes, limits.tx_bytes);
     return 0;
 }
@@ -327,7 +334,9 @@ extern "C" void dust_gateway_poll(void) {
     }
     uint8_t watchdog = 0;
     hpm5e_ssc_esc_read(&watchdog, 0x0440, 1);
-    core->Tick(Now(), bEcatOutputUpdateRunning && (watchdog & 1));
+    const auto now = Now();
+    core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
+    ServiceIo(*core, now);
 }
 extern "C" void APPL_AckErrorInd(UINT16) {}
 extern "C" UINT16 APPL_StartMailboxHandler(void) {
@@ -371,6 +380,7 @@ extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
             Error::None) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
+    ConfigureIo(transaction.candidate());
     dictionary.Freeze();
     return ALSTATUSCODE_NOERROR;
 }
@@ -407,6 +417,9 @@ extern "C" void APPL_InputMapping(UINT16* data) {
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);
     }
 }
+extern "C" bool dust_gateway_active(void) {
+    return core && core->state() == BusinessState::Active;
+}
 extern "C" void APPL_Application(void) {
     if (!mapping_ready || !core ||
         core->state() == BusinessState::Unconfigured) {
@@ -414,11 +427,24 @@ extern "C" void APPL_Application(void) {
     }
     const uint64_t now = Now();
     core->Tick(now, bEcatOutputUpdateRunning);
-    if (new_output) {
+    const bool received = new_output;
+    if (received) {
         new_output = false;
-        (void)core->Process({rx_image.data(), prepared.rx.bytes}, now,
-                            bEcatOutputUpdateRunning, actions);
-        // 当前无后端，Core 缺少 Protection 时在 Arm 前拒绝，不会派发动作。
+        if (core->Process({rx_image.data(), prepared.rx.bytes}, now,
+                          bEcatOutputUpdateRunning, actions) == Error::None) {
+            DispatchIo(*core, actions, now);
+        }
     }
-    (void)core->Publish({tx_image.data(), prepared.tx.bytes}, now, feedback);
+    ServiceIo(*core, now);
+    // OP 时每个 Rx 交换只发布一次，避免高频 MainLoop 造成 UART
+    // 窗口轮转采样混叠。SAFEOP 定期发布，状态改变时立即发布停止原因。
+    const bool changed = published_state != core->state();
+    if (received || changed ||
+        (!bEcatOutputUpdateRunning && now - last_publish >= kCycleUs)) {
+        CaptureIo(*core, feedback, now);
+        (void)core->Publish({tx_image.data(), prepared.tx.bytes}, now,
+                            feedback);
+        last_publish = now;
+        published_state = core->state();
+    }
 }

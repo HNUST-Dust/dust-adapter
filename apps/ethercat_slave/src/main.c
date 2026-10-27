@@ -337,7 +337,9 @@ int main(void) {
     /* FreeRun 仅使用 PDI/RESET；没有 SSC 回调处理 SYNC0/1。 */
     irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
     irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
-    printk("DUST HPM5E31 DTC1 LAB ready: VID=0 PID=0x44544331; Arm disabled\n");
+    printk(
+        "DUST HPM5E31 DTC1 LAB ready: VID=0 PID=0x44544331; CAN/UART IO "
+        "installed\n");
     int64_t next_phy_poll = 0;
     unsigned int poll_count = 0;
     int64_t next_link_poll = 0;
@@ -362,7 +364,7 @@ int main(void) {
             ecat_phy_update_link(esc);
             next_link_poll = k_uptime_get() + 100;
         }
-        if (k_uptime_get() >= next_phy_poll) {
+        if (!dust_gateway_active() && k_uptime_get() >= next_phy_poll) {
             phy_poll((poll_count++ % 10U) == 0U);
             next_phy_poll = k_uptime_get() + 1000;
         }

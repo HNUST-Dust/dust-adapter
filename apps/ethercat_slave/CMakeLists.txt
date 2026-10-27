@@ -15,6 +15,13 @@ if(NOT EXISTS "${hpm_phy_dir}/hpm5e31_phy.c")
 endif()
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(dust_ethercat_slave)
+set(generated "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(DUST_ADAPTER_CAN_CONFIG "${DUST_ADAPTER_ROOT}/config/can_devices.yaml" CACHE FILEPATH "MCU CAN device/protection configuration")
+add_custom_command(OUTPUT ${generated}/can_profile_generated.hpp
+ COMMAND ${Python3_EXECUTABLE} ${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py
+ --input ${DUST_ADAPTER_CAN_CONFIG} --output ${generated}/can_profile_generated.hpp
+ DEPENDS ${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py ${DUST_ADAPTER_CAN_CONFIG}
+ VERBATIM)
 # 协议层仍独立于 SSC，供原生交叉测试复用。
 add_library(dust_ecat_protocol STATIC
  ${DUST_ADAPTER_ROOT}/src/ethercat/pdo_dictionary.cpp
@@ -50,11 +57,15 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/src/ssc/sampleappl.h
 target_sources(app PRIVATE
  ${CMAKE_CURRENT_LIST_DIR}/src/main.c
  ${CMAKE_CURRENT_LIST_DIR}/src/gateway.cpp
+ ${CMAKE_CURRENT_LIST_DIR}/src/io_backend.cpp
+ ${CMAKE_CURRENT_LIST_DIR}/src/boot_identity.cpp
+ ${DUST_ADAPTER_ROOT}/src/drivers/uart_receive.cpp
+ ${generated}/can_profile_generated.hpp
  ${CMAKE_CURRENT_LIST_DIR}/src/hpm5e_esc_hw.c
  ${hpm_phy_dir}/hpm5e31_phy.c
  ${ssc_sources})
 target_include_directories(app PRIVATE
- ${CMAKE_CURRENT_LIST_DIR}/src ${gateway_generated}
+ ${CMAKE_CURRENT_LIST_DIR}/src ${gateway_generated} ${generated}
  ${hpm_phy_dir} ${hpm_phy_board_dir})
 target_link_libraries(app PRIVATE dust_ecat_protocol)
 target_compile_options(app PRIVATE "-include${gateway_generated}/gateway_config.h")

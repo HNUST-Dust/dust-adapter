@@ -22,7 +22,7 @@ done
 "${CXX:-c++}" -std=c++17 -Wall -Wextra -Werror -fno-exceptions "${flags[@]}" \
   "$root/apps/ethercat_slave/src/gateway.cpp" "$root/src/ethercat/layout.cpp" \
   "$root/src/ethercat/core.cpp" "$root/src/ethercat/pdo_dictionary.cpp" \
-  "$root/tests/ethercat_ssc_contracts.cpp" "$build/objdef.o" "$build/coeappl.o" \
+  "$root/tests/ssc_native/io_stub.cpp" "$root/tests/ethercat_ssc_contracts.cpp" "$build/objdef.o" "$build/coeappl.o" \
   "${gc_flags[@]}" -o "$build/ssc_contracts"
 "$build/ssc_contracts"
 python3 "$root/tests/ethercat_esi_contracts.py"

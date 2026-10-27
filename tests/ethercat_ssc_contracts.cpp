@@ -40,6 +40,8 @@ uint64_t k_ticks_to_us_floor64(uint64_t value) {
     return value;
 }
 }
+extern bool native_io_protected;
+extern unsigned native_io_dispatches;
 using namespace dust::ecat;
 static std::array<uint8_t, 0x3000> esc;
 extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
@@ -213,6 +215,12 @@ int main() {
     APPL_Application();
     APPL_InputMapping(tx.data());
     assert(U32(bytes + 40) == uint32_t(BusinessState::Ready));
+    const auto published = tx;
+    for (unsigned i = 0; i < 10; ++i) {
+        APPL_Application();
+    }
+    APPL_InputMapping(tx.data());
+    assert(tx == published);  // OP 空转不能推进 UART 发布窗口。
     Put64(request + 16, boot);
     Put32(request + 24, 2);
     Put32(request + 28, kArm);
@@ -232,5 +240,27 @@ int main() {
     APPL_Application();
     APPL_InputMapping(tx.data());
     assert(U64(bytes + 8) != boot);
+    // 后端声明保护就绪时，真实 SSC 周期允许 Arm 并调用动作派发入口。
+    native_io_protected = true;
+    assert(COE_ObjDictionaryInit() == 0);
+    assert(dust_gateway_init() == 0);
+    Configure();
+    APPL_Application();
+    APPL_InputMapping(tx.data());
+    assert(U32(bytes + 36) & kProtectionCapability);
+    const auto next_boot = U64(bytes + 8);
+    assert(APPL_StartOutputHandler() == 0);
+    nAlStatus = STATE_OP;
+    Put64(request + 16, next_boot);
+    Put32(request + 24, 1);
+    const auto dispatched = native_io_dispatches;
+    APPL_OutputMapping(rx.data());
+    APPL_Application();
+    APPL_InputMapping(tx.data());
+    assert(dust_gateway_active());
+    assert(U32(bytes + 40) == uint32_t(BusinessState::Active));
+    assert(native_io_dispatches == dispatched + 1);
+    APPL_Application();
+    assert(native_io_dispatches == dispatched + 1);
     std::puts("Real SSC SDO / mapping / cycle integration contracts PASS");
 }
