@@ -28,3 +28,11 @@ python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.
 "$root/scripts/test_ethercat_protocol.sh"
 
 "$root/scripts/test_ethercat_ssc.sh"
+
+# MCAN 批次状态模块属于锁定的板级支持，参与工作区回归。
+support="${DUST_HPM_SUPPORT_DIR:-$root/../hpm_support}"
+if [[ -x "$support/tests/native/test_mcan_tx.sh" ]]; then
+  "$support/tests/native/test_mcan_tx.sh"
+else
+  echo 'MCAN contracts not run: hpm_support native test script unavailable.'
+fi

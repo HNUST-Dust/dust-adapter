@@ -58,7 +58,7 @@ DUST_HOST_ROOT=/path/to/dust-control ./scripts/test_protocol.sh
 ./scripts/test_ethercat_ssc.sh
 ```
 
-目标编译：ROM 121048 B，主 RAM 171468 B（256 KiB 的 65.41%），另有 AHB SRAM 10 KiB。
+目标编译：ROM 121716 B，主 RAM 171580 B（256 KiB 的 65.45%），另有 AHB SRAM 10 KiB。
 共享映射描述、按实际业务条目分配元数据，避免每个对象各占 255 条描述。
 `Core`、映射、描述池和过程影像均静态持有，不放在 4 KiB 主线程栈。
 
@@ -70,3 +70,17 @@ Arm 拒绝、故障锁存与显式重新初始化。另检查生成 ESI/SII/SSC 
 这些测试不模拟 ESC 三缓冲电路、实际网络时序、IRQ 延迟或驱动输出。
 
 下一步接 CAN/UART 后端与本地保护、可靠 boot_id、状态分页，再做新协议硬件枚举和周期验证。
+
+
+## MCAN 后端前置条件（2026-10-27）
+
+原 USB 使用 CASTCAN 的硬件批量发送接口；5E31 的 MCAN 旧驱动只处理 buffer 0，
+不能直接承接同样的批次与保护语义。锁定的 hpm_support 已增加
+`drivers/can/hpmicro_mcan_batch.h`：整批验证/装载、单次 TXBAR 提交、整批完成、
+有界撤销、停止后令牌回收，以及旧撤销快照与新批次的 generation 隔离。
+不将应用降级为循环调用单帧 `can_send()`。
+
+接口与验证边界见工作区 `hpm_support/docs/MCAN_BATCH.md`，原生合约已纳入
+`test_protocol.sh`。此步骤只补齐支持驱动，**EtherCAT 应用还未调用新 MCAN 接口，
+CAN/UART 后端、持久 boot_id 和能力 bit31 尚未接入**。未刷板或使能电机。
+下一步将先接来源绝对截止时间、MCU 白名单与保护帧队列，再处理 UART 确认和持久启动标识。
