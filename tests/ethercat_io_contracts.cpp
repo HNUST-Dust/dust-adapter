@@ -266,13 +266,17 @@ int main() {
             frame.data[0] = i;
             cans[2].rx(&devices[2], &frame, cans[2].rx_user);
         }
+        const auto cycle_started = native_now;
+        // 模拟周期开始后中断收到 UART 块：旧周期时间不能被当作采样上界。
+        native_now += 1;
         uint8_t bytes[32]{};
         uart_event e{};
         e.type = UART_RX_RDY;
         e.data.rx = {bytes, 0, 32};
         uarts[0].callback(&devices[4], &e, uarts[0].user);
         Core::Feedback feedback;
-        CaptureIo(*f.core, feedback, native_now);
+        CaptureIo(*f.core, feedback, cycle_started);
+        assert(f.core->state() == BusinessState::Active);
         assert(feedback.can[2].count == 2 &&
                feedback.can[2].frames[0].data[0] == 1 &&
                feedback.can[2].frames[1].data[0] == 2);

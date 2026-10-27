@@ -734,6 +734,8 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
                 }
                 port.discontinuity |= port.pending.discontinuity;
             }
+            // 块可能由本轮 CaptureIo 开始后的 IRQ 入队，不能用旧周期时刻计算年龄。
+            now = Now();
             if (uint32_t(uint32_t(now) - port.pending.captured) >= kTimeoutUs) {
                 core.Protect(Error::UartTimeout);
                 return;

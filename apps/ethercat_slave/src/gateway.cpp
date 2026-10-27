@@ -442,7 +442,8 @@ extern "C" void APPL_Application(void) {
     if (received || changed ||
         (!bEcatOutputUpdateRunning && now - last_publish >= kCycleUs)) {
         CaptureIo(*core, feedback, now);
-        (void)core->Publish({tx_image.data(), prepared.tx.bytes}, now,
+        // 捕获期间 IRQ 仍可入队；发布时刻必须晚于已取出的外设时间戳。
+        (void)core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
                             feedback);
         last_publish = now;
         published_state = core->state();
