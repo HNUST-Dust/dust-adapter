@@ -36,3 +36,9 @@ if [[ -x "$support/tests/native/test_mcan_tx.sh" ]]; then
 else
   echo 'MCAN contracts not run: hpm_support native test script unavailable.'
 fi
+
+if [[ -x "$support/tests/native/test_uart_idle.sh" ]]; then
+  "$support/tests/native/test_uart_idle.sh"
+else
+  echo 'UART idle contracts not run: hpm_support native test script unavailable.'
+fi

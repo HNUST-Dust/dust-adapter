@@ -58,7 +58,7 @@ DUST_HOST_ROOT=/path/to/dust-control ./scripts/test_protocol.sh
 ./scripts/test_ethercat_ssc.sh
 ```
 
-目标编译：ROM 121716 B，主 RAM 171580 B（256 KiB 的 65.45%），另有 AHB SRAM 10 KiB。
+目标编译：ROM 126188 B，主 RAM 173460 B（256 KiB 的 66.17%），另有 AHB SRAM 10 KiB。
 共享映射描述、按实际业务条目分配元数据，避免每个对象各占 255 条描述。
 `Core`、映射、描述池和过程影像均静态持有，不放在 4 KiB 主线程栈。
 
@@ -84,3 +84,21 @@ Arm 拒绝、故障锁存与显式重新初始化。另检查生成 ESI/SII/SSC 
 `test_protocol.sh`。此步骤只补齐支持驱动，**EtherCAT 应用还未调用新 MCAN 接口，
 CAN/UART 后端、持久 boot_id 和能力 bit31 尚未接入**。未刷板或使能电机。
 下一步将先接来源绝对截止时间、MCU 白名单与保护帧队列，再处理 UART 确认和持久启动标识。
+
+
+## 原生 UART RX idle（2026-10-27）
+
+5E31 目标启用 `UART_ASYNC_API` / `UART_INTERRUPT_DRIVEN` /
+`UART_HPMICRO_RX_NATIVE_IDLE`。驱动经 SDK IIR2 处理硬件 idle 标志，不使用旧 UART10 的
+GPTMR/TRGM 外部检测。实际业务 UART 端口仍待后端初始化；本次没有启动端口或刷板。
+
+原有 `platform::StartUartReceive()` 可继续使用：5E31 的 `uart_rx_enable()` 自动设置 native
+idle，旧 6750 仍经 prepare/start 使用外部检测。阈值按波特率向上换算到 1..255 bit；
+115200 baud 的 1000 us 配成 116 bit，921600 baud 的 1000 us 返回 `-ERANGE`。
+高波特率时需缩短接收 idle 超时，不能截断或静默钳位。`SYS_FOREVER_US` 关闭部分发布。
+
+idle 仅产生新增字节的 UART_RX_RDY，保留 DMA 当前缓冲区；停止/重启通过 generation
+隔离，满缓冲区由 DMA TC 归还和切换。驱动细节及未验证的实机时序边界见
+工作区 `hpm_support/docs/UART_NATIVE_IDLE.md`。
+原生策略测试、真实驱动函数体的寄存器/DMA 模拟测试、5E31 构建和旧 6750 USB 构建均通过。
+这些检查不能替代接线后的 UART 短帧、连续流和并发压力测试。
