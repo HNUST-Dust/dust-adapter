@@ -169,3 +169,19 @@ SBA 抽查 Flash 启动头/入口/初始化表与所提供 BIN 一致。
 详情见工作区 `hpm_support/docs/HPM5E_CLOCK_STARTUP.md`。
 
 RTT 控制块可由 SBA 读取，但缓存 RAM 的该视图可能过期，空日志不作为 main 未执行的定论。
+
+### 时钟修正版 ISP 重启实测
+
+2026-10-27，用户以 ISP 烧入 clockfix-514ab7c.bin，确认 BOOT=00 并断电重启。
+JTAG 重新能够 examine、halt 和 resume；PC 位于正常 IRQ 解锁代码，SP 位于 SRAM。
+实读：DCDC_MODE=0xb00704fb（目标 1275 mV）、CPU_CLOCK=0x03020100、
+PLL0_MFI=0x30000014、MFN=0、PLL0_DIV0=0x30000000，按 SDK 公式为 480 MHz；
+GROUP0=0x1fc0003f，LMM0 bit4 已开启。
+RTT 确认 NVS mount=0、record read=16、commit=16，网关输出 IO installed，
+PHY 主循环日志已持续超过 100 秒。此为一次重启观察，不是长期稳定性或周期压力验收。
+
+当前 NUC 关机，Port0 无链路符合该连接状态；尚未完成 OP/Discover。
+Port1 仍报告 PHY ID 与驱动预期不符，仅继续初始化 Port0，此项不在本轮修复结论内。
+连接当前 Vllink.Basic2 时 OpenOCD 自动匹配曾失败，显式指定
+`cmsis-dap vid_pid 0x1209 0x6666`、`cmsis-dap backend usb_bulk` 和实际探针序列号后成功。
+未将特定探针的 VID/PID/序列号写入通用板级默认配置。
