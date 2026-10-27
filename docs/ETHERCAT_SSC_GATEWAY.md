@@ -185,3 +185,18 @@ Port1 仍报告 PHY ID 与驱动预期不符，仅继续初始化 Port0，此项
 连接当前 Vllink.Basic2 时 OpenOCD 自动匹配曾失败，显式指定
 `cmsis-dap vid_pid 0x1209 0x6666`、`cmsis-dap backend usb_bulk` 和实际探针序列号后成功。
 未将特定探针的 VID/PID/序列号写入通用板级默认配置。
+
+### 2026-10-27 HI91 921600 接收台架
+
+- 应用板 overlay 将 UART2 改为 921600（HI91 实际配置）；UART5 为 SBUS 100000/8E2。
+- HPM 原生 idle 为 8 bit 计数器，921600 下 1 ms 超过 255 bit，返回 -ERANGE；
+  接收 idle 改为 200 us（185 bit），仍用原生中断/DMA，不回退定时轮询。
+- 周期开始后 IRQ 入队的采样时间可能晚于旧周期时间；UART 入窗前重新读时钟，
+  PDO 在采集结束后以新的当前时刻发布，防止无符号年龄下溢导致误保护。
+- 仅接收 MCU 配置 `config/can_bench_rx_only.yaml`，所有主机 CAN/UART TX 容量为 0。
+- 已经 JTAG 烧录并逐字节校验镜像；主机 5000 次 Active 状态回显通过，OP/WKC 丢失 0，
+  CAN3 收到 10047 帧，UART2 收到 819712 字节、UART5 收到 17600 字节。
+- UART2 连续 4096 字节抽样重组出 49 帧 HI91，CRC 全部正确；SBUS 164 个抽样帧无 failsafe，
+  其中 2 帧仍带 frame_lost。CAN2 按用户要求跳过，未验证全部电机反馈。
+- 同构建上一轮有 1 次 OP/WKC 不完整，严格工具返回失败；复测通过不代表主机硬实时抖动已验收。
+- 全套本机协议回归与台架构建通过；未发送外设控制数据。
