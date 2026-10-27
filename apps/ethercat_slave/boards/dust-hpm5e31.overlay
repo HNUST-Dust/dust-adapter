@@ -6,3 +6,8 @@
     dust-uart-3 = &uart3; dust-uart-4 = &uart4;
     dust-uart-5 = &uart5; dust-uart-6 = &uart6;
 }; };
+
+/* HI91 实机使用 921600 baud；通用板级默认值保持不变。 */
+&uart2 {
+    current-speed = <921600>;
+};
