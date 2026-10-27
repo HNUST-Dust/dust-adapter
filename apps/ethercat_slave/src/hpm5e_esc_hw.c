@@ -2,8 +2,6 @@
 
 #include "hpm5e_esc_hw.h"
 
-#include <errno.h>
-#include <string.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/irq.h>
@@ -22,49 +20,49 @@ uint16_t hpm5e_ssc_hw_init(void)
 
 void hpm5e_ssc_hw_release(void)
 {
-	hpm_ethercat_stop(esc);
+	hpm_esc_irq_enable(esc, false);
 }
 
 void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
-	if (hpm_ethercat_read(esc, address, (void *)data, length) != 0) {
-		memset((void *)data, 0, length);
-	}
+	hpm_esc_read(esc, address, (void *)data, length);
 }
 
 void hpm5e_ssc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
-	(void)hpm_ethercat_write(esc, address, (const void *)data, length);
+	hpm_esc_write(esc, address, (const void *)data, length);
 }
 
 uint16_t hpm5e_ssc_al_event(void)
 {
-	return hpm_ethercat_get_al_event(esc);
+	uint16_t event;
+	hpm_esc_read(esc, 0x0220U, &event, sizeof(event));
+	return event;
 }
 
 uint32_t hpm5e_ssc_timer_get(void)
 {
-	return hpm_ethercat_timer_get() - timer_origin_ms;
+	return k_uptime_get_32() - timer_origin_ms;
 }
 
 void hpm5e_ssc_timer_clear(void)
 {
-	timer_origin_ms = hpm_ethercat_timer_get();
+	timer_origin_ms = k_uptime_get_32();
 }
 
 uint16_t hpm5e_ssc_eeprom_reload(void)
 {
-	return hpm_ethercat_process_eeprom(esc) == 0 ? 0U : 1U;
+	return hpm5e_ssc_process_eeprom() == 0 ? 0U : 1U;
 }
 
 void hpm5e_ssc_irq_enable(void)
 {
-	hpm_ethercat_irq_enable(esc, HPM_ETHERCAT_IRQ_PDI, true);
+	irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
 }
 
 void hpm5e_ssc_irq_disable(void)
 {
-	hpm_ethercat_irq_enable(esc, HPM_ETHERCAT_IRQ_PDI, false);
+	irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
 }
 
 void hpm5e_ssc_enter_critical(void)

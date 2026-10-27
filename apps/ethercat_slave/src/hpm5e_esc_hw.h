@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <drivers/ethercat/ethercat_hpmicro.h>
+#include <zephyr/drivers/ethercat/hpm_esc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,6 +20,7 @@ uint16_t hpm5e_ssc_al_event(void);
 uint32_t hpm5e_ssc_timer_get(void);
 void hpm5e_ssc_timer_clear(void);
 uint16_t hpm5e_ssc_eeprom_reload(void);
+int hpm5e_ssc_process_eeprom(void);
 void hpm5e_ssc_irq_enable(void);
 void hpm5e_ssc_irq_disable(void);
 void hpm5e_ssc_enter_critical(void);

@@ -5,7 +5,7 @@
 EtherCAT 应用及其 prj.conf，默认输出到 `build`；不会编译根目录 USB 应用。
 
 板级定义位于工作区 hpm_support 的 `boards/hpmicro/dust-hpm5e31`，由 west.yml
-固定版本。[引脚表与原理图待确认项](https://github.com/HNUST-Dust/hpm_support/blob/04968e525086b57a6bdd8b02669c82d50e2fb82a/boards/hpmicro/dust-hpm5e31/README.md)。
+固定版本。[引脚表与原理图待确认项](https://github.com/HNUST-Dust/hpm_support/blob/b12efc50328047b73ac0fce5704d602ecb88fad2/boards/hpmicro/dust-hpm5e31/README.md)。
 
 ## 本次落实
 
@@ -31,11 +31,7 @@ PHY 地址先按电阻配置使用 RTL8201F=1、TJA1101B=0。RTL 复位仅有硬
 不是软件共享复位；PHY 专有初始化、自动链路检测及 100BASE-T1 对端角色仍需实板验证。
 片上启动 Flash 沿用同系列板的 1 MiB 与分区，SPI2 外置 Flash 暂不启用。
 
-旧参考板的显式构建方式（独立输出目录）：
-
-```sh
-west build -s apps/ethercat_slave -b dust-hpm5e3y -d build/ethercat_legacy -p always
-```
+旧参考板的构建结果属于旧驱动基线；新 HPM_ESC API 迁移仅验证 dust-hpm5e31。
 
 ## JTAG 连接
 
@@ -47,3 +43,19 @@ OpenOCD 脚本已固定从当前 West 工作区 SDK 获取，初次联调默认 
 TAP 识别失败发生在写入 Flash 之前。若同时出现 CMSIS-DAP 0x12 未实现和
 0x14 响应错位，先核对实际接线及探针固件/后端通信，不能仅按全 1 的 ID 判断芯片故障。
 配置和编译验证不代表 JTAG 已连接成功，尚未自动连接探针、复位或刷写。
+
+## HPM_ESC 驱动接口迁移（2026-10-27）
+
+同步后的 hpm_support 将 `ETHERCAT_HPMICRO` 替换为 `HPM_ESC`，公开头文件为
+`zephyr/drivers/ethercat/hpm_esc.h`。本工程已迁移配置、读写、时钟、IRQ 回调和启动流程，
+旧配置不能只改 Kconfig 名称后继续使用旧 C API。
+
+SII 仍为本应用的 2048 字节 RAM 镜像，EEPROM 请求应答移至应用层，写入不持久化；
+没有引入远端示例的 Flash EEPROM 格式化。计时使用 Zephyr 的毫秒时钟。
+PDI 中断可由 SSC 单独屏蔽，FreeRun 仅使用 PDI/RESET，中断启动后关闭 SYNC0/1。
+
+通过锁定的 hpm_support 版本直接复用 `samples/ecat/Middleware/ESC/hpm5e31_phy.c`
+及其板级配置，以保留 RTL8201F/TJA1101B 初始化和 100 ms 软件链路轮询。
+未引入该示例的 SSC、对象字典、EEPROM 镜像或 PDO，现有计数器 ESI 保持不变。
+TJA1101B 扩展寄存器与实板链路仍需验证，构建通过不替代硬件验收。
+SPI IMU 与加热仍关闭。

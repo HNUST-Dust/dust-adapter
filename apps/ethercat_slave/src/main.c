@@ -9,13 +9,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
 
-#include <drivers/ethercat/ethercat_hpmicro.h>
+#include <zephyr/drivers/ethercat/hpm_esc.h>
 #include <hpm_esc_drv.h>
 #include <hpm_gpio_drv.h>
 #include <hpm_iomux.h>
 
 #include "applInterface.h"
 #include "ecatappl.h"
+#include "hpm5e_esc_hw.h"
+#include "hpm5e31_phy.h"
 
 #define SII_SIZE 2048U
 
@@ -190,7 +192,8 @@ static void sip_phy_prepare(void)
 static hpm_stat_t phy_read(uint8_t address, uint8_t reg, uint16_t *value)
 {
 	ESC_Type *base = (ESC_Type *)DT_REG_ADDR(DT_NODELABEL(esc0));
-	hpm_stat_t rc = esc_mdio_read(base, address, reg, value);
+	hpm_stat_t rc = hpm_esc_mdio_read(esc,
+        (uint8_t)(ESC_PHY_ADDR_SHOW_MASK | address), reg, value);
 	base->MIIM_PDI_ACC_STAT = 0;
 	return rc;
 }
@@ -198,7 +201,7 @@ static hpm_stat_t phy_read(uint8_t address, uint8_t reg, uint16_t *value)
 static void phy_scan(void)
 {
 	printk("PHY diagnostic: offset=%u; scanning MDIO 0..31\n",
-	       DT_PROP(DT_NODELABEL(esc0), phy_address_offset));
+	       DT_PROP(DT_NODELABEL(esc0), phy_addr_offset));
 	phy_present = 0;
 	for (uint8_t address = 0; address < 32; address++) {
 		uint16_t id1 = 0xffff, id2 = 0xffff;
@@ -264,12 +267,12 @@ static void phy_poll(bool heartbeat)
 static int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count, void *user_data)
 {
 	uint8_t *image = user_data;
-	const size_t offset = (size_t)word_addr * sizeof(uint16_t);
-	const size_t length = word_count * sizeof(uint16_t);
-
-	if (offset + length > SII_SIZE) {
-		return -EINVAL;
-	}
+    const size_t image_words = SII_SIZE / sizeof(uint16_t);
+    if (word_addr > image_words || word_count > image_words - word_addr) {
+        return -EINVAL;
+    }
+    const size_t offset = (size_t)word_addr * sizeof(uint16_t);
+    const size_t length = word_count * sizeof(uint16_t);
 	memcpy(data, image + offset, length);
 	return 0;
 }
@@ -277,11 +280,10 @@ static int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count, void 
 static int sii_write(uint32_t word_addr, uint16_t data, void *user_data)
 {
 	uint8_t *image = user_data;
-	const size_t offset = (size_t)word_addr * sizeof(uint16_t);
-
-	if (offset + sizeof(data) > SII_SIZE) {
-		return -EINVAL;
-	}
+    if (word_addr >= SII_SIZE / sizeof(uint16_t)) {
+        return -EINVAL;
+    }
+    const size_t offset = (size_t)word_addr * sizeof(uint16_t);
 	memcpy(image + offset, &data, sizeof(data));
 	return 0;
 }
@@ -302,11 +304,50 @@ static int sii_reload(uint32_t *data, void *user_data)
 	return 0;
 }
 
+/* SII 镜像由应用持有；新驱动仅提供 ESC 寄存器访问。 */
+int hpm5e_ssc_process_eeprom(void)
+{
+    ESC_Type *base = (ESC_Type *)hpm_esc_base(esc);
+    if ((base->EEPROM_CTRL_STAT & ESC_EEPROM_CTRL_STAT_BUSY_MASK) == 0U) {
+        return 0;
+    }
+    const uint8_t command = esc_get_eeprom_cmd(base);
+    const uint32_t address = esc_get_eeprom_word_address(base);
+    int ret;
+
+    switch (command) {
+    case esc_eeprom_read_cmd: {
+        uint16_t words[2] = {0U};
+        ret = sii_read(address, words, ARRAY_SIZE(words), sii_image);
+        if (ret == 0) {
+            esc_write_eeprom_data(base,
+                (uint64_t)words[0] | ((uint64_t)words[1] << 16));
+        }
+        break;
+    }
+    case esc_eeprom_write_cmd:
+        ret = sii_write(address, (uint16_t)esc_read_eeprom_data(base), sii_image);
+        break;
+    case esc_eeprom_reload_cmd: {
+        uint32_t value;
+        ret = sii_reload(&value, sii_image);
+        if (ret == 0) {
+            esc_write_eeprom_data(base, value);
+        }
+        break;
+    }
+    default:
+        return 0;
+    }
+    esc_eeprom_emulation_ack(base, command, ret != 0, false);
+    return ret;
+}
+
 static void pdi_callback(const struct device *dev, void *user_data)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(user_data);
-	(void)hpm_ethercat_process_eeprom(esc);
+	(void)hpm5e_ssc_process_eeprom();
 	if (atomic_get(&stack_ready)) {
 		PDI_Isr();
 	}
@@ -321,17 +362,6 @@ static void reset_callback(const struct device *dev, void *user_data)
 
 int main(void)
 {
-	const struct hpm_ethercat_eeprom_ops eeprom_ops = {
-		.read = sii_read,
-		.write = sii_write,
-		.reload = sii_reload,
-		.user_data = sii_image,
-	};
-	const struct hpm_ethercat_callbacks callbacks = {
-		.pdi = pdi_callback,
-		.reset = reset_callback,
-	};
-
 	if (!device_is_ready(esc)) {
 		printk("EtherCAT ESC device is not ready\n");
 		return 0;
@@ -341,17 +371,29 @@ int main(void)
 #if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	sip_phy_prepare();
 #endif
-	if (hpm_ethercat_set_eeprom_ops(esc, &eeprom_ops) != 0 ||
-	    hpm_ethercat_set_callbacks(esc, &callbacks) != 0 ||
-	    hpm_ethercat_start(esc) != 0) {
-		printk("EtherCAT ESC start failed\n");
-		return 0;
-	}
-	/* Prevent AL-event storms before SSC has installed its masks/state. */
-	for (enum hpm_ethercat_irq irq = HPM_ETHERCAT_IRQ_PDI;
-	     irq <= HPM_ETHERCAT_IRQ_RESET; irq++) {
-		hpm_ethercat_irq_enable(esc, irq, false);
-	}
+    hpm_esc_irq_enable(esc, false);
+    hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, pdi_callback, NULL);
+    hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, reset_callback, NULL);
+    hpm_esc_configure_eeprom(esc, true, false);
+    if (hpm5e_ssc_process_eeprom() != 0) {
+        printk("SII startup response failed\n");
+        return 0;
+    }
+    const int eeprom_status = hpm_esc_check_eeprom(esc);
+    if (eeprom_status != 0) {
+        printk("SII loading status=%d\n", eeprom_status);
+        if (eeprom_status != -EBADMSG) {
+            return 0;
+        }
+    }
+    ecat_phy_reset(esc);
+    hpm_esc_configure_phy(esc);
+    if (ecat_phy_config(esc) != status_success) {
+        printk("EtherCAT PHY initialization failed\n");
+        return 0;
+    }
+    hpm_esc_configure_signals(esc);
+    ecat_phy_update_link(esc);
 #if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 	/* ESC start enabled the shared 25 MHz reference; release SIP reset now. */
 	k_msleep(100);
@@ -383,11 +425,14 @@ int main(void)
 		return 0;
 	}
 	atomic_set(&stack_ready, 1);
-	hpm_ethercat_irq_enable(esc, HPM_ETHERCAT_IRQ_PDI, true);
-	hpm_ethercat_irq_enable(esc, HPM_ETHERCAT_IRQ_RESET, true);
+    hpm_esc_start(esc);
+    /* FreeRun 仅使用 PDI/RESET；没有 SSC 回调处理 SYNC0/1。 */
+    irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
+    irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
 	printk("WBR HPM5E SSC FreeRun slave ready: VID=0 PID=0x57425231\n");
 	int64_t next_phy_poll = 0;
 	unsigned int poll_count = 0;
+    int64_t next_link_poll = 0;
 
 	for (;;) {
 		if (atomic_cas(&reset_requested, 1, 0)) {
@@ -396,7 +441,11 @@ int main(void)
 			atomic_set(&stack_ready, 1);
 			printk("SSC reset handled\n");
 		}
-		MainLoop();
+        MainLoop();
+        if (k_uptime_get() >= next_link_poll) {
+            ecat_phy_update_link(esc);
+            next_link_poll = k_uptime_get() + 100;
+        }
 		if (k_uptime_get() >= next_phy_poll) {
 			phy_poll((poll_count++ % 10U) == 0U);
 			next_phy_poll = k_uptime_get() + 1000;

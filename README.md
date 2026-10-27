@@ -19,7 +19,7 @@ USB 基线保留在根目录 `src/`，旧 EtherCAT 从站保留在 `apps/etherca
 ```
 
 也可在仓库根目录直接执行 `west build -b dust-hpm5e31 -p always`，
-根入口会为 5E31/5E3Y 选择 EtherCAT 应用与配置，默认输出为 `build`。
+根入口会为 5E 板选择 EtherCAT 应用与配置，当前验证目标为 5E31，默认输出为 `build`。
 
 不带目标参数时默认 ethercat。默认输出分别为 build/ethercat_slave、build/usb_gateway，
 避免覆盖旧 build 缓存；可用 BUILD_DIR 指定独立目录，WEST 指定 west 可执行文件。
