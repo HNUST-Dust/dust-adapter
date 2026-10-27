@@ -157,3 +157,15 @@ west flash -d build/ethercat_bench
 已枚举新 PID、读取 0x2100，并到达 SAFEOP，WKC=3/3；没有发送 Arm。
 后续出现启动异常及链路 DOWN，正在等待控制板重新上电排查，尚未完成持续 OP/Discover 验收。
 此前旧计数器的 1 kHz 测试不作为本轮通过依据。
+
+## 2026-10-27 ISP 后时钟核对
+
+已确认用户恢复 BOOT=00 并重新上电；NUC 当前关机，暂不进行网络验证。
+SBA 抽查 Flash 启动头/入口/初始化表与所提供 BIN 一致。
+实读 CPU mux/div、PLL0 MFI/postdiv 和 DCDC 目标寄存器表明旧初始化选择 600 MHz、1200 mV，
+并漏开 LMM0。现锁定 hpm_support 修正为 SDK 5E00EVK 的 480 MHz、1275 mV，
+重配前先切回晶振，补开 LMM0/ROM0/AXIS，配置失败不切换高频。
+原生测试检查实际初始化函数的调用顺序和失败分支；还需重新 ISP 烧录后验证启动/JTAG。
+详情见工作区 `hpm_support/docs/HPM5E_CLOCK_STARTUP.md`。
+
+RTT 控制块可由 SBA 读取，但缓存 RAM 的该视图可能过期，空日志不作为 main 未执行的定论。

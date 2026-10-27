@@ -44,3 +44,9 @@ if [[ -x "$support/tests/native/test_uart_idle.sh" ]]; then
 else
   echo 'UART idle contracts not run: hpm_support native test script unavailable.'
 fi
+
+if [[ -x "$support/tests/native/test_hpm5e_clock.sh" ]]; then
+  "$support/tests/native/test_hpm5e_clock.sh"
+else
+  echo 'HPM5E clock contracts not run: hpm_support native test script unavailable.'
+fi
