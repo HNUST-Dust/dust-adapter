@@ -24,3 +24,5 @@ python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.
 "${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I "$root/src" "$root/tests/usb_control_message_contracts.cpp" -o "$build/usb_control_message_contracts"
 "$build/usb_control_message_contracts"
+
+"$root/scripts/test_ethercat_protocol.sh"

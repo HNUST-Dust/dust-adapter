@@ -39,3 +39,6 @@ SPI3 IMU 与加热暂时关闭；接线与待验证项见 [板级迁移说明](d
 SSC 按原许可与维护者授权记录保留，见 external/ssc/README.md；不重新许可为 Apache-2.0。
 
 开发顺序与主机协议基线见 [HPM5E31 网关起点](docs/HPM5E31_GATEWAY_BASELINE.md)。
+
+独立 EtherCAT 协议核心及验证方式见 [协议核心](docs/ETHERCAT_PROTOCOL_CORE.md)。
+当前仍运行计数器 PDO，新核心尚未接入 SSC 对象字典或硬件业务。
