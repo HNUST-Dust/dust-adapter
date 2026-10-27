@@ -259,6 +259,18 @@ int main() {
         ServiceIo(*f.core, native_now);
         assert(cans[2].batches == batches + 1);
         // 最新 CAN 窗口保留最后两帧，UART 原生 idle 块按 PDO 容量分片。
+        // 过期启动反馈不能进入本轮 PDO（覆盖采样时钟回绕）。
+        const auto saved_now = native_now;
+        native_now -= 20000;
+        can_frame stale{};
+        stale.id = 0x201;
+        stale.dlc = 8;
+        cans[2].rx(&devices[2], &stale, cans[2].rx_user);
+        native_now = saved_now;
+        Core::Feedback expired_feedback;
+        CaptureIo(*f.core, expired_feedback, native_now);
+        assert(expired_feedback.can[2].count == 0 &&
+               expired_feedback.can[2].drops >= 1);
         for (unsigned i = 0; i < 3; ++i) {
             can_frame frame{};
             frame.id = 0x201;

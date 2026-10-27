@@ -168,7 +168,7 @@ void UartEvent(const device* dev, uart_event* event, void* user) {
             break;
         case UART_RX_DISABLED:
             port.next_buffer = 1;
-            if (uart_rx_enable(dev, rx_buffers[port.index][0], 128, 1000)) {
+            if (uart_rx_enable(dev, rx_buffers[port.index][0], 128, 200)) {
                 atomic_set(&port.fault, 1);
             }
             break;
@@ -677,6 +677,11 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
         Core::CanEvent value;
         const unsigned capacity = configuration.can_rx[bus.index];
         while (!k_msgq_get(&bus.receive, &value, K_NO_WAIT)) {
+            // 启动失能反馈可能早于 PDO 配置。丢弃过期样本，禁止把旧反馈作为新应答发布。
+            if (uint32_t(uint32_t(Now()) - value.capture_us) >= kTimeoutUs) {
+                atomic_inc(&bus.drops);
+                continue;
+            }
             if (!capacity) {
                 continue;
             }
