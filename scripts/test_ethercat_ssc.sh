@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+build="$(mktemp -d)"
+trap 'rm -rf "$build"' EXIT
+python3 "$root/tools/generate_gateway_esi.py" --output "$build"
+cp "$root/external/ssc/"*.h "$root/external/ssc/"*.c "$build/"
+# 仓库拥有的应用头和生成的 EEPROM 取代计数器示例，和目标构建一致。
+cp "$root/apps/ethercat_slave/src/ssc/sampleappl.h" "$build/sampleappl.h"
+python3 "$root/tools/generate_gateway_esi.py" --output "$build"
+flags=(-ffunction-sections -fdata-sections -fsanitize=address,undefined -fno-omit-frame-pointer
+  -I "$build" -I "$root/tests/ssc_native" -I "$root/apps/ethercat_slave/src" -I "$root/src"
+  -include "$root/tests/ssc_native/platform.h" -include "$build/gateway_config.h")
+gc_flags=(-Wl,--gc-sections)
+if [[ "$(uname -s)" == Darwin ]]; then
+  gc_flags=(-Wl,-dead_strip)
+fi
+for source in objdef coeappl; do
+  # 保留真实 SSC 的 SDO 分派、长度和状态检查；只替换 ESC/时钟边界。
+  "${CC:-cc}" -std=c11 "${flags[@]}" -c "$build/$source.c" -o "$build/$source.o"
+done
+"${CXX:-c++}" -std=c++17 -Wall -Wextra -Werror -fno-exceptions "${flags[@]}" \
+  "$root/apps/ethercat_slave/src/gateway.cpp" "$root/src/ethercat/layout.cpp" \
+  "$root/src/ethercat/core.cpp" "$root/src/ethercat/pdo_dictionary.cpp" \
+  "$root/tests/ethercat_ssc_contracts.cpp" "$build/objdef.o" "$build/coeappl.o" \
+  "${gc_flags[@]}" -o "$build/ssc_contracts"
+"$build/ssc_contracts"
+python3 "$root/tests/ethercat_esi_contracts.py"

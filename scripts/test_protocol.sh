@@ -26,3 +26,5 @@ python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.
 "$build/usb_control_message_contracts"
 
 "$root/scripts/test_ethercat_protocol.sh"
+
+"$root/scripts/test_ethercat_ssc.sh"

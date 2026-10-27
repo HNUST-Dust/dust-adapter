@@ -24,8 +24,8 @@ EtherCAT 应用及其 prj.conf，默认输出到 `build`；不会编译根目录
 新板和旧参考板的 EtherCAT SSC 应用均完成干净构建，未刷写硬件。
 新板 ROM 94016 B、主 RAM 78408 B；旧参考板 ROM 96456 B、主 RAM 78408 B。
 构建配置已核对为 HPM5E31、dust-hpm5e31、SPI 关闭，新板无 SPI 驱动目标。
-新板仍使用旧 FreeRun 计数器 PDO；本次没有实现新的 CAN/UART 网关对象字典，
-不能直接与主机动态网关 PDO 配套运行。
+上述为板级初次迁移的历史构建记录。当前应用已切换到 DTC1 实验对象字典与周期协议，
+最新内存占用、ESI 和未完成项见 [SSC 网关接入](ETHERCAT_SSC_GATEWAY.md)。
 
 PHY 地址先按电阻配置使用 RTL8201F=1、TJA1101B=0。RTL 复位仅有硬件上拉，
 不是软件共享复位；PHY 专有初始化、自动链路检测及 100BASE-T1 对端角色仍需实板验证。
@@ -56,6 +56,6 @@ PDI 中断可由 SSC 单独屏蔽，FreeRun 仅使用 PDI/RESET，中断启动�
 
 通过锁定的 hpm_support 版本直接复用 `samples/ecat/Middleware/ESC/hpm5e31_phy.c`
 及其板级配置，以保留 RTL8201F/TJA1101B 初始化和 100 ms 软件链路轮询。
-未引入该示例的 SSC、对象字典、EEPROM 镜像或 PDO，现有计数器 ESI 保持不变。
+未引入该示例的 SSC、对象字典、EEPROM 镜像或 PDO；网关 SII/ESI 由本项目独立生成。
 TJA1101B 扩展寄存器与实板链路仍需验证，构建通过不替代硬件验收。
 SPI IMU 与加热仍关闭。

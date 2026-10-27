@@ -2,10 +2,11 @@
 
 `ethercat` 已合入 `feature/generic-usb-adapter`，以其 CAN/UART 驱动、编译期 YAML
 白名单与保护、原始 IMU、温控及测试为后续 HPM5E31 网关固件的基础。
-USB 基线保留在根目录 `src/`，旧 EtherCAT 从站保留在 `apps/ethercat_slave/`。
+USB 基线保留在根目录 `src/`，EtherCAT 应用位于 `apps/ethercat_slave/`。
 
-**当前 EtherCAT 应用仍是 SSC FreeRun 计数器从站，不是新主机所需的 CAN/UART 网关。**
-主机动态 PDO、0x2100 启动配置、会话与保护协议将在此基础上逐步实现，未宣称接板可用。
+**当前为 DTC1 网关实验固件：已接入 SSC 动态 PDO、0x2100 配置和周期协议，Arm 禁用。**
+CAN/UART 后端、本地保护和跨上电唯一 boot_id 尚未接入，未完成新协议实板验收。
+接口、内存边界和实验 ESI 见 [SSC 网关接入](docs/ETHERCAT_SSC_GATEWAY.md)。
 
 ## 构建
 
@@ -29,7 +30,7 @@ SPI3 IMU 与加热暂时关闭；接线与待验证项见 [板级迁移说明](d
 ## 开发边界
 
 - 根目录 USB 应用与其固件协议保持基线，先复用 CAN/UART 及本地保护，不迁入主机控制算法。
-- apps/ethercat_slave 保留片上 ESC/PHY、SSC 5.13、SII 和旧计数器 ESI。
+- apps/ethercat_slave 使用片上 ESC/PHY、SSC 5.13 与同源生成的网关 SII/ESI。
 - 原 ESI 的实验 Vendor ID=0、计数器 PDO 不能用于新主机动态网关。
 - 依赖由 west.yml 固定，新板定义在 hpm_support；SDK 保持原版本。
 - 不自动刷写、使能电机、启动机器人或烧写 OTP。编译通过不等于硬件验收。
@@ -41,4 +42,4 @@ SSC 按原许可与维护者授权记录保留，见 external/ssc/README.md；�
 开发顺序与主机协议基线见 [HPM5E31 网关起点](docs/HPM5E31_GATEWAY_BASELINE.md)。
 
 独立 EtherCAT 协议核心及验证方式见 [协议核心](docs/ETHERCAT_PROTOCOL_CORE.md)。
-当前仍运行计数器 PDO，新核心尚未接入 SSC 对象字典或硬件业务。
+SSC 已调用核心进行配置提交和周期交换；硬件业务后端仍待实现。

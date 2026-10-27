@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EtherCATInfo Version="1.6">
+  <Vendor>
+    <Id>#x00000000</Id>
+    <Name>DUST Experimental Slaves</Name>
+  </Vendor>
+  <Descriptions>
+    <Groups>
+      <Group>
+        <Type>DUST_GATEWAY_LAB</Type>
+        <Name LcId="1033">DUST Experimental Slaves</Name>
+      </Group>
+    </Groups>
+    <Devices>
+      <Device Physics="YY">
+        <Type ProductCode="#x44544331" RevisionNo="#x00010000">DUST_HPM5E31_GATEWAY_LAB</Type>
+        <Name LcId="1033">DUST HPM5E31 Gateway LAB</Name>
+        <GroupType>DUST_GATEWAY_LAB</GroupType>
+        <Fmmu>Outputs</Fmmu>
+        <Fmmu>Inputs</Fmmu>
+        <Fmmu>MBoxState</Fmmu>
+        <Sm DefaultSize="128" StartAddress="#x1000" ControlByte="#x26" Enable="1" MinSize="36" MaxSize="128">MBoxOut</Sm>
+        <Sm DefaultSize="128" StartAddress="#x1080" ControlByte="#x22" Enable="1" MinSize="36" MaxSize="128">MBoxIn</Sm>
+        <Sm DefaultSize="0" StartAddress="#x1100" ControlByte="#x64" Enable="1" MinSize="0" MaxSize="1024">Outputs</Sm>
+        <Sm DefaultSize="0" StartAddress="#x1d00" ControlByte="#x20" Enable="1" MinSize="0" MaxSize="1536">Inputs</Sm>
+        <Mailbox DataLinkLayer="true">
+          <CoE SdoInfo="true" PdoAssign="true" PdoConfig="true" CompleteAccess="false" SegmentedSdo="true" />
+        </Mailbox>
+        <Eeprom>
+          <ByteSize>2048</ByteSize>
+          <ConfigData>0000000000000000000000000000</ConfigData>
+        </Eeprom>
+      </Device>
+    </Devices>
+  </Descriptions>
+</EtherCATInfo>
