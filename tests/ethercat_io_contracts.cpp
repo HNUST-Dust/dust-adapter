@@ -106,7 +106,7 @@ int uart_callback_set(const device* d, uart_callback_t cb, void* u) {
     return 0;
 }
 int uart_rx_enable(const device*, uint8_t*, size_t, int32_t t) {
-    assert(t == 1000);
+    assert(t > 0 && (uint64_t(921600) * t + 999999) / 1000000 <= 255);
     return 0;
 }
 int uart_rx_disable(const device*) {

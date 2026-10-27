@@ -415,9 +415,11 @@ int InitializeIo(uint64_t& boot) {
                     return fail(result);
                 }
             }
+            // HPM 原生 idle 计数上限 255 bit；921600 baud 下 200 us 为 185 bit。
+            // UART 是字节流，缩短分块间隔不改变上层帧协议。
             int result = platform::StartUartReceive(port.dev, UartEvent, &port,
                                                     rx_buffers[port.index][0],
-                                                    128, 1000);
+                                                    128, 200);
             if (result) {
                 return fail(result);
             }
