@@ -84,7 +84,7 @@ struct Fixture {
         Put32(rx.data() + 28, flags);
         Put32(rx.data() + 32, layout.signature);
         Put32(rx.data() + 36, sources);
-        Put32(rx.data() + 40, 1000);
+        Put32(rx.data() + 40, config.cycle_us);
     }
     void Batch(unsigned source, uint32_t sequence, uint32_t remaining = 10000,
                unsigned count = 1) {
@@ -131,7 +131,7 @@ static void ConfigurationContracts() {
     CHECK(t.Write(23, 0) == Error::Argument);
     CHECK(t.Write(4, 256) == Error::Argument);
     CHECK(t.Write(10, 65536) == Error::Argument);
-    CHECK(t.Write(2, 500) == Error::Argument);
+    CHECK(t.Write(2, 501) == Error::Argument);
     CHECK(t.Write(3, 19999) == Error::Argument);
     c.signature = l.signature;
     Stage(t, c);
@@ -499,7 +499,22 @@ static void AdditionalContracts() {
         CHECK(!truncated.actions.can[0].valid);
     }
 }
+static void CycleContracts() {
+    for (auto cycle : {125U, 250U, 500U, 1000U}) {
+        auto config = Config();
+        config.cycle_us = cycle;
+        Fixture good(true, 0x123456789abcdef0ULL, config);
+        good.Header(1, kDiscover);
+        CHECK(good.Process() == Error::None);
+        Fixture mismatch(true, 0x123456789abcdef0ULL, config);
+        mismatch.Header(1, kDiscover);
+        Put32(mismatch.rx.data() + 40, cycle == 1000 ? 500 : 1000);
+        CHECK(mismatch.Process() == Error::Wire);
+        CHECK(mismatch.core.state() == BusinessState::Protected);
+    }
+}
 int main() {
+    CycleContracts();
     AdditionalContracts();
     ConfigurationContracts();
     SessionContracts();

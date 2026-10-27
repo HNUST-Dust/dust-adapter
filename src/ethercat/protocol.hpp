@@ -9,7 +9,10 @@ namespace dust::ecat {
 constexpr uint32_t kMagic = 0x31435444;
 constexpr uint16_t kAbiMajor = 1;
 constexpr uint16_t kAbiMinor = 0;
-constexpr uint32_t kCycleUs = 1000;
+constexpr uint32_t kCycleUs = 1000;  // 默认交换周期；控制器可以独立保持 1 kHz。
+constexpr bool ValidCycle(uint32_t us) {
+    return us == 125 || us == 250 || us == 500 || us == 1000;
+}
 constexpr uint32_t kTimeoutUs = 20000;
 constexpr uint32_t kProtectionCapability = 1U << 31;
 constexpr size_t kMaxImageBytes = 4096;

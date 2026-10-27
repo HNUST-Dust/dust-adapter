@@ -324,7 +324,7 @@ Error BuildLayout(const Configuration& c, const Limits& limits, Layout& out) {
         ((limits.uart_tx_mask | limits.uart_rx_mask) & ~63U)) {
         return Error::Argument;
     }
-    if (c.cycle_us != kCycleUs || c.watchdog_us != kTimeoutUs) {
+    if (!ValidCycle(c.cycle_us) || c.watchdog_us != kTimeoutUs) {
         return Error::Argument;
     }
     for (auto slots : c.can_tx) {
@@ -366,7 +366,7 @@ Error ConfigurationTransaction::Write(uint8_t sub, uint32_t value) {
     if (sub < 1 || sub > 22) {
         return Error::Argument;
     }
-    if ((sub == 2 && value != kCycleUs) || (sub == 3 && value != kTimeoutUs) ||
+    if ((sub == 2 && !ValidCycle(value)) || (sub == 3 && value != kTimeoutUs) ||
         (sub >= 4 && sub <= 5 && value > 16) ||
         (sub >= 6 && sub <= 9 && value > 32) ||
         (sub >= 10 && sub <= 21 && value > 512) || (sub == 22 && value > 1)) {
@@ -426,7 +426,7 @@ void ConfigurationTransaction::Clear() {
 Error DecodeHeader(Bytes image, RxHeader& out) {
     if (!image.data || image.size < 64 || U32(image.data) != kMagic ||
         U16(image.data + 4) != kAbiMajor || U16(image.data + 6) != kAbiMinor ||
-        U32(image.data + 40) != kCycleUs) {
+        !ValidCycle(U32(image.data + 40))) {
         return Error::Wire;
     }
     const auto* p = image.data;

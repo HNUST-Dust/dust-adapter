@@ -440,7 +440,7 @@ extern "C" void APPL_Application(void) {
     // 窗口轮转采样混叠。SAFEOP 定期发布，状态改变时立即发布停止原因。
     const bool changed = published_state != core->state();
     if (received || changed ||
-        (!bEcatOutputUpdateRunning && now - last_publish >= kCycleUs)) {
+        (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us)) {
         CaptureIo(*core, feedback, now);
         // 捕获期间 IRQ 仍可入队；发布时刻必须晚于已取出的外设时间戳。
         (void)core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),

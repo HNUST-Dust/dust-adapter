@@ -82,10 +82,12 @@ int main() {
             }
             c.imu = random() % 2;
         }
+        if (i == 3) c.cycle_us = 125;
         slave::Layout actual;
         const auto result = slave::BuildLayout(
             c, {4096, 4096, 24576, 15, 63, 63, true}, actual);
         host::PdoConfig config;
+        config.cycle_time_us = c.cycle_us;
         auto& adapter = config.adapters["probe"];
         adapter.can_tx_slots = c.can_tx;
         adapter.can_rx_slots = c.can_rx;

@@ -368,7 +368,12 @@ int main(void) {
             phy_poll((poll_count++ % 10U) == 0U);
             next_phy_poll = k_uptime_get() + 1000;
         }
-        k_usleep(100);
+        // Active 时避免 100 us 系统 tick 取整形成额外周期延迟；ISR 仍可抢占。
+        if (dust_gateway_active()) {
+            k_busy_wait(10);
+        } else {
+            k_usleep(100);
+        }
     }
     return 0;
 }

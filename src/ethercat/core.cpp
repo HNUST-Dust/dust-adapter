@@ -143,7 +143,8 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
     Tick(now, operational);
     RxHeader h;
     Error error = DecodeHeader(image, h);
-    if (error != Error::None || image.size != layout_.rx.bytes) {
+    if (error != Error::None || image.size != layout_.rx.bytes ||
+        U32(image.data + 40) != config_.cycle_us) {
         return reject(Error::Wire);
     }
     if (h.signature != layout_.signature) {
