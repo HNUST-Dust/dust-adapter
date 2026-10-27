@@ -292,6 +292,10 @@ int main() {
         assert(feedback.can[2].count == 2 &&
                feedback.can[2].frames[0].data[0] == 1 &&
                feedback.can[2].frames[1].data[0] == 2);
+        const auto retained_batch = feedback.can[2].sequence;
+        CaptureIo(*f.core, feedback, native_now);
+        assert(feedback.can[2].count == 2 &&
+               feedback.can[2].sequence == retained_batch);
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.uart_tx[0] + 4) == 1);
@@ -302,6 +306,8 @@ int main() {
         assert(U32(f.tx.data() + f.layout.uart_tx[0]) != first_chunk);
         // 租约过期撤销在途批次，下一次服务只发送 YAML 本地保护。
         native_now += 20000;
+        CaptureIo(*f.core, feedback, native_now);
+        assert(feedback.can[2].count == 0);
         ServiceIo(*f.core, native_now);
         assert(f.core->state() == BusinessState::Protected && !uarts[0].busy);
         ServiceIo(*f.core, native_now);
