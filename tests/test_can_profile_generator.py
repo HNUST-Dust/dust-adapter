@@ -14,6 +14,14 @@ class ConfigurationTests(unittest.TestCase):
     def setUp(self):
         self.config = yaml.safe_load((ROOT/'config/can_devices.yaml').read_text())
 
+    def test_bench_profile_never_declares_outputs(self):
+        bench = generator.load_config((ROOT/'config/can_bench_rx_only.yaml').read_text())
+        profile = generator.compile_profile(bench)
+        self.assertFalse(profile['addresses'])
+        self.assertFalse(profile['stops'])
+        self.assertEqual(profile['filters'], generator.compile_profile(self.config)['filters'])
+        self.assertTrue(profile['boot'])
+
     def test_duplicate_yaml_keys_are_errors(self):
         with self.assertRaises(ValueError):
             generator.load_config('command_timeout_us: 20000\ncommand_timeout_us: 1000000\n')

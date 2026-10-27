@@ -3,6 +3,7 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/storage/flash_map.h>
+#include <zephyr/sys/printk.h>
 
 #include <cerrno>
 #include <cstring>
@@ -51,7 +52,9 @@ int AllocateBootIdentity(uint64_t& boot) {
         storage.sector_size = page.size;
         storage.sector_count =
             2;  // 仅占预留区前 8 KiB，不与 SII RAM 镜像共享存储。
+        printk("Boot NVS: mounting\n");
         result = nvs_mount(&storage);
+        printk("Boot NVS: mount=%d\n", result);
         if (result) {
             return result;
         }
@@ -59,6 +62,7 @@ int AllocateBootIdentity(uint64_t& boot) {
     }
     uint8_t record[16]{};
     const auto bytes = nvs_read(&storage, 1, record, sizeof(record));
+    printk("Boot NVS: record read=%d\n", int(bytes));
     const uint32_t tag = uint32_t(identity) ^ uint32_t(identity >> 32);
     uint64_t previous = 0;
     if (bytes != -ENOENT) {
@@ -75,7 +79,9 @@ int AllocateBootIdentity(uint64_t& boot) {
     Put32(record, 0x31425444);
     Put32(record + 4, tag);
     Put64(record + 8, counter);
+    printk("Boot NVS: committing counter\n");
     const auto written = nvs_write(&storage, 1, record, sizeof(record));
+    printk("Boot NVS: commit=%d\n", int(written));
     if (written != sizeof(record)) {
         return written < 0 ? int(written) : -EIO;
     }

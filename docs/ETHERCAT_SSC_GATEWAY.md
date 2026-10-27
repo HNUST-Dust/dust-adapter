@@ -58,9 +58,9 @@ DUST_HOST_ROOT=/path/to/dust-control ./scripts/test_protocol.sh
 ./scripts/test_ethercat_ssc.sh
 ```
 
-目标编译：ROM 167188 B，主 RAM 201452 B（256 KiB 的 76.85%），另有 AHB SRAM 10 KiB。
+目标编译：ROM 167568 B，主 RAM 205548 B（256 KiB 的 78.41%），另有 AHB SRAM 10 KiB。
 共享映射描述、按实际业务条目分配元数据，避免每个对象各占 255 条描述。
-`Core`、映射、描述池和过程影像均静态持有，不放在 4 KiB 主线程栈。
+`Core`、映射、描述池和过程影像均静态持有，不放在主线程栈。
 
 原生 SSC 测试直接编译真实 `coeappl.c` / `objdef.c`，仅替换 ESC 寄存器与时钟边界，
 并把整数宽度固定为目标机的 32 位 ABI。ASan/UBSan 覆盖：
@@ -136,3 +136,24 @@ hpm_support 原生测试另直接提取 MCAN 提交函数体，验证装载过�
 这些均为离线证据，尚未刷入本次固件。下一步在台架依次验证新 SII 枚举、YAML 动态映射、
 Discover/Arm、CAN 空载收发、UART 短帧与连续流、断线/超时保护，再验证 1 kHz 多端口压力。
 实验 VID=0 仍需专门的台架主站入口；正常控制运行时的身份检查未放宽。
+
+## 2026-10-27 台架接入记录
+
+HPM Flash 驱动现声明 FLASH_HAS_EXPLICIT_ERASE，NVS 的 flash_flatten 才会调用 NOR erase；
+此前实际启动返回 ENOSYS，不能创建网关核心。启动日志增加 NVS mount/read/commit 阶段，
+主线程栈增加至 8 KiB 并开启 sentinel/初始化填充，便于后续排查启动异常；尚未测量真实栈水位。
+
+无电机 ACK 的台架采用 `config/can_bench_rx_only.yaml`，只保留原 CAN 反馈过滤器，
+不声明发送白名单或保护帧。默认电机配置和启动停止行为保持不变。
+
+```sh
+west build -b dust-hpm5e31 -d build/ethercat_bench -- \
+  -DDUST_ADAPTER_CAN_CONFIG="$PWD/config/can_bench_rx_only.yaml"
+west flash -d build/ethercat_bench
+```
+
+首轮主机只配置 CAN RX、UART5/6 RX，所有 TX 容量为 0、SPI IMU=false。
+主站需要显式以 u16 下载 0x1c32:1=0 与 0x1c33:1=0，避免 SSC 自动选择 SM Sync。
+已枚举新 PID、读取 0x2100，并到达 SAFEOP，WKC=3/3；没有发送 Arm。
+后续出现启动异常及链路 DOWN，正在等待控制板重新上电排查，尚未完成持续 OP/Discover 验收。
+此前旧计数器的 1 kHz 测试不作为本轮通过依据。
