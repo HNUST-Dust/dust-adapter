@@ -2,6 +2,8 @@
 
 #include "hpm5e_esc_hw.h"
 #include "rtt_trace.h"
+#include "esc_dma.h"
+#include <string.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -27,14 +29,21 @@ void hpm5e_ssc_hw_release(void)
 void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
 	dust_trace_read(DUST_TR_ESC_READ_BEGIN, address, length);
-	hpm_esc_read(esc, address, (void *)data, length);
+	int result = dust_esc_dma_read((void *)data, address, length);
+	if (result == 1) {
+		hpm_esc_read(esc, address, (void *)data, length);
+	} else if (result < 0) {
+		memset((void *)data, 0, length);
+	}
 	dust_trace_read(DUST_TR_ESC_READ_END, address, length);
 }
 
 void hpm5e_ssc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
 	dust_trace_esc(DUST_TR_ESC_BEGIN, address, length);
-	hpm_esc_write(esc, address, (const void *)data, length);
+	if (dust_esc_dma_write((const void *)data, address, length) == 1) {
+		hpm_esc_write(esc, address, (const void *)data, length);
+	}
 	dust_trace_esc(DUST_TR_ESC_END, address, length);
 }
 

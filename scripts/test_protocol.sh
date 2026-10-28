@@ -58,3 +58,5 @@ if [[ -f "$support/tests/native/test_esc_access.sh" ]]; then
 else
   echo "ESC transfer contracts not run: hpm_support native test script unavailable."
 fi
+
+bash "$root/scripts/test_ethercat_esc_dma.sh"

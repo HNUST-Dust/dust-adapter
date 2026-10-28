@@ -11,3 +11,9 @@
 &uart2 {
     current-speed = <921600>;
 };
+
+/* XDMA 0..5 belong to UART4..6; channel 6 is reserved for optional ESC DMA. */
+/ { zephyr,user {
+    dmas = <&xdma 6 0>;
+    dma-names = "esc";
+}; };

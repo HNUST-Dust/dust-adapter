@@ -2,12 +2,16 @@
 #include "io_backend.hpp"
 bool native_io_protected = false;
 unsigned native_io_dispatches = 0;
+unsigned native_io_stops = 0;
+int native_esc_dma_fault = 0;
+extern "C" int dust_esc_dma_init(void) { return 0; }
+extern "C" int dust_esc_dma_error(void) { return native_esc_dma_fault; }
 namespace dust::ecat {
 namespace {
 bool Validate(void*, unsigned, const CanFrame&) {
     return true;
 }
-void Stop(void*, Error) {}
+void Stop(void*, Error) { ++native_io_stops; }
 }  // namespace
 
 int InitializeIo(uint64_t& boot) {

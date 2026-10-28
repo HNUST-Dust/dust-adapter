@@ -8,7 +8,7 @@ cp "$root/external/ssc/"*.h "$root/external/ssc/"*.c "$build/"
 # 仓库拥有的应用头和生成的 EEPROM 取代计数器示例，和目标构建一致。
 cp "$root/apps/ethercat_slave/src/ssc/sampleappl.h" "$build/sampleappl.h"
 python3 "$root/tools/generate_gateway_esi.py" --output "$build"
-flags=(-ffunction-sections -fdata-sections -fsanitize=address,undefined -fno-omit-frame-pointer
+flags=(-DCONFIG_DUST_ECAT_ESC_DMA=1 -ffunction-sections -fdata-sections -fsanitize=address,undefined -fno-omit-frame-pointer
   -I "$build" -I "$root/tests/ssc_native" -I "$root/apps/ethercat_slave/src" -I "$root/src"
   -include "$root/tests/ssc_native/platform.h" -include "$build/gateway_config.h")
 gc_flags=(-Wl,--gc-sections)

@@ -56,6 +56,7 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/src/ssc/sampleappl.h
  ${gateway_generated}/sampleappl.h COPYONLY)
 target_sources(app PRIVATE
  ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+ ${CMAKE_CURRENT_LIST_DIR}/src/esc_dma.c
  ${CMAKE_CURRENT_LIST_DIR}/src/rtt_trace.cpp
  ${CMAKE_CURRENT_LIST_DIR}/src/gateway.cpp
  ${CMAKE_CURRENT_LIST_DIR}/src/io_backend.cpp

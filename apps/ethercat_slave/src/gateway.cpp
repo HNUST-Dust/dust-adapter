@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "gateway.h"
 #include "rtt_trace.h"
+#include "esc_dma.h"
 
 #include <zephyr/kernel.h>
 
@@ -264,6 +265,10 @@ extern "C" int dust_gateway_init(void) {
         core->~Core();
     }
     core = nullptr;
+    if (dust_esc_dma_init()) {
+        printk("ESC DMA self-test failed: %d\n", dust_esc_dma_error());
+        return -1;
+    }
     uint64_t boot = 0;
     const int initialized = InitializeIo(boot);
     if (initialized || !boot) {
@@ -337,6 +342,9 @@ extern "C" void dust_gateway_poll(void) {
     uint8_t watchdog = 0;
     hpm5e_ssc_esc_read(&watchdog, 0x0440, 1);
     const auto now = Now();
+    if (dust_esc_dma_error()) {
+        core->Protect(Error::Transport);
+    }
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
     ServiceIo(*core, now);
 }
@@ -427,6 +435,10 @@ extern "C" bool dust_gateway_active(void) {
 extern "C" void APPL_Application(void) {
     if (!mapping_ready || !core ||
         core->state() == BusinessState::Unconfigured) {
+        return;
+    }
+    if (dust_esc_dma_error()) {
+        core->Protect(Error::Transport);
         return;
     }
     const uint64_t now = Now();

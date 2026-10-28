@@ -57,3 +57,12 @@ config DUST_IMU_HEATER_MAX_PERMILLE
     int "Maximum heater duty in permille"
     default 1000
     range 0 1000
+
+config DUST_ECAT_ESC_DMA
+    bool "Synchronous ESC PDO DMA experiment"
+    depends on BOARD_DUST_HPM5E31 && DMA
+    default n
+    help
+      Use a reserved XDMA channel and uncached staging buffer for aligned PDO
+      blocks. Wait for completion; fail closed on DMA errors or 500 us timeout.
+      Register/mailbox and IRQ-context accesses keep the CPU path.

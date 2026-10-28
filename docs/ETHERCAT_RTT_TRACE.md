@@ -43,3 +43,5 @@ The intermediate word test ran 1000 commands; the bounded trace retained only
 its first 128 and counted 872 overflowed recordings. Full host CSV and the
 retained trace subset are saved in dust-control, alongside the final 64-run
 comparison. Support-level contracts run through scripts/test_protocol.sh.
+
+DMA 实验、错误处理及对照结果见 [ETHERCAT_ESC_DMA.md](ETHERCAT_ESC_DMA.md)。默认保持 CPU word 路径。

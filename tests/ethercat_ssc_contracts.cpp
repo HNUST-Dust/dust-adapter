@@ -262,5 +262,18 @@ int main() {
     assert(native_io_dispatches == dispatched + 1);
     APPL_Application();
     assert(native_io_dispatches == dispatched + 1);
+    // A failed/partial DMA must protect the actual gateway before dispatch.
+    extern int native_esc_dma_fault;
+    extern unsigned native_io_stops;
+    const auto stops_before_dma = native_io_stops;
+    native_esc_dma_fault = -5;
+    Put32(request + 24, 2);
+    APPL_OutputMapping(rx.data());
+    APPL_Application();
+    assert(!dust_gateway_active());
+    assert(native_io_dispatches == dispatched + 1);
+    assert(native_io_stops == stops_before_dma + 1);
+    dust_gateway_poll();
+    assert(native_io_stops == stops_before_dma + 1);
     std::puts("Real SSC SDO / mapping / cycle integration contracts PASS");
 }
