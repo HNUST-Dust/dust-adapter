@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "gateway.h"
+#include "rtt_trace.h"
 
 #include <zephyr/kernel.h>
 
@@ -270,6 +271,7 @@ extern "C" int dust_gateway_init(void) {
         return -1;
     }
     core = new (core_storage) Core(boot, IoProtection());
+    dust_trace_reset(boot);
     last_publish = 0;
     published_state = BusinessState::Unconfigured;
     transaction.Clear();
@@ -409,12 +411,14 @@ extern "C" UINT16 APPL_StopOutputHandler(void) {
 extern "C" void APPL_OutputMapping(UINT16* data) {
     if (mapping_ready) {
         std::memcpy(rx_image.data(), data, prepared.rx.bytes);
+        dust_trace_mapping(U64(rx_image.data()+8), U32(rx_image.data()+24));
         new_output = true;
     }
 }
 extern "C" void APPL_InputMapping(UINT16* data) {
     if (mapping_ready) {
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);
+        dust_trace_input(U32(tx_image.data()+24), prepared.tx.bytes);
     }
 }
 extern "C" bool dust_gateway_active(void) {
@@ -430,8 +434,10 @@ extern "C" void APPL_Application(void) {
     const bool received = new_output;
     if (received) {
         new_output = false;
+        dust_trace_process();
         if (core->Process({rx_image.data(), prepared.rx.bytes}, now,
                           bEcatOutputUpdateRunning, actions) == Error::None) {
+            dust_trace_processed();
             DispatchIo(*core, actions, now);
         }
     }
@@ -443,8 +449,10 @@ extern "C" void APPL_Application(void) {
         (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us)) {
         CaptureIo(*core, feedback, now);
         // 捕获期间 IRQ 仍可入队；发布时刻必须晚于已取出的外设时间戳。
-        (void)core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
-                            feedback);
+        if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
+                            feedback) == Error::None) {
+            dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data()+24));
+        }
         last_publish = now;
         published_state = core->state();
     }

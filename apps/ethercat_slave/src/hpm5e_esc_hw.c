@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 #include "hpm5e_esc_hw.h"
+#include "rtt_trace.h"
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -25,12 +26,16 @@ void hpm5e_ssc_hw_release(void)
 
 void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
+	dust_trace_read(DUST_TR_ESC_READ_BEGIN, address, length);
 	hpm_esc_read(esc, address, (void *)data, length);
+	dust_trace_read(DUST_TR_ESC_READ_END, address, length);
 }
 
 void hpm5e_ssc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
+	dust_trace_esc(DUST_TR_ESC_BEGIN, address, length);
 	hpm_esc_write(esc, address, (const void *)data, length);
+	dust_trace_esc(DUST_TR_ESC_END, address, length);
 }
 
 uint16_t hpm5e_ssc_al_event(void)

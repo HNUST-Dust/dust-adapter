@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "io_backend.hpp"
+#include "rtt_trace.h"
 
 #include <drivers/can/hpmicro_mcan_batch.h>
 #include <zephyr/drivers/uart.h>
@@ -34,6 +35,7 @@ struct CanPort {
     atomic_t busy{}, fault{}, received{}, submitted{}, completed{}, errors{},
         drops{};
     bool ready = false;
+    bool trace_submission = false;
 };
 CanPort buses[] = {{DEVICE_DT_GET(DT_ALIAS(dust_can_0)), 0},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_1)), 1},
@@ -83,6 +85,10 @@ std::array<PendingCan, 16> admitted;
 
 void CanDone(const device*, int error, void* user) {
     auto& bus = *static_cast<CanPort*>(user);
+    if (bus.trace_submission) {
+        dust_trace_stamp(DUST_TR_TX_DONE, uint32_t(error));
+    }
+    bus.trace_submission = false;
     if (error && error != -ECANCELED && error != -ENETDOWN) {
         atomic_inc(&bus.errors);
         atomic_set(&bus.fault, 1);
@@ -94,6 +100,10 @@ void CanDone(const device*, int error, void* user) {
 void CanReceive(const device*, can_frame* frame, void* user) {
     auto& bus = *static_cast<CanPort*>(user);
     const uint32_t sequence = bus.rx_sequence++;
+    if (bus.index == 3 && frame->id == 0x13 && frame->dlc == 8 &&
+        !frame->flags && (frame->data[0] & 15) == 3) {
+        dust_trace_stamp(DUST_TR_CAN_RX, sequence);
+    }
     atomic_inc(&bus.received);
     if (frame->dlc > 8 || frame->flags || frame->id > 0x7ff) {
         atomic_inc(&bus.drops);
@@ -304,12 +314,24 @@ void PumpCan(Core* core, uint64_t now) {
         }
         bus.deadline = deadline;
         atomic_set(&bus.busy, 1);
+        bus.trace_submission = bus.index == 3 && count == 1 &&
+            hardware_frames[0].id == 3 && hardware_frames[0].dlc == 8 &&
+            hardware_frames[0].data[7] == 0xfd;
+        if (bus.trace_submission) {
+            dust_trace_stamp(DUST_TR_SUBMIT, 0);
+        }
         const int result =
             deadline ? hpm_mcan_send_batch_until(
                            bus.dev, hardware_frames.data(), count, K_NO_WAIT,
                            deadline, CanDone, &bus)
                      : hpm_mcan_send_batch(bus.dev, hardware_frames.data(),
                                            count, K_NO_WAIT, CanDone, &bus);
+        if (bus.index == 3 && count == 1 && hardware_frames[0].id == 3) {
+            dust_trace_stamp(DUST_TR_SUBMITTED, uint32_t(result));
+        }
+        if (result) {
+            bus.trace_submission = false;
+        }
         if (!result) {
             for (unsigned i = 0; i < count; ++i) {
                 bus.transmit.Pop();
@@ -578,6 +600,13 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
         if (!batch.valid) {
             continue;
         }
+        bool trace = source == 0 && batch.count == 1 && batch.frames[0].bus == 3 &&
+            batch.frames[0].id == 3 && batch.frames[0].length == 8 &&
+            batch.frames[0].data[7] == 0xfd;
+        for (unsigned n=0; trace && n<7; ++n) trace = batch.frames[0].data[n] == 0xff;
+        if (trace) {
+            dust_trace_begin(core.session(), batch.sequence);
+        }
         const uint64_t deadline = std::min(
             batch.deadline_us, now + dust::can_profile::kCommandTimeoutUs);
         source_deadlines[source] = deadline;
@@ -587,6 +616,9 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
                 core.Protect(Error::Capacity);
                 return;
             }
+        }
+        if (trace) {
+            dust_trace_stamp(DUST_TR_ENQUEUE, 0);
         }
     }
     for (unsigned i = 0; i < 6; ++i) {
@@ -711,6 +743,11 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
             });
             bus.feedback_count = unsigned(last - bus.feedback.begin());
             if (bus.feedback_count != before) ++bus.batch;
+        }
+        if (bus.index == 3) {
+            for (unsigned n=0; n<bus.feedback_count; ++n) {
+                if (bus.feedback[n].id == 0x13) dust_trace_capture(bus.feedback[n].sequence);
+            }
         }
         feedback.can[bus.index] = {bus.batch,
                                    uint32_t(atomic_get(&bus.drops)),

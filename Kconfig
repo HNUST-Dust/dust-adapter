@@ -1,5 +1,13 @@
 source "Kconfig.zephyr"
 
+config DUST_ECAT_RTT_TRACE
+    bool "Bounded DM disable RTT trace in RAM (lab only)"
+    default n
+    help
+      Record 128 sequential CAN3 ID3 disable requests without changing PDO ABI.
+      Export dust_ecat_trace through JTAG after stopping the master.
+
+
 config WBR_CONTROL_ONBOARD_IMU_RAW
     bool "Acquire raw HXY onboard IMU bursts"
     default n
