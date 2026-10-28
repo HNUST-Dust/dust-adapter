@@ -99,6 +99,18 @@ K_THREAD_STACK_DEFINE(can_rx_stack, 2048);
 k_thread can_rx_thread;
 uint32_t capture_generation = 0, observed_generation = 0;
 bool can_capture_enabled = false;
+bool have_can_snapshot = false;
+uint32_t oldest_can_capture = 0;
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+extern "C" {
+struct CanScheduleStats {
+    uint32_t version, poll_us, active_wakes, active_timeouts,
+        active_empty_wakes, active_changes, ssc_expirations;
+};
+static_assert(sizeof(CanScheduleStats) == 28);
+CanScheduleStats dust_ecat_sched_stats = {1, CONFIG_DUST_ECAT_CAN_RX_POLL_US};
+}
+#endif
 class CaptureGuard {
    public:
     CaptureGuard() {
@@ -111,14 +123,78 @@ class CaptureGuard {
     CaptureGuard& operator=(const CaptureGuard&) = delete;
 };
 bool DrainCanReceive();
+// Called only while can_capture_mutex is held. Timestamp comparison uses age,
+// not numerical ordering, so normal uint32 microsecond wrap is supported.
+void RefreshOldestCanCapture(uint32_t now) {
+    have_can_snapshot = false;
+    uint32_t largest_age = 0;
+    for (const auto& bus : buses) {
+        for (unsigned n = 0; n < bus.feedback_count; ++n) {
+            const auto age = uint32_t(now - bus.feedback[n].capture_us);
+            if (!have_can_snapshot || age > largest_age) {
+                have_can_snapshot = true;
+                largest_age = age;
+                oldest_can_capture = bus.feedback[n].capture_us;
+            }
+        }
+    }
+}
+void ExpireCanSnapshots(uint32_t now) {
+    if (!have_can_snapshot || uint32_t(now - oldest_can_capture) < kTimeoutUs) {
+        return;
+    }
+    bool changed = false;
+    for (auto& bus : buses) {
+        const auto before = bus.feedback_count;
+        auto last = std::remove_if(
+            bus.feedback.begin(), bus.feedback.begin() + before,
+            [&](const Core::CanEvent& event) {
+                return !configuration.can_rx[bus.index] ||
+                       uint32_t(now - event.capture_us) >= kTimeoutUs;
+            });
+        bus.feedback_count = unsigned(last - bus.feedback.begin());
+        if (before != bus.feedback_count) {
+            ++bus.batch;
+            changed = true;
+        }
+    }
+    if (changed) {
+        ++capture_generation;
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+        ++dust_ecat_sched_stats.ssc_expirations;
+#endif
+    }
+    RefreshOldestCanCapture(now);
+}
 void CanRxLoop(void*, void*, void*) {
     for (;;) {
-        // IRQ signals immediately. Timeout only expires retained snapshots.
-        k_sem_take(&can_rx_wake, K_USEC(100));
+        const int result = k_sem_take(
+            &can_rx_wake, CONFIG_DUST_ECAT_CAN_RX_POLL_US
+                              ? K_USEC(CONFIG_DUST_ECAT_CAN_RX_POLL_US)
+                              : K_FOREVER);
         CaptureGuard guard;
-        if (can_capture_enabled && DrainCanReceive()) {
-            ++capture_generation;
+        if (!can_capture_enabled) {
+            continue;
         }
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+        ++dust_ecat_sched_stats.active_wakes;
+        if (result == -EAGAIN) {
+            ++dust_ecat_sched_stats.active_timeouts;
+        }
+#else
+        (void)result;
+#endif
+        if (DrainCanReceive()) {
+            ++capture_generation;
+            RefreshOldestCanCapture(uint32_t(Now()));
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+            ++dust_ecat_sched_stats.active_changes;
+#endif
+        }
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+        else
+            ++dust_ecat_sched_stats.active_empty_wakes;
+#endif
     }
 }
 #endif
@@ -255,6 +331,7 @@ void Stop(void*, Error) {
     {
         CaptureGuard guard;
         can_capture_enabled = false;
+        have_can_snapshot = false;
         for (auto& bus : buses) {
             k_msgq_purge(&bus.receive);
             bus.feedback_count = 0;
@@ -339,6 +416,7 @@ void EnterActive(Core& core, uint64_t now) {
             ++bus.batch;
         }
         ++capture_generation;
+        have_can_snapshot = false;
         can_capture_enabled = true;
     }
     k_sem_give(&can_rx_wake);
@@ -883,6 +961,7 @@ bool DrainCanReceive() {
 bool ServiceCanReceive() {
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     CaptureGuard guard;
+    if (have_can_snapshot) ExpireCanSnapshots(uint32_t(Now()));
     const bool changed = capture_generation != observed_generation;
     observed_generation = capture_generation;
     return changed;
@@ -894,6 +973,9 @@ void CaptureCanFeedback(Core::Feedback& feedback) {
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     {
         CaptureGuard guard;
+        if (have_can_snapshot) {
+            ExpireCanSnapshots(uint32_t(Now()));
+        }
         for (auto& bus : buses) {
             bus.snapshot_consumed = true;
             std::copy_n(bus.feedback.begin(), bus.feedback_count,
@@ -901,6 +983,15 @@ void CaptureCanFeedback(Core::Feedback& feedback) {
             feedback.can[bus.index] = {
                 bus.batch, uint32_t(atomic_get(&bus.drops)),
                 bus.published_feedback.data(), uint16_t(bus.feedback_count)};
+            if (bus.index == 3) {
+                for (unsigned n = 0; n < bus.feedback_count; ++n) {
+                    if (bus.published_feedback[n].id == 0x13) {
+                        dust_trace_can_queue(
+                            DUST_TR_CAN_SNAPSHOT,
+                            bus.published_feedback[n].sequence);
+                    }
+                }
+            }
         }
     }
 #endif
@@ -909,6 +1000,14 @@ void CaptureCanFeedback(Core::Feedback& feedback) {
         feedback.can[bus.index] = {bus.batch, uint32_t(atomic_get(&bus.drops)),
                                    bus.feedback.data(),
                                    uint16_t(bus.feedback_count)};
+        if (bus.index == 3) {
+            for (unsigned n = 0; n < bus.feedback_count; ++n) {
+                if (bus.feedback[n].id == 0x13) {
+                    dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT,
+                                         bus.feedback[n].sequence);
+                }
+            }
+        }
 #endif
         uint8_t* p = feedback.diagnostics.data() + 32 + bus.index * 32;
         Put32(p, atomic_get(&bus.received));

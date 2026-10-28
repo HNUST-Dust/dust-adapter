@@ -75,3 +75,18 @@ config DUST_ECAT_CAN_RX_THREAD
       Priority 0 worker drains bounded CAN queues on IRQ semaphore wakeups.
       SSC/Core remain on main priority 1 and consume a separately copied snapshot.
       Disable for the single-thread RTT control experiment.
+
+config DUST_ECAT_CAN_RX_POLL_US
+    int "CAN RX worker fallback polling interval (0 = events only)"
+    depends on DUST_ECAT_CAN_RX_THREAD
+    default 100
+    range 0 20000
+    help
+      CAN IRQs always signal immediately. Zero blocks until an event. The SSC
+      owner expires retained snapshots before publishing, so expiry does not
+      require periodic high-priority worker wakeups. Use 100 as the control.
+
+config DUST_ECAT_SCHED_STATS
+    bool "Bounded CAN worker wakeup counters in RAM (lab only)"
+    depends on DUST_ECAT_CAN_RX_THREAD
+    default n

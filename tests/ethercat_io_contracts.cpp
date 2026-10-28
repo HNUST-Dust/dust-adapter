@@ -382,24 +382,13 @@ int main() {
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.diagnostics + 208) == 0);
     }
-    {
-        Fixture f;
-        f.Header(1);
-        f.Can(1);
-        f.Process();
-        unsigned before = cans[2].batches;
-        delay_admission = true;
-        ServiceIo(*f.core, native_now);
-        delay_admission = false;
-        assert(f.core->state() == BusinessState::Protected &&
-               cans[2].batches == before);
-    }
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     {
         Fixture f;
         f.Header(1);
         f.Can(1);
         f.Process();
+        assert(f.core->state() == BusinessState::Active);
         std::thread irq_producer([&] {
             for (unsigned i = 0; i < 2000; ++i) {
                 can_frame frame{};
@@ -430,6 +419,43 @@ int main() {
         CaptureCanFeedback(stopped);
         assert(stopped.can[2].count == 0);
     }
+    // Expiry must be performed by SSC even if the event worker never wakes.
+    // Exercise the uint32 capture timestamp wrap without advancing Core's lease.
+    const uint64_t saved_clock = native_now;
+    native_now = (uint64_t(1) << 32) - 10000;
+    {
+        Fixture f;
+        f.Header(1); f.Can(1); f.Process();
+        assert(f.core->state() == BusinessState::Active);
+        can_frame frame{}; frame.id = 0x201; frame.dlc = 8;
+        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
+        FlushCan();
+        Core::Feedback snapshot;
+        CaptureCanFeedback(snapshot);
+        assert(snapshot.can[2].count == 1);
+        (void)ServiceCanReceive();
+        native_now += 20001;
+        // No FlushCan or IRQ notification: only SSC expires the snapshot.
+        assert(ServiceCanReceive());
+        CaptureCanFeedback(snapshot);
+        assert(snapshot.can[2].count == 0);
+        assert(!ServiceCanReceive());
+    }
+    native_now = saved_clock;
+#endif
+    {
+        Fixture f;
+        f.Header(1);
+        f.Can(1);
+        f.Process();
+        unsigned before = cans[2].batches;
+        delay_admission = true;
+        ServiceIo(*f.core, native_now);
+        delay_admission = false;
+        assert(f.core->state() == BusinessState::Protected &&
+               cans[2].batches == before);
+    }
+#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     NativeStopCanWorker();
 #endif
     std::puts(

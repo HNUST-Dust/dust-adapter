@@ -47,14 +47,19 @@ inline int k_sem_take(k_sem* s, int timeout) {
     std::unique_lock<std::mutex> guard(s->mutex);
     s->completed = s->taken;
     s->cv.notify_all();
-    s->cv.wait_for(guard, std::chrono::microseconds(timeout),
-                   [&] { return s->pending || s->stop; });
+    bool signaled = true;
+    if (timeout == K_FOREVER) {
+        s->cv.wait(guard, [&] { return s->pending || s->stop; });
+    } else {
+        signaled = s->cv.wait_for(guard, std::chrono::microseconds(timeout),
+                               [&] { return s->pending || s->stop; });
+    }
     if (s->stop) {
         throw NativeThreadExit{};
     }
     s->pending = false;
     s->taken = s->issued;
-    return 0;
+    return signaled ? 0 : -EAGAIN;
 }
 struct k_thread {
     std::thread value;

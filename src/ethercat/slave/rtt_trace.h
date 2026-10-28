@@ -24,6 +24,7 @@ enum dust_trace_stage {
     DUST_TR_ESC_END,
     DUST_TR_CAN_ENQUEUED,
     DUST_TR_CAN_DEQUEUED,
+    DUST_TR_CAN_SNAPSHOT,
     DUST_TR_STAGES
 };
 #if defined(CONFIG_DUST_ECAT_RTT_TRACE)

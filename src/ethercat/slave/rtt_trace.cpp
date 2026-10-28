@@ -23,7 +23,7 @@ struct TraceBuffer {
     uint64_t boot;
     TraceRecord records[128];
 };
-static_assert(sizeof(TraceRecord) == 184 &&
+static_assert(sizeof(TraceRecord) == 192 &&
               offsetof(TraceBuffer, records) == 40);
 extern "C" {
 TraceBuffer dust_ecat_trace;
@@ -88,7 +88,7 @@ extern "C" void dust_trace_reset(uint64_t boot) {
     dust_mcan_timing.boot = boot;
 #endif
     dust_ecat_trace.magic = 0x31525444;  // DTR1
-    dust_ecat_trace.version = 2;
+    dust_ecat_trace.version = 3;
     dust_ecat_trace.record_bytes = sizeof(TraceRecord);
     dust_ecat_trace.capacity = 128;
     dust_ecat_trace.clock_hz = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC;
@@ -183,7 +183,8 @@ extern "C" void dust_trace_can_timing(uint32_t sequence, const hpm_mcan_rx_timin
 #endif
 extern "C" void dust_trace_can_queue(unsigned stage, uint32_t sequence) {
     const auto key = irq_lock();
-    if ((stage == DUST_TR_CAN_ENQUEUED || stage == DUST_TR_CAN_DEQUEUED) &&
+    if ((stage == DUST_TR_CAN_ENQUEUED || stage == DUST_TR_CAN_DEQUEUED ||
+         stage == DUST_TR_CAN_SNAPSHOT) &&
         Has(DUST_TR_CAN_RX) && active->can_sequence == sequence) {
         Stamp(stage, k_cycle_get_64(), 0);
     }
