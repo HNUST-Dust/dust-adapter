@@ -66,3 +66,9 @@ if [[ -f "$support/tests/native/test_mcan_timing.sh" ]]; then
 else
   echo 'MCAN RX timing contracts not run: hpm_support script unavailable.'
 fi
+
+if [[ -f "$support/tests/native/test_mcan_rx.sh" ]]; then
+  bash "$support/tests/native/test_mcan_rx.sh"
+else
+  echo 'MCAN RX FIFO contracts not run: hpm_support script unavailable.'
+fi
