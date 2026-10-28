@@ -66,3 +66,12 @@ config DUST_ECAT_ESC_DMA
       Use a reserved XDMA channel and uncached staging buffer for aligned PDO
       blocks. Wait for completion; fail closed on DMA errors or 500 us timeout.
       Register/mailbox and IRQ-context accesses keep the CPU path.
+
+config DUST_ECAT_CAN_RX_THREAD
+    bool "Event-driven CAN receive worker"
+    depends on MULTITHREADING
+    default y
+    help
+      Priority 0 worker drains bounded CAN queues on IRQ semaphore wakeups.
+      SSC/Core remain on main priority 1 and consume a separately copied snapshot.
+      Disable for the single-thread RTT control experiment.

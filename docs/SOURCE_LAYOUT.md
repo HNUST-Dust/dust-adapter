@@ -40,8 +40,9 @@ Zephyr 的中断回调和工作线程分工值得复用：回调只记录数据�
 
 ## 当前 EtherCAT 线程边界和优化判断
 
-当前启用 Zephyr 多线程，但应用中的 SSC、Core、软件发送队列和反馈快照由同一个主线程拥有；
-CAN/UART 中断异步入队。系统工作队列是额外的内核线程。
+当前采用独立 CAN 接收线程 + SSC 主线程。`dust_can_rx` 优先级 0，栈 2048 B；
+主线程优先级 1，继续唯一拥有 SSC、Core、软件发送队列、UART 窗口和 ESC 读写。
+CAN/UART 中断异步入队，系统工作队列也是额外的内核线程。
 
 最近 canfast 的 64 个样本中，CAN 回调到快照平均约 63.3 us，其中入队前约 9.6 us、
 队列等待约 52.1 us、出队到快照约 1.5 us。ESC 输入写入约 50 us。
@@ -49,7 +50,7 @@ CAN/UART 中断异步入队。系统工作队列是额外的内核线程。
 上一轮仅提前捕获快照把等待转移到了发布阶段，整体 RTT 没有稳定改善。
 
 本次目录迁移保持调度和协议行为不变，便于用同一基线验证。
-后续接收线程应按以下边界实现并做 A/B 对照，不能直接从两个线程调用现有 ServiceCanReceive：
+接收线程需要遵守以下边界并做 A/B 对照，不能让两个线程同时无锁排空同一反馈数组：
 
 1. CAN IRQ 入队后以信号量唤醒高优先级接收线程，处理有界批次后阻塞；不能忙循环抢占 SSC。
 2. 接收线程只拥有采集队列和私有快照。SSC/Core 和 ESC 读写仍归一个线程。
@@ -69,3 +70,36 @@ CAN/UART 中断异步入队。系统工作队列是额外的内核线程。
 实际 SSC、实际 IO 后端、UART 原生 idle、MCAN、ESC 字宽及 DMA 故障保护测试。
 从根目录分别使用默认配置及 DM 白名单 + RTT trace 新目录构建 `dust-hpm5e31`，均通过。
 DM trace 镜像 ROM 170860 B、RAM 229244 B，与迁移前相同；本次未刷写或执行实机 RTT。
+
+## 多线程实验实现（2026-10-28）
+
+沿用原 src 中队列 + 信号量 + 有界工作线程的模式。首轮独立 CAN 接收，
+CAN/UART 发送继续使用当前异步硬件驱动，避免同时改变多个延迟环节。
+
+- IRQ 完成入队及时间戳后唤醒 `dust_can_rx`；线程每次最多处理每总线 32 条。
+  二值信号量合并唤醒，100 us 超时只用来淘汰过期快照，不是固定收包等待。
+- 接收线程在短互斥区更新快照，SSC 复制至自己的独立数组后释放锁，再调用 Core.Publish。
+  Core 持有的指针不会随接收线程更新而改变。锁不覆盖 ESC、CAN/UART 硬件提交。
+- SSC 复制前的多次 IRQ 唤醒合并为最新容量范围内的记录，避免线程调度把一批反馈拆成
+  多个互相覆盖的单帧快照。快照复制后，新一批覆盖此前的已消费快照。
+- Stop/Protect 同步禁用采集、清空快照和旧队列；Arm 同步清空旧队列后重新开放。
+  工作线程不调用 Core、SSC，也不自行发 CAN/UART 命令。
+- 原生测试同时编译单线程与多线程后端；多线程边界用真实 std::thread、互斥锁、原子计数
+  和条件变量，包括并发 IRQ 入队/快照发布、持有快照的稳定性、保护时仍有 IRQ 入队。
+  原生测试不模拟 Zephyr 优先级与中断时延，性能仍需实板测量。
+
+新目录实验构建：
+
+```bash
+west build -b dust-hpm5e31 -d build/dm_rtt_can_thread -- \
+  -DDUST_ADAPTER_CAN_CONFIG=$PWD/config/can_bench_dm_rtt.yaml \
+  -DCONFIG_DUST_ECAT_RTT_TRACE=y -DCONFIG_DUST_ECAT_ESC_DMA=n
+# 同源码单线程对照：独立目录构建，并恢复之前的主线程优先级。
+west build -b dust-hpm5e31 -d build/dm_rtt_thread_control -- \
+  -DDUST_ADAPTER_CAN_CONFIG=$PWD/config/can_bench_dm_rtt.yaml \
+  -DCONFIG_DUST_ECAT_RTT_TRACE=y -DCONFIG_DUST_ECAT_ESC_DMA=n \
+  -DCONFIG_DUST_ECAT_CAN_RX_THREAD=n -DCONFIG_MAIN_THREAD_PRIORITY=0
+```
+
+默认启用本次线程实验；不能在启用接收线程时把主线程优先级设为 0 或更高，编译会拒绝。
+SPI IMU 仍关闭、DMA 仍关闭、PDO/YAML 布局不变。实机验证仍只允许 DM 失能帧。

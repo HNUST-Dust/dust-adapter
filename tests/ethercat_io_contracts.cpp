@@ -10,7 +10,16 @@
 #include "io_backend.hpp"
 #include "platform.hpp"
 using namespace dust::ecat;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
+std::atomic<uint64_t> native_now{1000};
+#else
 uint64_t native_now = 1000;
+#endif
+static void FlushCan() {
+#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
+    NativeFlushCanWorker();
+#endif
+}
 static device devices[10] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}};
 const device* NativeDevice(const char* name) {
     const std::string n(name);
@@ -261,7 +270,7 @@ int main() {
         assert(cans[2].batches == batches + 1);
         // 最新 CAN 窗口保留最后两帧，UART 原生 idle 块按 PDO 容量分片。
         // 过期启动反馈不能进入本轮 PDO（覆盖采样时钟回绕）。
-        const auto saved_now = native_now;
+        const uint64_t saved_now = native_now;
         native_now -= 20000;
         can_frame stale{};
         stale.id = 0x201;
@@ -269,6 +278,7 @@ int main() {
         cans[2].rx(&devices[2], &stale, cans[2].rx_user);
         native_now = saved_now;
         Core::Feedback expired_feedback;
+        FlushCan();
         CaptureIo(*f.core, expired_feedback, native_now);
         assert(expired_feedback.can[2].count == 0 &&
                expired_feedback.can[2].drops >= 1);
@@ -279,7 +289,7 @@ int main() {
             frame.data[0] = i;
             cans[2].rx(&devices[2], &frame, cans[2].rx_user);
         }
-        const auto cycle_started = native_now;
+        const uint64_t cycle_started = native_now;
         // 模拟周期开始后中断收到 UART 块：旧周期时间不能被当作采样上界。
         native_now += 1;
         uint8_t bytes[32]{};
@@ -289,19 +299,23 @@ int main() {
         uarts[0].callback(&devices[4], &e, uarts[0].user);
         Core::Feedback feedback;
         // CAN can be drained and exposed without consuming queued UART input.
+        FlushCan();
         assert(ServiceCanReceive());
         CaptureCanFeedback(feedback);
         assert(feedback.can[2].count == 2);
         assert(!ServiceCanReceive());
+
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U16(f.tx.data() + f.layout.uart_tx[0] + 12) == 0);
+        FlushCan();
         CaptureIo(*f.core, feedback, cycle_started);
         assert(f.core->state() == BusinessState::Active);
         assert(feedback.can[2].count == 2 &&
                feedback.can[2].frames[0].data[0] == 1 &&
                feedback.can[2].frames[1].data[0] == 2);
         const auto retained_batch = feedback.can[2].sequence;
+        FlushCan();
         CaptureIo(*f.core, feedback, native_now);
         assert(feedback.can[2].count == 2 &&
                feedback.can[2].sequence == retained_batch);
@@ -321,8 +335,18 @@ int main() {
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.uart_tx[0]) != first_chunk);
+#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
+        const auto old_sequence = feedback.can[2].frames[0].sequence;
+        can_frame concurrent{};
+        concurrent.id = 0x201; concurrent.dlc = 8;
+        cans[2].rx(&devices[2], &concurrent, cans[2].rx_user);
+        FlushCan();
+        assert(feedback.can[2].frames[0].sequence == old_sequence);
+        assert(ServiceCanReceive());
+#endif
         // 租约过期撤销在途批次，下一次服务只发送 YAML 本地保护。
         native_now += 20000;
+        FlushCan();
         CaptureIo(*f.core, feedback, native_now);
         assert(feedback.can[2].count == 0);
         ServiceIo(*f.core, native_now);
@@ -370,6 +394,44 @@ int main() {
         assert(f.core->state() == BusinessState::Protected &&
                cans[2].batches == before);
     }
+#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
+    {
+        Fixture f;
+        f.Header(1);
+        f.Can(1);
+        f.Process();
+        std::thread irq_producer([&] {
+            for (unsigned i = 0; i < 2000; ++i) {
+                can_frame frame{};
+                frame.id = 0x201; frame.dlc = 8;
+                std::memcpy(frame.data, &i, sizeof(i));
+                cans[2].rx(&devices[2], &frame, cans[2].rx_user);
+            }
+        });
+        for (unsigned i = 0; i < 100; ++i) {
+            Core::Feedback snapshot;
+            CaptureCanFeedback(snapshot);
+            assert(snapshot.can[2].count <= 2);
+            std::array<Core::CanEvent, 2> held{};
+            std::copy_n(snapshot.can[2].frames, snapshot.can[2].count, held.begin());
+            std::this_thread::yield();
+            // Worker is free to update its array while Core holds this copy.
+            for (unsigned n = 0; n < snapshot.can[2].count; ++n)
+                assert(held[n].sequence == snapshot.can[2].frames[n].sequence &&
+                       held[n].data == snapshot.can[2].frames[n].data);
+            assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
+                                  snapshot) == Error::None);
+        }
+        // Protect while IRQs can still enqueue; worker cannot resurrect data.
+        f.core->Protect(Error::State);
+        irq_producer.join();
+        FlushCan();
+        Core::Feedback stopped;
+        CaptureCanFeedback(stopped);
+        assert(stopped.can[2].count == 0);
+    }
+    NativeStopCanWorker();
+#endif
     std::puts(
         "EtherCAT real IO backend contracts passed (mock peripheral "
         "boundaries).");
