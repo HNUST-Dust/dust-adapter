@@ -52,3 +52,9 @@ if [[ -x "$support/tests/native/test_hpm5e_clock.sh" ]]; then
 else
   echo 'HPM5E clock contracts not run: hpm_support native test script unavailable.'
 fi
+
+if [[ -f "$support/tests/native/test_esc_access.sh" ]]; then
+  bash "$support/tests/native/test_esc_access.sh"
+else
+  echo "ESC transfer contracts not run: hpm_support native test script unavailable."
+fi
