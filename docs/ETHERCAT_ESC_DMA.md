@@ -48,3 +48,21 @@ The CPU control used the same previously verified word-fast image. Its maximum R
 This **synchronous bounce-buffer/IRQ implementation is slower**. The much larger change in CAN submit-to-RX-callback occurred only in the DMA run, and disappeared in the adjacent CPU control. It is not explained by the roughly 38.5 us additional mean PDO copying cost. The measurements do not distinguish physical CAN/motor reply delay from RX IRQ latency; the mechanism remains unresolved. Do not label the extra 6 ms as Ethernet transfer time or proven motor computation time.
 
 The CPU image was restored to hardware. DMA remains an opt-in experiment. Larger bursts, a safe polled DMA driver API or a different asynchronous architecture would require separate investigation and measurements; the existence of SYNC0/1 DMA request signals alone does not establish a performance benefit. Raw host/MCU data and build fingerprints are saved in dust-control/docs/bench-results with the 2026-10-28 dma and cpucontrol prefixes.
+
+## Corrected MCAN receive path: multithread + DMA retest
+
+Subsequent MCAN hardware diagnostics found an eight-frame FIFO backlog with
+6.512 ms SOF age and only 5.935 us ISR-entry-to-callback time. The combined
+hardware mask/global rejection/FIFO drain correction removed that anomaly in
+the multithread CPU run: FIFO occupancy 1, hardware age 122 us including frame
+reception, RTT mean 872.004 us/max 999.708 us, all 64 commands/trace records pass.
+This evidence changes the interpretation of the earlier unexplained CAN segment;
+it does not retrospectively reconstruct the exact backlog in the older DMA run.
+
+The new DMA comparison keeps `CONFIG_DUST_ECAT_CAN_RX_THREAD=y`,
+`CONFIG_HPM_MCAN_RX_TIMING=y`, the corrected hpm_support revision and all
+125 us/64 sample bench parameters. Build directory is `build/dm_rtt_mcan_fixed_dma`;
+DMA stays opt-in. Export DTR1, MCT1 and `dust_esc_dma_stats` after the master exits.
+Do not compare only host RTT: also compare ESC read/write, hardware FIFO age,
+CAN callbacks, publish wait and successful DMA transfer/error counts.
+New combined-image runtime performance is pending.
