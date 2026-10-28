@@ -60,3 +60,9 @@ else
 fi
 
 bash "$root/scripts/test_ethercat_esc_dma.sh"
+
+if [[ -f "$support/tests/native/test_mcan_timing.sh" ]]; then
+  bash "$support/tests/native/test_mcan_timing.sh"
+else
+  echo 'MCAN RX timing contracts not run: hpm_support script unavailable.'
+fi

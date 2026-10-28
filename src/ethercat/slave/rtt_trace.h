@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+struct hpm_mcan_rx_timing;
 enum dust_trace_stage {
     DUST_TR_ESC_READ_BEGIN,
     DUST_TR_ESC_READ_END,
@@ -27,6 +28,9 @@ enum dust_trace_stage {
 };
 #if defined(CONFIG_DUST_ECAT_RTT_TRACE)
 void dust_trace_reset(uint64_t boot);
+#if defined(CONFIG_HPM_MCAN_RX_TIMING)
+void dust_trace_can_timing(uint32_t sequence, const struct hpm_mcan_rx_timing *timing);
+#endif
 void dust_trace_mapping(uint64_t session, uint32_t exchange);
 void dust_trace_process(void);
 void dust_trace_processed(void);

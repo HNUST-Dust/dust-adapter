@@ -6,6 +6,9 @@
 
 #include <cstddef>
 #include <cstring>
+#if defined(CONFIG_HPM_MCAN_RX_TIMING)
+#include <drivers/can/hpmicro_mcan_timing.h>
+#endif
 // Single outstanding DM disable command only. No logging/allocation in IRQs.
 struct TraceRecord {
     uint32_t revision, valid;
@@ -24,6 +27,22 @@ static_assert(sizeof(TraceRecord) == 184 &&
               offsetof(TraceBuffer, records) == 40);
 extern "C" {
 TraceBuffer dust_ecat_trace;
+#if defined(CONFIG_HPM_MCAN_RX_TIMING)
+struct CanTimingRecord {
+    uint32_t revision, valid;
+    uint64_t session;
+    uint32_t batch, sequence;
+    hpm_mcan_rx_timing timing;
+};
+struct CanTimingBuffer {
+    uint32_t magic, version, record_bytes, capacity, count, overflow, clock_hz, header_bytes;
+    uint64_t boot;
+    CanTimingRecord records[128];
+};
+static_assert(sizeof(hpm_mcan_rx_timing) == 48 && sizeof(CanTimingRecord) == 72 &&
+              offsetof(CanTimingBuffer, records) == 40);
+CanTimingBuffer dust_mcan_timing;
+#endif
 }
 namespace {
 TraceRecord* active;
@@ -58,6 +77,16 @@ void Stamp(unsigned stage, uint64_t at, uint32_t value) {
 extern "C" void dust_trace_reset(uint64_t boot) {
     const auto key = irq_lock();
     std::memset(&dust_ecat_trace, 0, sizeof(dust_ecat_trace));
+#if defined(CONFIG_HPM_MCAN_RX_TIMING)
+    std::memset(&dust_mcan_timing, 0, sizeof(dust_mcan_timing));
+    dust_mcan_timing.magic = 0x3154434d; // MCT1, independent optional sidecar.
+    dust_mcan_timing.version = 1;
+    dust_mcan_timing.record_bytes = sizeof(CanTimingRecord);
+    dust_mcan_timing.capacity = 128;
+    dust_mcan_timing.clock_hz = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC;
+    dust_mcan_timing.header_bytes = 40;
+    dust_mcan_timing.boot = boot;
+#endif
     dust_ecat_trace.magic = 0x31525444;  // DTR1
     dust_ecat_trace.version = 2;
     dust_ecat_trace.record_bytes = sizeof(TraceRecord);
@@ -131,6 +160,27 @@ extern "C" void dust_trace_stamp(unsigned stage, uint32_t value) {
     }
     irq_unlock(key);
 }
+#if defined(CONFIG_HPM_MCAN_RX_TIMING)
+extern "C" void dust_trace_can_timing(uint32_t sequence, const hpm_mcan_rx_timing *timing) {
+    if (!timing) return;
+    const auto key = irq_lock();
+    if (Has(DUST_TR_CAN_RX) && active->can_sequence == sequence) {
+        const auto index = unsigned(active - dust_ecat_trace.records);
+        auto& record = dust_mcan_timing.records[index];
+        if (!record.valid) {
+            ++record.revision;
+            record.session = active->session;
+            record.batch = active->batch;
+            record.sequence = sequence;
+            record.timing = *timing;
+            record.valid = 1;
+            ++record.revision;
+            if (dust_mcan_timing.count <= index) dust_mcan_timing.count = index + 1;
+        }
+    }
+    irq_unlock(key);
+}
+#endif
 extern "C" void dust_trace_can_queue(unsigned stage, uint32_t sequence) {
     const auto key = irq_lock();
     if ((stage == DUST_TR_CAN_ENQUEUED || stage == DUST_TR_CAN_DEQUEUED) &&

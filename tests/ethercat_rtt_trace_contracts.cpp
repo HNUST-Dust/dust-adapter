@@ -22,6 +22,22 @@ int main() {
     assert(!(r.valid & (1U << DUST_TR_PUBLISH)));
     dust_trace_stamp(DUST_TR_SUBMIT, 0);
     dust_trace_stamp(DUST_TR_CAN_RX, 9);
+    hpm_mcan_rx_timing timing{};
+    timing.irq_cycles = 10;
+    timing.counter = 5;
+    timing.rx_timestamp = 65530;
+    timing.tscc = 0xf0001;
+    timing.nominal_bitrate = 1000000;
+    dust_trace_can_timing(8, &timing);
+    assert(dust_mcan_timing.count == 0);
+    dust_trace_can_timing(9, &timing);
+    auto& t = dust_mcan_timing.records[0];
+    assert(dust_mcan_timing.count == 1 && t.valid == 1 && t.revision == 2 &&
+           t.sequence == 9 && t.session == 11 && t.batch == 3 &&
+           t.timing.rx_timestamp == 65530 && dust_mcan_timing.boot == 7);
+    timing.irq_cycles = 99;
+    dust_trace_can_timing(9, &timing);
+    assert(t.timing.irq_cycles == 10); // First matching callback only.
     dust_trace_capture(8);
     assert(!(r.valid & (1U << DUST_TR_CAPTURE)));
     dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, 8);

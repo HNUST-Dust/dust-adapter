@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "io_backend.hpp"
 #include "rtt_trace.h"
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE) && defined(CONFIG_HPM_MCAN_RX_TIMING)
+#include <drivers/can/hpmicro_mcan_timing.h>
+#endif
 
 #include <drivers/can/hpmicro_mcan_batch.h>
 #include <zephyr/drivers/uart.h>
@@ -140,6 +143,9 @@ void CanReceive(const device*, can_frame* frame, void* user) {
     if (bus.index == 3 && frame->id == 0x13 && frame->dlc == 8 &&
         !frame->flags && (frame->data[0] & 15) == 3) {
         dust_trace_stamp(DUST_TR_CAN_RX, sequence);
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE) && defined(CONFIG_HPM_MCAN_RX_TIMING)
+        dust_trace_can_timing(sequence, hpm_mcan_last_rx_timing(bus.dev));
+#endif
     }
     atomic_inc(&bus.received);
     if (frame->dlc > 8 || frame->flags || frame->id > 0x7ff) {

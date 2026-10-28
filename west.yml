@@ -17,7 +17,7 @@ manifest:
       west-commands: scripts/west-commands.yml
     - name: hpm_support
       remote: dust
-      revision: 1823f983c31d38a543093ea1325952c2063ec155
+      revision: 0256d1df154e11741b0c82c37cdbef1008f517da
     - name: sdk_env
       remote: usb-fork
       revision: 7b8cb8bb2f04f52353a6429bffb024f0a2867876
