@@ -24,6 +24,11 @@ int main() {
     dust_trace_stamp(DUST_TR_CAN_RX, 9);
     dust_trace_capture(8);
     assert(!(r.valid & (1U << DUST_TR_CAPTURE)));
+    dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, 8);
+    assert(!(r.valid & (1U << DUST_TR_CAN_ENQUEUED)));
+    dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, 9);
+    dust_trace_can_queue(DUST_TR_CAN_DEQUEUED, 9);
+    assert(r.cycles[DUST_TR_CAN_DEQUEUED] > r.cycles[DUST_TR_CAN_ENQUEUED]);
     dust_trace_capture(9);
     dust_trace_stamp(DUST_TR_PUBLISH, 99);
     dust_trace_input(98, 400);

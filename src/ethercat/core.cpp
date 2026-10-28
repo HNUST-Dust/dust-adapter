@@ -376,7 +376,7 @@ void Core::CompleteStatus(uint32_t sequence, int32_t result,
     }
 }
 Error Core::Publish(MutableBytes image, uint64_t now,
-                    const Feedback& feedback) {
+                    const Feedback& feedback, bool advance_uart) {
     Tick(now, true);
     if (state_ == BusinessState::Unconfigured) {
         return Error::State;
@@ -408,7 +408,30 @@ Error Core::Publish(MutableBytes image, uint64_t now,
         return invalid(Error::Wire);
     }
     // Tick 由集成层即使在没有 RxPDO 到达时也独立调用。
-    std::fill_n(image.data, image.size, uint8_t(0));
+    // A CAN-only refresh preserves the last UART image byte-for-byte and
+    // does not mark another block sent or move the retransmission cursor.
+    if (state_ != BusinessState::Active) {
+        advance_uart = true;
+    }
+    if (!advance_uart &&
+        (U32(image.data) != kMagic || U64(image.data + 8) != boot_ ||
+         U64(image.data + 16) != session_ ||
+         U32(image.data + 32) != layout_.signature)) {
+        return invalid(Error::State);
+    }
+    unsigned clear_from = 0;
+    if (!advance_uart) {
+        for (unsigned port = 0; port < 6; ++port) {
+            if (layout_.uart_tx[port] == kAbsent) {
+                continue;
+            }
+            std::fill(image.data + clear_from,
+                      image.data + layout_.uart_tx[port], uint8_t(0));
+            clear_from =
+                layout_.uart_tx[port] + 16 + config_.uart[port].rx_bytes;
+        }
+    }
+    std::fill(image.data + clear_from, image.data + image.size, uint8_t(0));
     auto* p = image.data;
     Put32(p, kMagic);
     Put16(p + 4, kAbiMajor);
@@ -459,7 +482,7 @@ Error Core::Publish(MutableBytes image, uint64_t now,
         }
     }
     for (unsigned port = 0; port < 6; ++port) {
-        if (layout_.uart_tx[port] == kAbsent) {
+        if (!advance_uart || layout_.uart_tx[port] == kAbsent) {
             continue;
         }
         auto* out = p + layout_.uart_tx[port];

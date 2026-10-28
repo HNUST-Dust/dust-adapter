@@ -358,6 +358,7 @@ int main(void) {
             irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
             printk("SSC reset handled\n");
         }
+        dust_gateway_poll();
         MainLoop();
         dust_gateway_poll();
         if (k_uptime_get() >= next_link_poll) {

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+#include <algorithm>
 #include <drivers/can/hpmicro_mcan_batch.h>
 
 #include <array>
@@ -287,6 +288,14 @@ int main() {
         e.data.rx = {bytes, 0, 32};
         uarts[0].callback(&devices[4], &e, uarts[0].user);
         Core::Feedback feedback;
+        // CAN can be drained and exposed without consuming queued UART input.
+        assert(ServiceCanReceive());
+        CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count == 2);
+        assert(!ServiceCanReceive());
+        assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
+                               feedback) == Error::None);
+        assert(U16(f.tx.data() + f.layout.uart_tx[0] + 12) == 0);
         CaptureIo(*f.core, feedback, cycle_started);
         assert(f.core->state() == BusinessState::Active);
         assert(feedback.can[2].count == 2 &&
@@ -301,6 +310,14 @@ int main() {
         assert(U32(f.tx.data() + f.layout.uart_tx[0] + 4) == 1);
         assert(U16(f.tx.data() + f.layout.uart_tx[0] + 12) == 16);
         auto first_chunk = U32(f.tx.data() + f.layout.uart_tx[0]);
+        const auto uart_offset = f.layout.uart_tx[0];
+        std::array<uint8_t, 32> uart_snapshot;
+        std::copy_n(f.tx.data() + uart_offset, uart_snapshot.size(), uart_snapshot.data());
+        for (unsigned refresh = 0; refresh < 3; ++refresh) {
+            assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
+                                   feedback, false) == Error::None);
+            assert(std::equal(uart_snapshot.begin(), uart_snapshot.end(), f.tx.data() + uart_offset));
+        }
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.uart_tx[0]) != first_chunk);

@@ -15,6 +15,7 @@
 #include "io_backend.hpp"
 extern "C" {
 #include "coeappl.h"
+#include "ecatappl.h"
 #include "ecat_def.h"
 #include "ecatslv.h"
 #include "objdef.h"
@@ -54,6 +55,7 @@ Core::Feedback feedback;
 Actions actions;
 bool mapping_ready;
 bool new_output;
+bool can_dirty;
 uint64_t last_publish = 0;
 BusinessState published_state = BusinessState::Unconfigured;
 const UCHAR kObjectName[] = "DTC1 gateway\0\xff";
@@ -277,6 +279,7 @@ extern "C" int dust_gateway_init(void) {
     }
     core = new (core_storage) Core(boot, IoProtection());
     dust_trace_reset(boot);
+    can_dirty = false;
     last_publish = 0;
     published_state = BusinessState::Unconfigured;
     transaction.Clear();
@@ -347,6 +350,22 @@ extern "C" void dust_gateway_poll(void) {
     }
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
     ServiceIo(*core, now);
+    if (core->state() == BusinessState::Active) {
+        can_dirty |= ServiceCanReceive();
+        // Main-thread FreeRun only; one bounded extra input refresh per poll.
+        // Use SSC's mapping/write path instead of bypassing SyncManager handling.
+        if (can_dirty && mapping_ready && bEcatInputUpdateRunning && !bEscIntEnabled) {
+            CaptureCanFeedback(feedback);
+            if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
+                              feedback, false) == Error::None) {
+                can_dirty = false;
+                dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data() + 24));
+                last_publish = Now();
+                published_state = core->state();
+                PDO_InputMapping();
+            }
+        }
+    }
 }
 extern "C" void APPL_AckErrorInd(UINT16) {}
 extern "C" UINT16 APPL_StartMailboxHandler(void) {
@@ -443,6 +462,9 @@ extern "C" void APPL_Application(void) {
     }
     const uint64_t now = Now();
     core->Tick(now, bEcatOutputUpdateRunning);
+    if (core->state() == BusinessState::Active) {
+        can_dirty |= ServiceCanReceive();
+    }
     const bool received = new_output;
     if (received) {
         new_output = false;
@@ -454,15 +476,20 @@ extern "C" void APPL_Application(void) {
         }
     }
     ServiceIo(*core, now);
-    // OP 时每个 Rx 交换只发布一次，避免高频 MainLoop 造成 UART
-    // 窗口轮转采样混叠。SAFEOP 定期发布，状态改变时立即发布停止原因。
+    // 常规发布推进 UART 窗口；额外 CAN 发布保留上一份 UART 字节及窗口状态。
     const bool changed = published_state != core->state();
-    if (received || changed ||
-        (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us)) {
-        CaptureIo(*core, feedback, now);
+    const bool regular = received || changed ||
+        (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us);
+    if (regular || can_dirty) {
+        if (regular) {
+            CaptureIo(*core, feedback, now);
+        } else {
+            CaptureCanFeedback(feedback);
+        }
         // 捕获期间 IRQ 仍可入队；发布时刻必须晚于已取出的外设时间戳。
         if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
-                            feedback) == Error::None) {
+                            feedback, regular) == Error::None) {
+            can_dirty = false;
             dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data()+24));
         }
         last_publish = now;

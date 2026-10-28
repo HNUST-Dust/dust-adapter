@@ -115,14 +115,18 @@ void CanReceive(const device*, can_frame* frame, void* user) {
     value.capture_us = uint32_t(Now());
     value.length = frame->dlc;
     std::memcpy(value.data.data(), frame->data, frame->dlc);
-    if (k_msgq_put(&bus.receive, &value, K_NO_WAIT)) {
+    int queued = k_msgq_put(&bus.receive, &value, K_NO_WAIT);
+    if (queued) {
         Core::CanEvent discarded;
         (void)k_msgq_get(&bus.receive, &discarded, K_NO_WAIT);
         atomic_inc(&bus.drops);
-        if (k_msgq_put(&bus.receive, &value, K_NO_WAIT)) {
+        queued = k_msgq_put(&bus.receive, &value, K_NO_WAIT);
+        if (queued) {
             atomic_inc(&bus.drops);
         }
     }
+    if (!queued && bus.index == 3 && value.id == 0x13)
+        dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, sequence);
 }
 void UartEvent(const device* dev, uart_event* event, void* user) {
     auto& port = *static_cast<UartPort*>(user);
@@ -706,12 +710,16 @@ void ServiceIo(Core& core, uint64_t now) {
         port.transmit.Pop();
     }
 }
-void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
+bool ServiceCanReceive() {
+    bool changed = false;
     for (auto& bus : buses) {
         unsigned count = 0;
         Core::CanEvent value;
         const unsigned capacity = configuration.can_rx[bus.index];
-        while (!k_msgq_get(&bus.receive, &value, K_NO_WAIT)) {
+        for (unsigned drained = 0; drained < 32; ++drained) {
+            if (k_msgq_get(&bus.receive, &value, K_NO_WAIT)) break;
+            if (bus.index == 3 && value.id == 0x13)
+                dust_trace_can_queue(DUST_TR_CAN_DEQUEUED, value.sequence);
             // 启动失能反馈可能早于 PDO 配置。丢弃过期样本，禁止把旧反馈作为新应答发布。
             if (uint32_t(uint32_t(Now()) - value.capture_us) >= kTimeoutUs) {
                 atomic_inc(&bus.drops);
@@ -731,6 +739,7 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
         if (count) {
             bus.feedback_count = count;
             ++bus.batch;
+            changed = true;
         } else {
             // 保留最新快照直到下一批或过期。否则同一 EtherCAT 帧先写 SM2 后读
             // SM3 时，下一次空发布可能抢先覆盖尚未被主站读取的 CAN 反馈。
@@ -742,13 +751,21 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
                 return !capacity || uint32_t(current - event.capture_us) >= kTimeoutUs;
             });
             bus.feedback_count = unsigned(last - bus.feedback.begin());
-            if (bus.feedback_count != before) ++bus.batch;
+            if (bus.feedback_count != before) {
+                ++bus.batch;
+                changed = true;
+            }
         }
         if (bus.index == 3) {
             for (unsigned n=0; n<bus.feedback_count; ++n) {
                 if (bus.feedback[n].id == 0x13) dust_trace_capture(bus.feedback[n].sequence);
             }
         }
+    }
+    return changed;
+}
+void CaptureCanFeedback(Core::Feedback& feedback) {
+    for (auto& bus : buses) {
         feedback.can[bus.index] = {bus.batch,
                                    uint32_t(atomic_get(&bus.drops)),
                                    bus.feedback.data(), uint16_t(bus.feedback_count)};
@@ -770,6 +787,10 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
             }
         }
     }
+}
+void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
+    (void)ServiceCanReceive();
+    CaptureCanFeedback(feedback);
     for (auto& port : ports) {
         uint8_t* p = feedback.diagnostics.data() + 160 + port.index * 8;
         Put32(p, atomic_get(&port.received));

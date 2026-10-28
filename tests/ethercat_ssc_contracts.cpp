@@ -7,6 +7,7 @@
 
 #include "ethercat/protocol.hpp"
 #include "gateway.h"
+namespace dust::ecat { extern bool native_can_dirty; }
 extern "C" {
 #include "coeappl.h"
 #include "ecat_def.h"
@@ -48,6 +49,12 @@ extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
                                    uint16_t count) {
     assert(unsigned(address) + count <= esc.size());
     std::memcpy(const_cast<void*>(out), esc.data() + address, count);
+}
+static unsigned native_input_refreshes;
+extern "C" void PDO_InputMapping(void) {
+    ++native_input_refreshes;
+    std::array<UINT16, MAX_PD_INPUT_SIZE / 2> mapped{};
+    APPL_InputMapping(mapped.data());
 }
 static uint8_t Write(uint16_t index, uint8_t sub, uint32_t value,
                      unsigned bytes) {
@@ -262,6 +269,40 @@ int main() {
     assert(native_io_dispatches == dispatched + 1);
     APPL_Application();
     assert(native_io_dispatches == dispatched + 1);
+    // A new CAN snapshot publishes without a new output PDO or IO dispatch.
+    const auto previous_publication = U32(bytes + 24);
+    dust::ecat::native_can_dirty = true;
+    APPL_Application();
+    APPL_InputMapping(tx.data());
+    assert(U32(bytes + 24) == previous_publication + 1);
+    assert(native_io_dispatches == dispatched + 1);
+    APPL_Application();
+    APPL_InputMapping(tx.data());
+    assert(U32(bytes + 24) == previous_publication + 1);
+    // Main-thread CAN service also performs one SSC input refresh immediately.
+    esc[0x440] = 1;
+    bEcatInputUpdateRunning = true;
+    bEscIntEnabled = false;
+    dust::ecat::native_can_dirty = true;
+    dust_gateway_poll();
+    APPL_InputMapping(tx.data());
+    assert(U32(bytes + 24) == previous_publication + 2);
+    assert(native_input_refreshes == 1);
+    assert(native_io_dispatches == dispatched + 1);
+    dust_gateway_poll();
+    assert(native_input_refreshes == 1);
+    // Synchronized mode / stopped inputs must not get an out-of-cycle write.
+    bEscIntEnabled = true;
+    dust::ecat::native_can_dirty = true;
+    dust_gateway_poll();
+    assert(native_input_refreshes == 1);
+    bEscIntEnabled = false;
+    bEcatInputUpdateRunning = false;
+    dust_gateway_poll();
+    assert(native_input_refreshes == 1);
+    bEcatInputUpdateRunning = true;
+    dust_gateway_poll();
+    assert(native_input_refreshes == 2);
     // A failed/partial DMA must protect the actual gateway before dispatch.
     extern int native_esc_dma_fault;
     extern unsigned native_io_stops;

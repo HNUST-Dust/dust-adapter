@@ -244,8 +244,9 @@ class Core {
         std::array<uint8_t, 25> imu_raw{};
     };
     // 显式小端编码；每次成功发布推进 publish_sequence，不分配堆内存。
+    // advance_uart=false 保留上一份有效镜像的 UART 区域及窗口状态，供 CAN 额外发布。
     Error Publish(MutableBytes image, uint64_t now_us,
-                  const Feedback& feedback);
+                  const Feedback& feedback, bool advance_uart = true);
 
    private:
     struct Source {
