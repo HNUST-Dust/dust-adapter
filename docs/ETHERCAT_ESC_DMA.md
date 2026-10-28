@@ -66,3 +66,35 @@ DMA stays opt-in. Export DTR1, MCT1 and `dust_esc_dma_stats` after the master ex
 Do not compare only host RTT: also compare ESC read/write, hardware FIFO age,
 CAN callbacks, publish wait and successful DMA transfer/error counts.
 New combined-image runtime performance is pending.
+
+### Corrected-path result (64 samples)
+
+The combined multithread/DMA test passed 64 commands with complete DTR1/MCT1
+records, no WKC miss or timeout, and restored ASPM. FIFO occupancy stayed 1;
+hardware SOF age averaged 124.250 us (maximum 144 us). CAN submit-to-RX-callback
+was 301.103 us versus CPU 300.981 us: the old 6 ms anomaly did not recur.
+
+| Metric, us unless indicated | Multithread CPU | Multithread DMA |
+|---|---:|---:|
+| RTT mean | 872.004 | 961.917 |
+| RTT P95 | 999.127 | 1124.164 |
+| RTT maximum | 999.708 | 1249.018 |
+| RTT standard deviation | 84.187 | 114.148 |
+| Samples over 1 ms / 64 | 0 | 15 |
+| ESC read96B mean | 16.334 | 41.005 |
+| ESC write400B mean | 54.468 | 93.961 |
+| Snapshot to publish mean | 59.974 | 94.978 |
+
+Actual DMA reads=4822/writes=4855, ready=selftest=1, channel6/burst1; all error,
+timeout, reentry and IRQ-fallback counts zero. CPU fallbacks include register
+accesses and are not DMA failure counts. RAM diagnostics and build fingerprints
+are saved under dust-control/docs/bench-results with prefix
+2026-10-28-dm-rtt-125us-mcanfixdma.
+
+This synchronous bounce-buffer/configure/wait-for-IRQ implementation remains
+slower in this small-block experiment even after the CAN issue was fixed.
+It does not overlap transfer completion with useful SSC work. It is not evidence
+that every DMA architecture or burst setting is slower. Keep the multithread
+architecture and CPU word default; the tested CPU image is restored after the
+comparison. A future DMA optimization needs separate timing and correctness
+validation. Sixty-four samples do not establish long-term latency bounds.
