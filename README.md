@@ -1,45 +1,32 @@
-# dust-adapter — EtherCAT development on the generic USB baseline
+# dust-adapter — EtherCAT CAN/UART 网关
 
-`ethercat` 已合入 `feature/generic-usb-adapter`，以其 CAN/UART 驱动、编译期 YAML
-白名单与保护、原始 IMU、温控及测试为后续 HPM5E31 网关固件的基础。
-USB 基线保留在根目录 `src/`，EtherCAT 应用位于 `apps/ethercat_slave/`。
-
-**当前为 DTC1 网关实验固件：已接入 SSC 动态 PDO、CAN/UART 后端、本地保护与持久启动计数。**
-初始化全部成功后允许 Arm；实验 VID=0 限制仍保留，尚未完成新协议实板验收。
-接口、内存边界和实验 ESI 见 [SSC 网关接入](docs/ETHERCAT_SSC_GATEWAY.md)。
+`ethercat` 分支在 generic USB 固件基础上替换通讯后端，控制算法仍在主机。
+固件统一由根目录 `CMakeLists.txt`、`prj.conf` 和 `boards/` 构建，全部应用源码位于
+`src/`，不再使用独立 `apps` 工程。旧 USB 模块保留供协议测试和驱动实现参考，不参与当前固件链接；USB 固件请使用原 USB 分支。
 
 ## 构建
 
-在已初始化的 West 工作区中，安装相应 Zephyr SDK 后：
+在已经初始化的 West 工作区中：
 
 ```bash
-./dust-adapter/scripts/build.sh ethercat -p always
-# USB 基线需要显式选择：
-./dust-adapter/scripts/build.sh usb -p always
-./dust-adapter/scripts/test_protocol.sh
+cd dust-adapter
+west build -b dust-hpm5e31 -p always
+# 或使用脚本，默认输出 build/ethercat_slave：
+./scripts/build.sh ethercat -p always
+./scripts/test_protocol.sh
 ```
 
-也可在仓库根目录直接执行 `west build -b dust-hpm5e31 -p always`，
-根入口会为 5E 板选择 EtherCAT 应用与配置，当前验证目标为 5E31，默认输出为 `build`。
+从旧应用目录迁移时必须使用 `-p always` 或新的构建目录，不能复用旧 CMake 应用路径。
+可用 `BUILD_DIR` 指定脚本输出目录、`WEST` 指定 west 可执行文件。
+CAN YAML 使用 `-DDUST_ADAPTER_CAN_CONFIG=/绝对路径/config.yaml` 指定。
+动态 PDO 的容量与端口仍由主机 YAML 配置；本次整理不改变协议。
 
-不带目标参数时默认 ethercat。默认输出分别为 build/ethercat_slave、build/usb_gateway，
-避免覆盖旧 build 缓存；可用 BUILD_DIR 指定独立目录，WEST 指定 west 可执行文件。
-EtherCAT 默认板为 dust-hpm5e31，按 HPM5E31.pdf 原理图独立定义，使用两颗外置 PHY。
-SPI3 IMU 与加热暂时关闭；接线与待验证项见 [板级迁移说明](docs/HPM5E31_BOARD.md)。
+当前使用 HPM5E31 片上 ESC、两颗外置 PHY、SSC 5.13、动态 PDO、CAN/UART 后端和本地保护。
+SPI IMU 与加热暂时关闭。实验 VID=0 限制保留，编译通过不代表实板验收。
+SSC 按原许可保留，见 [SSC 许可说明](external/ssc/README.md)。
 
-## 开发边界
-
-- 根目录 USB 应用与其固件协议保持基线，先复用 CAN/UART 及本地保护，不迁入主机控制算法。
-- apps/ethercat_slave 使用片上 ESC/PHY、SSC 5.13 与同源生成的网关 SII/ESI。
-- 原 ESI 的实验 Vendor ID=0、计数器 PDO 不能用于新主机动态网关。
-- 依赖由 west.yml 固定，新板定义在 hpm_support；SDK 保持原版本。
-- 不自动刷写、使能电机、启动机器人或烧写 OTP。编译通过不等于硬件验收。
-
-[旧 EtherCAT 基础](docs/ethercat.md)、[USB generic 基线](docs/USB_GENERIC_BASELINE.md)、
-[CAN YAML 配置](config/README.md)、[维护风格](docs/CPP_STYLE_HANDOFF.md)。
-SSC 按原许可与维护者授权记录保留，见 external/ssc/README.md；不重新许可为 Apache-2.0。
-
-开发顺序与主机协议基线见 [HPM5E31 网关起点](docs/HPM5E31_GATEWAY_BASELINE.md)。
-
-独立 EtherCAT 协议核心及验证方式见 [协议核心](docs/ETHERCAT_PROTOCOL_CORE.md)。
-SSC 已接入配置提交、周期交换及实际 CAN/UART 后端；验证边界见上述接入文档。
+源码职责和线程分析见 [源码组织](docs/SOURCE_LAYOUT.md)。
+板级接线见 [HPM5E31 板级说明](docs/HPM5E31_BOARD.md)，
+协议接入见 [SSC 网关](docs/ETHERCAT_SSC_GATEWAY.md)，
+CAN 白名单与保护配置见 [CAN YAML 配置](config/README.md)，
+性能记录见 [RTT 时间戳](docs/ETHERCAT_RTT_TRACE.md)。

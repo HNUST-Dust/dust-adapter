@@ -9,7 +9,7 @@ west build -b dust-hpm5e31 -d build/dm_rtt_trace -- \
 bash scripts/test_ethercat_rtt_trace.sh
 ```
 
-RAM 符号 `dust_ecat_trace` 含 40 字节头和 128 条 168 字节记录，停止录入后不覆盖；溢出单独计数。阶段枚举和布局见 `apps/ethercat_slave/src/rtt_trace.{h,cpp}`。使用 `k_cycle_get_64()`，时钟 Hz 写入头中，当前 24 MHz。IRQ 中只写内存，不打印、不动态分配。首轮建议只采 64 条命令。
+RAM 符号 `dust_ecat_trace` 含 40 字节头和 128 条 168 字节记录，停止录入后不覆盖；溢出单独计数。阶段枚举和布局见 `src/ethercat/slave/rtt_trace.{h,cpp}`。使用 `k_cycle_get_64()`，时钟 Hz 写入头中，当前 24 MHz。IRQ 中只写内存，不打印、不动态分配。首轮建议只采 64 条命令。
 
 16 个阶段：ESC SM2 读取前后、Rx 映射完成、协议处理前后、IO 接纳、CAN 入队、MCAN 提交前后、TX 完成回调、CAN 反馈回调、反馈捕获、发布完成、SSC 输入映射、ESC SM3 写入前后。发布仅在匹配 CAN 序号被捕获后记录。每个阶段只保留首次时间。
 

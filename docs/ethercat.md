@@ -9,7 +9,7 @@
 完整边界与测试见 [SSC 网关接入](ETHERCAT_SSC_GATEWAY.md)。
 
 实验身份 VID=0、PID=0x44544331、Revision=0x00010000；新 ESI 为
-`apps/ethercat_slave/esi/DUST_HPM5E31_Gateway.xml`。旧 `DUST_HPM5E_FreeRun.xml`
+`config/esi/DUST_HPM5E31_Gateway.xml`。旧 `DUST_HPM5E_FreeRun.xml`
 仅归档旧计数器身份 0x57425231，不再描述当前构建。
 
 ## SSC 配置与许可

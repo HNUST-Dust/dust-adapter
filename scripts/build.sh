@@ -7,10 +7,9 @@ if [[ $# -gt 0 && "$1" != -* ]]; then
   shift
 fi
 case "$transport" in
-  ethercat) source_dir="$root/apps/ethercat_slave"; board=dust-hpm5e31; output=ethercat_slave ;;
-  usb) source_dir="$root"; board=dust-hpm6750; output=usb_gateway ;;
-  *) echo "Usage: $0 [ethercat|usb] [west build arguments]" >&2; exit 2 ;;
+  ethercat) source_dir="$root"; board=dust-hpm5e31; output=ethercat_slave ;;
+  *) echo "Usage: $0 [ethercat] [west build arguments]" >&2; exit 2 ;;
 esac
-# Only build; no flashing. Keep independent CMake caches for both applications.
+# Only build; no flashing. The root application owns all firmware sources.
 exec "${WEST:-west}" build -s "$source_dir" -b "$board" \
   -d "${BUILD_DIR:-$root/build/$output}" "$@"

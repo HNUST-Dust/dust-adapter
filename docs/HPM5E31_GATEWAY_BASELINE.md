@@ -10,7 +10,7 @@ feature/generic-usb-adapter 75acdfb 已合入 ethercat，未改动 USB v4 wire �
 ## 当前工程
 
 - 根目录 USB 应用保留通用 CAN、UART、IMU、温控、指示与保护配置，作为复用基础。
-- apps/ethercat_slave 保留旧 ESC/PHY 与 SSC FreeRun 计数器；external/ssc 保留原许可。
+- . 保留旧 ESC/PHY 与 SSC FreeRun 计数器；external/ssc 保留原许可。
 - 默认板为按新原理图定义的 dust-hpm5e31；旧 dust-hpm5e3y 保留作参考。
 - scripts/build.sh 默认 ethercat，显式 usb 可验证原基线；两个输出目录分离。
 

@@ -2,7 +2,7 @@
 #include <cassert>
 #include <cstdint>
 uint64_t trace_test_clock = 0;
-#include "../apps/ethercat_slave/src/rtt_trace.cpp"
+#include "../src/ethercat/slave/rtt_trace.cpp"
 int main() {
     dust_trace_reset(7);
     dust_trace_stamp(DUST_TR_CAN_RX,

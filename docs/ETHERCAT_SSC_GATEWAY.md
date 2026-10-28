@@ -24,7 +24,7 @@
 
 ## 同源 SII / ESI 与固定 RAM 分区
 
-`apps/ethercat_slave/gateway.json` 是设备身份和物理资源约束来源，
+`config/ethercat_gateway.json` 是设备身份和物理资源约束来源，
 `tools/generate_gateway_esi.py` 同时生成 SSC 宏、2048 B RAM SII 镜像与 ESI。
 主机 YAML 仍决定启用哪些 CAN/UART、槽数和有效数据长度，修改容量不需要重编从站。
 设备 JSON 是板级资源上限，不能通过主机 YAML 扩大硬件容量。
@@ -47,7 +47,7 @@ VID=0 不可用于生产，主机正常控制运行时会拒绝它；保留该�
 SII 写入仍只修改 RAM，不写 Flash/OTP。
 
 生成文件位于构建目录 `ssc_gateway/`，ESI 归档副本在
-`apps/ethercat_slave/esi/DUST_HPM5E31_Gateway.xml`。XML 已做内容契约检查，
+`config/esi/DUST_HPM5E31_Gateway.xml`。XML 已做内容契约检查，
 尚未做 ETG XSD/一致性认证，也未实测 IgH 对新 SII 的枚举。
 
 ## 构建与离线验证

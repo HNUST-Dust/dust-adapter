@@ -11,9 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 module_spec = importlib.util.spec_from_file_location("generator", ROOT / "tools/generate_gateway_esi.py")
 generator = importlib.util.module_from_spec(module_spec)
 module_spec.loader.exec_module(generator)
-spec = json.loads((ROOT / "apps/ethercat_slave/gateway.json").read_text())
+spec = json.loads((ROOT / "config/ethercat_gateway.json").read_text())
 config, header, xml, image = generator.generate(spec)
-assert xml == (ROOT / "apps/ethercat_slave/esi/DUST_HPM5E31_Gateway.xml").read_text()
+assert xml == (ROOT / "config/esi/DUST_HPM5E31_Gateway.xml").read_text()
 assert len(image) == 2048 and image[14] == 0x30
 assert struct.unpack_from("<III", image, 16) == (spec["vendor_id"], spec["product_code"], spec["revision"])
 assert spec["vendor_id"] == 0 and spec["product_code"] != 0x57425231

@@ -110,6 +110,6 @@ CAN 默认表的旧确认方式。历史交接记录保留为追溯资料，不�
 ### EtherCAT 合并 generic USB 基线（2026-10-26）
 
 将 feature/generic-usb-adapter 合入 ethercat。保留根目录 USB v4 应用的 CAN/UART、
-保护配置、原始 IMU 和温控，以及 apps/ethercat_slave 与 external/ssc 的旧从站基础。
+保护配置、原始 IMU 和温控，以及 . 与 external/ssc 的旧从站基础。
 构建入口显式区分 ethercat/usb，默认选择 ethercat；双方都不自动刷写。
 本次仅建立开发基线，计数器 PDO 尚未升级为 HPM5E31 网关协议。

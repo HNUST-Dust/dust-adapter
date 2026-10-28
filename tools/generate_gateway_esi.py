@@ -104,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    spec = json.loads((ROOT / "apps/ethercat_slave/gateway.json").read_text())
+    spec = json.loads((ROOT / "config/ethercat_gateway.json").read_text())
     config, eeprom, xml, image = generate(spec)
     args.output.mkdir(parents=True, exist_ok=True)
     for name, text in (("gateway_config.h", config), ("eeprom.h", eeprom), ("DUST_HPM5E31_Gateway.xml", xml)):

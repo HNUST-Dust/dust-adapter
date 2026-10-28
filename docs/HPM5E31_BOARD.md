@@ -13,7 +13,7 @@ EtherCAT 应用及其 prj.conf，默认输出到 `build`；不会编译根目录
 - 按原理图接入四路 CAN、UART0～6、RTL8201F/TJA1101B 的 MII、共享 MDIO/MDC
   和 REFCK；TJA1101B 使用 PF28 复位、PF26 中断。
 - 不再对新板执行旧 SIP PHY 的 PV/PW、PA28 CTR1 和模拟焊盘实验初始化。
-  旧配置移入 `apps/ethercat_slave/boards/dust-hpm5e3y.overlay`，仅旧板构建加载。
+  旧配置移入 `boards/dust-hpm5e3y.overlay`，仅旧板构建加载。
 - `prj.conf` 明确 `CONFIG_SPI=n`，SPI3 节点 disabled，暂不采集板载 IMU。
   CS PC21 默认高，IMU 加热门极 PD04 默认低，PWM 引脚仅启用蜂鸣器 PF01。
   外部 UART IMU 并未因此禁用。
