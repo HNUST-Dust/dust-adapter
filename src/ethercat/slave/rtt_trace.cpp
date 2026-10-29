@@ -16,6 +16,7 @@ struct TraceRecord {
     uint32_t batch, exchange, publication, can_sequence;
     int32_t submit_result, done_result;
     uint64_t cycles[DUST_TR_STAGES];
+    uint32_t capture_phase, snapshot_phase;
 };
 struct TraceBuffer {
     uint32_t magic, version, record_bytes, capacity, count, overflow, clock_hz,
@@ -23,7 +24,7 @@ struct TraceBuffer {
     uint64_t boot;
     TraceRecord records[128];
 };
-static_assert(sizeof(TraceRecord) == 192 &&
+static_assert(sizeof(TraceRecord) == 280 &&
               offsetof(TraceBuffer, records) == 40);
 extern "C" {
 TraceBuffer dust_ecat_trace;
@@ -46,6 +47,7 @@ CanTimingBuffer dust_mcan_timing;
 }
 namespace {
 TraceRecord* active;
+unsigned owner_phase;
 uint64_t mapped_session, mapped_at, process_at, processed_at, read_begin,
     read_end;
 uint32_t mapped_exchange, input_bytes;
@@ -70,6 +72,8 @@ void Stamp(unsigned stage, uint64_t at, uint32_t value) {
     if (stage == DUST_TR_TX_DONE) {
         active->done_result = int32_t(value);
     }
+    if (stage == DUST_TR_CAPTURE) active->capture_phase = owner_phase;
+    if (stage == DUST_TR_CAN_SNAPSHOT) active->snapshot_phase = owner_phase;
     active->valid |= 1U << stage;
     ++active->revision;
 }
@@ -88,17 +92,25 @@ extern "C" void dust_trace_reset(uint64_t boot) {
     dust_mcan_timing.boot = boot;
 #endif
     dust_ecat_trace.magic = 0x31525444;  // DTR1
-    dust_ecat_trace.version = 3;
+    dust_ecat_trace.version = 7;
     dust_ecat_trace.record_bytes = sizeof(TraceRecord);
     dust_ecat_trace.capacity = 128;
     dust_ecat_trace.clock_hz = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC;
     dust_ecat_trace.header_bytes = 40;
     dust_ecat_trace.boot = boot;
     active = nullptr;
+    owner_phase = DUST_PHASE_UNKNOWN;
     mapped_at = process_at = processed_at = mapped_session = read_begin =
         read_end = 0;
     input_bytes = 0;
     irq_unlock(key);
+}
+extern "C" unsigned dust_trace_phase(unsigned phase) {
+    const auto key = irq_lock();
+    const unsigned previous = owner_phase;
+    owner_phase = phase;
+    irq_unlock(key);
+    return previous;
 }
 extern "C" void dust_trace_mapping(uint64_t session, uint32_t exchange) {
     const auto key = irq_lock();
@@ -155,6 +167,23 @@ extern "C" void dust_trace_stamp(unsigned stage, uint32_t value) {
     const auto key = irq_lock();
     // A worker capture may preempt a publication using an older SSC snapshot.
     // Only the matching main-thread snapshot makes that publication eligible.
+    // First execution markers after this feedback was queued. A stale semaphore
+    // wake or a worker pass after dequeue must not claim this command.
+    if ((stage == DUST_TR_WORKER_WAKE || stage == DUST_TR_WORKER_LOCKED ||
+         stage == DUST_TR_CAN3_SCAN) &&
+        (!Has(DUST_TR_CAN_ENQUEUED) || Has(DUST_TR_CAN_DEQUEUED))) {
+        irq_unlock(key);
+        return;
+    }
+    // These are first execution boundaries while this feedback awaits SSC.
+    if ((stage == DUST_TR_WORKER_WAIT || stage == DUST_TR_SSC_SERVICE ||
+         stage == DUST_TR_SNAPSHOT_BEGIN || stage == DUST_TR_SNAPSHOT_LOCKED ||
+         stage == DUST_TR_PENDING_WRITE_END || stage == DUST_TR_SSC_RETURN ||
+         stage == DUST_TR_POLL_ENTRY) &&
+        (!Has(DUST_TR_CAPTURE) || Has(DUST_TR_CAN_SNAPSHOT))) {
+        irq_unlock(key);
+        return;
+    }
     if ((stage != DUST_TR_PUBLISH || Has(DUST_TR_CAN_SNAPSHOT)) &&
         (stage != DUST_TR_CAN_RX || Has(DUST_TR_SUBMIT))) {
         Stamp(stage, k_cycle_get_64(), value);

@@ -12,6 +12,9 @@ void ConfigureIo(const Configuration& configuration);
 void DispatchIo(Core& core, const Actions& actions, uint64_t now);
 // SSC owner: observe worker snapshots (or drain in single-thread mode), no UART rotation.
 bool ServiceCanReceive();
+// Advisory version hint for the optional late checkpoint only. Never replace
+// regular ServiceCanReceive expiry checks with this probe. No acknowledgement.
+bool CanReceivePending();
 void CaptureCanFeedback(Core::Feedback& feedback);
 // service 高频检查截止时间/故障；capture 在常规发布时采样 UART 窗口。
 void ServiceIo(Core& core, uint64_t now);

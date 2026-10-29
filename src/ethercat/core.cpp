@@ -4,10 +4,28 @@
 #include <cstring>
 
 #include "protocol.hpp"
+#include "digest.hpp"
+
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+// RAM-only first protection snapshot. File points into the matching ELF rodata.
+extern "C" {
+struct DustFirstProtection {
+    uint32_t version, valid, reason, state, file, line;
+    uint32_t now_lo, now_hi, exchange_lo, exchange_hi, operational, watchdog_us, tick_file, tick_line;
+};
+volatile DustFirstProtection dust_first_protection = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+}
+static uint64_t protection_tick_now;
+static uint64_t protection_tick_exchange;
+static bool protection_tick_operational;
+static const char* protection_tick_file;
+static unsigned protection_tick_line;
+#endif
 
 namespace dust::ecat {
 namespace {
 uint32_t Digest(Bytes bytes) {
+#if defined(CONFIG_DUST_ECAT_REFERENCE_DIGEST)
     uint32_t crc = 0xffffffffU;
     for (size_t n = 0; n < bytes.size; ++n) {
         crc ^= bytes.data[n];
@@ -16,6 +34,9 @@ uint32_t Digest(Bytes bytes) {
         }
     }
     return crc ^ 0xffffffffU;
+#else
+    return detail::FastDigest(bytes.data, bytes.size);
+#endif
 }
 bool Zero(const uint8_t* p, size_t size) {
     for (size_t i = 0; i < size; ++i) {
@@ -50,10 +71,29 @@ Error Core::Configure(const ConfigurationTransaction& t, const Limits& limits,
     state_ = BusinessState::Ready;
     return Error::None;
 }
-void Core::Protect(Error reason) {
+void Core::Protect(Error reason, const char* file, unsigned line) {
     if (state_ == BusinessState::Protected) {
         return;
     }
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+    if (!dust_first_protection.valid) {
+        dust_first_protection.reason = uint32_t(reason);
+        dust_first_protection.state = uint32_t(state_);
+        dust_first_protection.file = uint32_t(reinterpret_cast<uintptr_t>(file));
+        dust_first_protection.line = line;
+        dust_first_protection.now_lo = uint32_t(protection_tick_now);
+        dust_first_protection.now_hi = uint32_t(protection_tick_now >> 32);
+        dust_first_protection.exchange_lo = uint32_t(protection_tick_exchange);
+        dust_first_protection.exchange_hi = uint32_t(protection_tick_exchange >> 32);
+        dust_first_protection.operational = protection_tick_operational;
+        dust_first_protection.watchdog_us = config_.watchdog_us;
+        dust_first_protection.tick_file = uint32_t(reinterpret_cast<uintptr_t>(protection_tick_file));
+        dust_first_protection.tick_line = protection_tick_line;
+        dust_first_protection.valid = 1;
+    }
+#else
+    (void)file; (void)line;
+#endif
     fault_ = reason == Error::None ? Error::Protection : reason;
     state_ = BusinessState::Protected;
     have_uart_offer_.fill(false);
@@ -62,7 +102,16 @@ void Core::Protect(Error reason) {
         protection_.stop(protection_.context, fault_);
     }
 }
-void Core::Tick(uint64_t now, bool operational) {
+void Core::Tick(uint64_t now, bool operational, const char* file, unsigned line) {
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+    protection_tick_file = file;
+    protection_tick_line = line;
+    protection_tick_now = now;
+    protection_tick_exchange = exchange_at_;
+    protection_tick_operational = operational;
+#else
+    (void)file; (void)line;
+#endif
     if (state_ != BusinessState::Active) {
         return;
     }
@@ -419,19 +468,27 @@ Error Core::Publish(MutableBytes image, uint64_t now,
          U32(image.data + 32) != layout_.signature)) {
         return invalid(Error::State);
     }
+    auto clear = [&](unsigned from, unsigned to) {
+#if defined(CONFIG_DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR)
+        // Header bytes0..59 and the entire diagnostics block are overwritten
+        // on every successful publication. Keep reserved/payload clearing.
+        from = std::max(from, 60U);
+        to = std::min(to, unsigned(layout_.diagnostics));
+#endif
+        if (from < to) std::fill(image.data + from, image.data + to, uint8_t(0));
+    };
     unsigned clear_from = 0;
     if (!advance_uart) {
         for (unsigned port = 0; port < 6; ++port) {
             if (layout_.uart_tx[port] == kAbsent) {
                 continue;
             }
-            std::fill(image.data + clear_from,
-                      image.data + layout_.uart_tx[port], uint8_t(0));
+            clear(clear_from, layout_.uart_tx[port]);
             clear_from =
                 layout_.uart_tx[port] + 16 + config_.uart[port].rx_bytes;
         }
     }
-    std::fill(image.data + clear_from, image.data + image.size, uint8_t(0));
+    clear(clear_from, image.size);
     auto* p = image.data;
     Put32(p, kMagic);
     Put16(p + 4, kAbiMajor);

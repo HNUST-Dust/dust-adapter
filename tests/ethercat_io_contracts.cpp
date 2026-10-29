@@ -399,6 +399,9 @@ int main() {
         });
         for (unsigned i = 0; i < 100; ++i) {
             Core::Feedback snapshot;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+            if (CanReceivePending()) (void)ServiceCanReceive();
+#endif
             CaptureCanFeedback(snapshot);
             assert(snapshot.can[2].count <= 2);
             std::array<Core::CanEvent, 2> held{};
@@ -419,6 +422,43 @@ int main() {
         CaptureCanFeedback(stopped);
         assert(stopped.can[2].count == 0);
     }
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    {
+        Fixture f;
+        f.Header(1); f.Can(1); f.Process();
+        FlushCan();
+        (void)ServiceCanReceive();
+        const auto locks = native_mutex_lock_count.load();
+        const auto clocks = native_clock_read_count.load();
+        for (unsigned n = 0; n < 100; ++n) assert(!CanReceivePending());
+        assert(native_mutex_lock_count.load() == locks);
+        assert(native_clock_read_count.load() == clocks);
+        // An event arriving after a negative probe stays visible; probing
+        // repeatedly cannot clear it before the normal service observes it.
+        can_frame frame{}; frame.id = 0x201; frame.dlc = 8;
+        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
+        FlushCan();
+        assert(CanReceivePending()); assert(CanReceivePending());
+        assert(ServiceCanReceive());
+        assert(!CanReceivePending());
+        Core::Feedback snapshot;
+        CaptureCanFeedback(snapshot);
+        assert(snapshot.can[2].count == 1);
+        frame.data[0] = 91;
+        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
+        FlushCan();
+        assert(CanReceivePending());
+        assert(ServiceCanReceive());
+        CaptureCanFeedback(snapshot);
+        assert(snapshot.can[2].count == 1 && snapshot.can[2].frames[0].data[0] == 91);
+        f.core->Protect(Error::State);
+        FlushCan();
+        assert(CanReceivePending()); // Stop clear is a notified generation too.
+        assert(ServiceCanReceive());
+        CaptureCanFeedback(snapshot);
+        assert(snapshot.can[2].count == 0 && !CanReceivePending());
+    }
+#endif
     // Expiry must be performed by SSC even if the event worker never wakes.
     // Exercise the uint32 capture timestamp wrap without advancing Core's lease.
     const uint64_t saved_clock = native_now;
@@ -436,6 +476,9 @@ int main() {
         (void)ServiceCanReceive();
         native_now += 20001;
         // No FlushCan or IRQ notification: only SSC expires the snapshot.
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+        assert(!CanReceivePending()); // Version hint does not validate age.
+#endif
         assert(ServiceCanReceive());
         CaptureCanFeedback(snapshot);
         assert(snapshot.can[2].count == 0);

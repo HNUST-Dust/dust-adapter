@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "io_backend.hpp"
 #include "rtt_trace.h"
+#include "sync0_deferred.h"
+#include "wait_profile.h"
 #if defined(CONFIG_DUST_ECAT_RTT_TRACE) && defined(CONFIG_HPM_MCAN_RX_TIMING)
 #include <drivers/can/hpmicro_mcan_timing.h>
 #endif
@@ -98,6 +100,18 @@ K_SEM_DEFINE(can_rx_wake, 0, 1);
 K_THREAD_STACK_DEFINE(can_rx_stack, 2048);
 k_thread can_rx_thread;
 uint32_t capture_generation = 0, observed_generation = 0;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+atomic_t can_notice_version{};
+// SSC owner only; worker never reads or clears the acknowledgement.
+uint32_t observed_notice_version = 0;
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+extern "C" {
+struct CanNoticeStats { uint32_t version, probes, pending, unchanged; };
+static_assert(sizeof(CanNoticeStats) == 16);
+CanNoticeStats dust_ecat_can_notice_stats = {1, 0, 0, 0};
+}
+#endif
+#endif
 bool can_capture_enabled = false;
 bool have_can_snapshot = false;
 uint32_t oldest_can_capture = 0;
@@ -160,19 +174,44 @@ void ExpireCanSnapshots(uint32_t now) {
     }
     if (changed) {
         ++capture_generation;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+        atomic_inc(&can_notice_version);
+#endif
 #if defined(CONFIG_DUST_ECAT_SCHED_STATS)
         ++dust_ecat_sched_stats.ssc_expirations;
 #endif
     }
     RefreshOldestCanCapture(now);
 }
+#if defined(CONFIG_DUST_ECAT_DC_PROFILE) || defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
+// Scope is created after acquiring CaptureGuard: exclude time blocked on mutex.
+class WorkerElapsedScope {
+    uint32_t start_ = k_cycle_get_32();
+public:
+    ~WorkerElapsedScope() {
+        uint32_t end=k_cycle_get_32();
+#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
+        dust_sync0_worker_elapsed(end-start_);
+#endif
+#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
+        dust_wait_worker(start_,end);
+#endif
+    }
+};
+#endif
 void CanRxLoop(void*, void*, void*) {
     for (;;) {
+        dust_trace_stamp(DUST_TR_WORKER_WAIT, 0);
         const int result = k_sem_take(
             &can_rx_wake, CONFIG_DUST_ECAT_CAN_RX_POLL_US
                               ? K_USEC(CONFIG_DUST_ECAT_CAN_RX_POLL_US)
                               : K_FOREVER);
+        dust_trace_stamp(DUST_TR_WORKER_WAKE, 0);
         CaptureGuard guard;
+#if defined(CONFIG_DUST_ECAT_DC_PROFILE) || defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
+        WorkerElapsedScope worker_elapsed;
+#endif
+        dust_trace_stamp(DUST_TR_WORKER_LOCKED, 0);
         if (!can_capture_enabled) {
             continue;
         }
@@ -186,6 +225,9 @@ void CanRxLoop(void*, void*, void*) {
 #endif
         if (DrainCanReceive()) {
             ++capture_generation;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+            atomic_inc(&can_notice_version);
+#endif
             RefreshOldestCanCapture(uint32_t(Now()));
 #if defined(CONFIG_DUST_ECAT_SCHED_STATS)
             ++dust_ecat_sched_stats.active_changes;
@@ -338,6 +380,9 @@ void Stop(void*, Error) {
             ++bus.batch;
         }
         ++capture_generation;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+        atomic_inc(&can_notice_version);
+#endif
     }
 #endif
     for (auto& port : ports) {
@@ -416,6 +461,9 @@ void EnterActive(Core& core, uint64_t now) {
             ++bus.batch;
         }
         ++capture_generation;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+        atomic_inc(&can_notice_version);
+#endif
         have_can_snapshot = false;
         can_capture_enabled = true;
     }
@@ -447,6 +495,7 @@ void PumpCan(Core* core, uint64_t now) {
         if (!bus.transmit.size()) {
             continue;
         }
+        DustSyncPhaseScope preparation(DUST_SYNC_TX_PREP);
         const unsigned count = std::min(size_t(16), bus.transmit.size());
         uint64_t deadline = 0;
         for (unsigned i = 0; i < count; ++i) {
@@ -810,6 +859,7 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
     }
 }
 void ServiceIo(Core& core, uint64_t now) {
+    DustSyncPhaseScope io_phase(DUST_SYNC_IO_CHECKS);
     if (core.state() == BusinessState::Active) {
         EnterActive(core, now);
         for (auto deadline : source_deadlines) {
@@ -834,7 +884,13 @@ void ServiceIo(Core& core, uint64_t now) {
             }
         }
     }
-    PumpCan(&core, now);  // 保护状态也需要把不可覆盖的本地保护帧交给控制器。
+    {
+        DustSyncPhaseScope can_tx_phase(DUST_SYNC_IO_CAN_TX);
+        PumpCan(&core, now);  // 保护状态也需要把不可覆盖的本地保护帧交给控制器。
+    }
+#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
+    (void)dust_sync0_phase(DUST_SYNC_IO_UART_TX);
+#endif
     if (core.state() != BusinessState::Active) {
         return;
     }
@@ -875,12 +931,16 @@ namespace {
 bool DrainCanReceive() {
     bool changed = false;
     for (auto& bus : buses) {
+        if (bus.index == 3) {
+            dust_trace_stamp(DUST_TR_CAN3_SCAN, 0);
+        }
         unsigned count = 0;
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
         // Coalesce IRQ wakeups until SSC takes a copy. Scheduling must not
         // turn one pending batch into a series of overwritten one-frame
         // batches.
-        if (!bus.snapshot_consumed) {
+        // Empty snapshots need no age check; keep draining the IRQ queue below.
+        if (!bus.snapshot_consumed && bus.feedback_count) {
             const auto current = uint32_t(Now());
             for (unsigned n = 0; n < bus.feedback_count; ++n) {
                 if (uint32_t(current - bus.feedback[n].capture_us) <
@@ -930,7 +990,8 @@ bool DrainCanReceive() {
             bus.feedback_count = count;
             ++bus.batch;
             changed = true;
-        } else {
+        } else if (bus.feedback_count) {
+            // Empty caches have nothing to expire and need no clock read.
             // 保留最新快照直到下一批或过期。否则同一 EtherCAT 帧先写 SM2 后读
             // SM3 时，下一次空发布可能抢先覆盖尚未被主站读取的 CAN 反馈。
             const auto before = bus.feedback_count;
@@ -958,21 +1019,42 @@ bool DrainCanReceive() {
     return changed;
 }
 }  // namespace
+bool CanReceivePending() {
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    // Read only an atomic version and owner-private state. A producer racing
+    // after a false probe remains visible next time; nothing is cleared here.
+    const bool pending = uint32_t(atomic_get(&can_notice_version)) != observed_notice_version;
+#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
+    ++dust_ecat_can_notice_stats.probes;
+    if (pending) ++dust_ecat_can_notice_stats.pending;
+    else ++dust_ecat_can_notice_stats.unchanged;
+#endif
+    return pending;
+#else
+    return true; // Baseline and single-thread mode must still service queues.
+#endif
+}
 bool ServiceCanReceive() {
+    dust_trace_stamp(DUST_TR_SSC_SERVICE, 0);
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     CaptureGuard guard;
     if (have_can_snapshot) ExpireCanSnapshots(uint32_t(Now()));
     const bool changed = capture_generation != observed_generation;
     observed_generation = capture_generation;
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    observed_notice_version = uint32_t(atomic_get(&can_notice_version));
+#endif
     return changed;
 #else
     return DrainCanReceive();
 #endif
 }
 void CaptureCanFeedback(Core::Feedback& feedback) {
+    dust_trace_stamp(DUST_TR_SNAPSHOT_BEGIN, 0);
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     {
         CaptureGuard guard;
+        dust_trace_stamp(DUST_TR_SNAPSHOT_LOCKED, 0);
         if (have_can_snapshot) {
             ExpireCanSnapshots(uint32_t(Now()));
         }

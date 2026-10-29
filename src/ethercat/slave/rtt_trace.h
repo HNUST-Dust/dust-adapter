@@ -25,9 +25,29 @@ enum dust_trace_stage {
     DUST_TR_CAN_ENQUEUED,
     DUST_TR_CAN_DEQUEUED,
     DUST_TR_CAN_SNAPSHOT,
+    DUST_TR_WORKER_WAKE,
+    DUST_TR_WORKER_LOCKED,
+    DUST_TR_CAN3_SCAN,
+    DUST_TR_WORKER_WAIT,
+    DUST_TR_SSC_SERVICE,
+    DUST_TR_SNAPSHOT_BEGIN,
+    DUST_TR_SNAPSHOT_LOCKED,
+    DUST_TR_PENDING_WRITE_END,
+    DUST_TR_SSC_RETURN,
+    DUST_TR_POLL_ENTRY,
     DUST_TR_STAGES
 };
+// Written only by the SSC owner; captured by the worker under trace IRQ lock.
+enum dust_trace_phase_id {
+    DUST_PHASE_UNKNOWN, DUST_PHASE_OUTER, DUST_PHASE_SSC,
+    DUST_PHASE_MAINTENANCE, DUST_PHASE_WAIT,
+    DUST_PHASE_POLL_TICK, DUST_PHASE_POLL_IO, DUST_PHASE_POLL_CAN,
+    DUST_PHASE_POLL_PUBLISH, DUST_PHASE_APP_TICK, DUST_PHASE_APP_CAN,
+    DUST_PHASE_APP_PROCESS, DUST_PHASE_APP_IO, DUST_PHASE_APP_PUBLISH,
+    DUST_PHASE_ESC_READ, DUST_PHASE_ESC_WRITE
+};
 #if defined(CONFIG_DUST_ECAT_RTT_TRACE)
+unsigned dust_trace_phase(unsigned phase);
 void dust_trace_reset(uint64_t boot);
 #if defined(CONFIG_HPM_MCAN_RX_TIMING)
 void dust_trace_can_timing(uint32_t sequence, const struct hpm_mcan_rx_timing *timing);
@@ -43,6 +63,10 @@ void dust_trace_can_queue(unsigned stage, uint32_t can_sequence);
 void dust_trace_input(uint32_t publication, uint32_t bytes);
 void dust_trace_esc(unsigned stage, uint16_t address, uint16_t bytes);
 #else
+static inline unsigned dust_trace_phase(unsigned phase) {
+    (void)phase;
+    return DUST_PHASE_UNKNOWN;
+}
 static inline void dust_trace_reset(uint64_t b) {
     (void)b;
 }
@@ -84,4 +108,13 @@ static inline void dust_trace_esc(unsigned s, uint16_t a, uint16_t b) {
 #endif
 #ifdef __cplusplus
 }
+// Restore the caller's phase even on early return from an application callback.
+class DustTracePhaseScope {
+    unsigned previous_;
+public:
+    explicit DustTracePhaseScope(unsigned phase) : previous_(dust_trace_phase(phase)) {}
+    ~DustTracePhaseScope() { (void)dust_trace_phase(previous_); }
+    DustTracePhaseScope(const DustTracePhaseScope&) = delete;
+    DustTracePhaseScope& operator=(const DustTracePhaseScope&) = delete;
+};
 #endif

@@ -25,7 +25,13 @@ extern std::atomic<uint64_t> native_now;
 #else
 extern uint64_t native_now;
 #endif
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+inline std::atomic<uint64_t> native_clock_read_count{0};
+#endif
 inline int64_t k_uptime_ticks() {
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    ++native_clock_read_count;
+#endif
     return native_now;
 }
 inline uint64_t k_ticks_to_us_floor64(uint64_t value) {

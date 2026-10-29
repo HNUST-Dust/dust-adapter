@@ -42,16 +42,62 @@ int main() {
     assert(!(r.valid & (1U << DUST_TR_CAPTURE)));
     dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, 8);
     assert(!(r.valid & (1U << DUST_TR_CAN_ENQUEUED)));
+    dust_trace_stamp(DUST_TR_CAN3_SCAN, 0);
+    assert(!(r.valid & (1U << DUST_TR_CAN3_SCAN)));
+    dust_trace_stamp(DUST_TR_WORKER_WAKE, 0);
+    assert(!(r.valid & (1U << DUST_TR_WORKER_WAKE))); // Unrelated wake.
     dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, 9);
+    dust_trace_stamp(DUST_TR_WORKER_WAKE, 0);
+    dust_trace_stamp(DUST_TR_WORKER_LOCKED, 0);
+    assert(r.cycles[DUST_TR_WORKER_WAKE] > r.cycles[DUST_TR_CAN_ENQUEUED]);
+    assert(r.cycles[DUST_TR_WORKER_LOCKED] > r.cycles[DUST_TR_WORKER_WAKE]);
+    dust_trace_stamp(DUST_TR_CAN3_SCAN, 0);
+    assert(r.cycles[DUST_TR_CAN3_SCAN] > r.cycles[DUST_TR_WORKER_LOCKED]);
     dust_trace_can_queue(DUST_TR_CAN_DEQUEUED, 9);
+    auto scan = r.cycles[DUST_TR_CAN3_SCAN];
+    dust_trace_stamp(DUST_TR_CAN3_SCAN, 0);
+    assert(r.cycles[DUST_TR_CAN3_SCAN] == scan);
     assert(r.cycles[DUST_TR_CAN_DEQUEUED] > r.cycles[DUST_TR_CAN_ENQUEUED]);
-    dust_trace_capture(9);
+    auto wake = r.cycles[DUST_TR_WORKER_WAKE];
+    dust_trace_stamp(DUST_TR_WORKER_WAKE, 0);
+    assert(r.cycles[DUST_TR_WORKER_WAKE] == wake);
+    dust_trace_stamp(DUST_TR_PENDING_WRITE_END, 0);
+    assert(!(r.valid & (1U << DUST_TR_PENDING_WRITE_END)));
+    dust_trace_stamp(DUST_TR_SNAPSHOT_BEGIN, 0);
+    assert(!(r.valid & (1U << DUST_TR_SNAPSHOT_BEGIN)));
+    (void)dust_trace_phase(DUST_PHASE_SSC);
+    {
+        DustTracePhaseScope phase(DUST_PHASE_POLL_IO);
+        dust_trace_capture(9);
+        assert(r.capture_phase == DUST_PHASE_POLL_IO);
+    }
+    assert(dust_trace_phase(DUST_PHASE_APP_PUBLISH) == DUST_PHASE_SSC);
+    dust_trace_capture(9); // Duplicate must preserve original capture phase.
+    assert(r.capture_phase == DUST_PHASE_POLL_IO);
+    dust_trace_stamp(DUST_TR_WORKER_WAIT, 0);
+    dust_trace_stamp(DUST_TR_PENDING_WRITE_END, 0);
+    dust_trace_stamp(DUST_TR_SSC_RETURN, 0);
+    dust_trace_stamp(DUST_TR_POLL_ENTRY, 0);
+    dust_trace_stamp(DUST_TR_SSC_SERVICE, 0);
+    dust_trace_stamp(DUST_TR_SNAPSHOT_BEGIN, 0);
+    dust_trace_stamp(DUST_TR_SNAPSHOT_LOCKED, 0);
+    assert(r.cycles[DUST_TR_WORKER_WAIT] > r.cycles[DUST_TR_CAPTURE]);
+    assert(r.cycles[DUST_TR_SNAPSHOT_LOCKED] > r.cycles[DUST_TR_SNAPSHOT_BEGIN]);
     dust_trace_stamp(DUST_TR_PUBLISH, 98);
     assert(!(r.valid & (1U << DUST_TR_PUBLISH))); // Worker capture alone is insufficient.
     dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT, 8);
     assert(!(r.valid & (1U << DUST_TR_CAN_SNAPSHOT)));
     dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT, 9);
     assert(r.cycles[DUST_TR_CAN_SNAPSHOT] > r.cycles[DUST_TR_CAPTURE]);
+    assert(r.snapshot_phase == DUST_PHASE_APP_PUBLISH);
+    auto pending_write = r.cycles[DUST_TR_PENDING_WRITE_END];
+    dust_trace_stamp(DUST_TR_PENDING_WRITE_END, 0);
+    assert(r.cycles[DUST_TR_PENDING_WRITE_END] == pending_write);
+    assert(r.cycles[DUST_TR_SSC_RETURN] > pending_write);
+    assert(r.cycles[DUST_TR_POLL_ENTRY] > r.cycles[DUST_TR_SSC_RETURN]);
+    auto snapshot_begin = r.cycles[DUST_TR_SNAPSHOT_BEGIN];
+    dust_trace_stamp(DUST_TR_SNAPSHOT_BEGIN, 0);
+    assert(r.cycles[DUST_TR_SNAPSHOT_BEGIN] == snapshot_begin);
     dust_trace_stamp(DUST_TR_PUBLISH, 99);
     dust_trace_input(98, 400);
     assert(!(r.valid & (1U << DUST_TR_INPUT_MAP)));
@@ -75,9 +121,23 @@ int main() {
     assert(dust_ecat_trace.records[127].can_sequence == 0);
     dust_trace_reset(8);
     assert(dust_ecat_trace.count == 0 && dust_ecat_trace.boot == 8);
-    assert(dust_ecat_trace.version == 3 && dust_ecat_trace.record_bytes == 192);
+    assert(dust_ecat_trace.version == 7 && dust_ecat_trace.record_bytes == 280);
+    assert(dust_trace_phase(DUST_PHASE_OUTER) == DUST_PHASE_UNKNOWN);
     dust_trace_mapping(12, 1);
     dust_trace_process();
     dust_trace_begin(13, 1);
     assert(dust_ecat_trace.count == 0);
+    dust_trace_begin(12, 2);
+    dust_trace_stamp(DUST_TR_SUBMIT, 0);
+    dust_trace_stamp(DUST_TR_CAN_RX, 10);
+    dust_trace_capture(10);
+    dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT, 10);
+    // A new publication write must not fill an absent old-write checkpoint.
+    dust_trace_stamp(DUST_TR_PENDING_WRITE_END, 0);
+    dust_trace_stamp(DUST_TR_SSC_RETURN, 0);
+    dust_trace_stamp(DUST_TR_POLL_ENTRY, 0);
+    const auto& later = dust_ecat_trace.records[0];
+    assert(!(later.valid & ((1U << DUST_TR_PENDING_WRITE_END) |
+                           (1U << DUST_TR_SSC_RETURN) |
+                           (1U << DUST_TR_POLL_ENTRY))));
 }

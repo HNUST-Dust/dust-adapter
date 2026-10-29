@@ -90,3 +90,89 @@ config DUST_ECAT_SCHED_STATS
     bool "Bounded CAN worker wakeup counters in RAM (lab only)"
     depends on DUST_ECAT_CAN_RX_THREAD
     default n
+
+config DUST_ECAT_INPUT_WRITE_COALESCE
+    bool "Skip already committed input publications in active FreeRun"
+    default n
+    help
+      Keep SSC input mapping calls, but omit the synchronous PDRAM write for
+      an unchanged successfully committed application publication. Restricted
+      to active FreeRun in thread context. State/mapping changes and transport
+      errors force normal writes. Experimental until board validation.
+
+config DUST_ECAT_INPUT_LATE_REFRESH
+    bool "Refresh pending CAN feedback once immediately before input mapping"
+    depends on !DUST_ECAT_INPUT_WRITE_COALESCE
+    default n
+    help
+      In Active FreeRun thread context, check CAN receive generation once before
+      copying the next SSC input image. A new snapshot rebuilds only CAN/status
+      fields and preserves the last UART image and window cursor. No recursive
+      mapping or extra ESC write is performed. Experimental until board validation.
+
+config DUST_ECAT_CAN_RX_NOTIFY_FAST
+    bool "Use atomic receive-version hint for the late mapping checkpoint"
+    depends on DUST_ECAT_INPUT_LATE_REFRESH && DUST_ECAT_CAN_RX_THREAD
+    default n
+    help
+      The late checkpoint compares an atomic worker notification version with
+      the version observed under the capture mutex. No change avoids the late
+      mutex/time/trace work. Existing regular SSC receive service and capture
+      expiry checks remain unconditional; this hint is not an expiry validator.
+
+config DUST_ECAT_SM_SYNC
+    bool "Lab: SM2 synchronized publication in SSC owner thread"
+    depends on DUST_ECAT_CAN_RX_THREAD
+    depends on !DUST_ECAT_ESC_DMA && !DUST_ECAT_INPUT_WRITE_COALESCE && !DUST_ECAT_INPUT_LATE_REFRESH
+    default n
+    help
+      Advertise SM synchronization in addition to FreeRun. Defer PDI IRQ work
+      to the SSC owner thread; Core/CAN/UART mutex operations never run in ISR.
+      No DC/Sync0 support is advertised. Experimental until board validation.
+
+config DUST_ECAT_DC_SYNC
+    bool "Lab: DC Sync0 publication using independently generated SSC"
+    depends on DUST_ECAT_SM_SYNC
+    default n
+    help
+      Requires a separately generated DC-capable SSC directory. Independent
+      Sync0 IRQ acknowledges and queues work; main thread owns all SSC/Core
+      calls. Only Sync0, not Sync1/subordinate cycles, is advertised.
+
+config DUST_ECAT_DC_PROFILE
+    bool "Lab: detailed DC per-phase profiling"
+    depends on DUST_ECAT_DC_SYNC
+    default y
+    help
+      Disable for controlled timing comparisons; keep total-cycle timing,
+      histogram, safety faults and PLIC counters without per-phase hooks.
+
+config DUST_ECAT_REFERENCE_DIGEST
+    bool "Lab: original bitwise digest for A/B comparison"
+    default n
+
+config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
+    bool "Skip clearing bytes fully overwritten by PDO publication"
+    default n
+
+config DUST_ECAT_DC_WAIT_PROFILE
+    bool "Lab: correlate pending Sync0 time with owner-loop phases"
+    depends on DUST_ECAT_DC_SYNC
+    default n
+
+config DUST_ECAT_PHY_RAW_DIAGNOSTICS
+    bool "Lab: periodic raw PHY register dump"
+    default n
+    help
+      Extra diagnostic MDIO reads and printk every 20 link polls. Disabling
+      leaves the 100 ms link checks, latch-low double reads, speed/duplex
+      validation, link-state publication and link transition messages intact.
+
+config DUST_ECAT_SSC_SKIP_UNUSED_AL_READ
+    bool "Lab: omit unused SSC input-mapping AL event read"
+    depends on !DUST_ECAT_SM_SYNC && !DUST_ECAT_DC_SYNC
+    default n
+    help
+      Adjust only the build copy of the recognized PDO_InputMapping function.
+      Keep automatic timing measurement and reported timing values unchanged.
+      Refuse the adjustment if the event value has any remaining use.

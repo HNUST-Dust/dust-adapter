@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def generate(spec):
+def generate(spec, dc_sync=False):
     rx, tx = spec["rx_address"], spec["tx_address"]
     if not (0x1100 <= rx < tx < spec["ram_end"] <= 0x10000
             and rx % 4 == tx % 4 == 0
@@ -60,7 +60,7 @@ def generate(spec):
         "MAX_PD_WRITE_ADDRESS": spec["ram_end"] - 1, "MIN_PD_READ_ADDRESS": tx,
         "MAX_PD_READ_ADDRESS": spec["ram_end"] - 1,
         "DUST_RX_ADDRESS": rx, "DUST_TX_ADDRESS": tx, "DUST_RAM_END": spec["ram_end"],
-        "MIN_PD_CYCLE_TIME": 1000000,
+        "MIN_PD_CYCLE_TIME": 500000 if dc_sync else 1000000,
     }
     config += "".join(f"#define {name} 0x{value:x}U\n" for name, value in defines.items())
     config += f'#define DEVICE_NAME "{spec["name"]}"\n#define DEVICE_NAME_LEN {len(spec["name"])}\n'
@@ -92,6 +92,13 @@ def generate(spec):
         ET.SubElement(device, "Sm", **attrs).text = name
     mailbox = ET.SubElement(device, "Mailbox", DataLinkLayer="true")
     ET.SubElement(mailbox, "CoE", SdoInfo="true", PdoAssign="true", PdoConfig="true", CompleteAccess="false", SegmentedSdo="true")
+    if dc_sync:
+        dc = ET.SubElement(device, "Dc")
+        mode = ET.SubElement(dc, "OpMode")
+        ET.SubElement(mode, "Name").text = "DC-Sync0"
+        ET.SubElement(mode, "Desc").text = "DC Sync0 owner-thread lab"
+        ET.SubElement(mode, "AssignActivate").text = "#x0300"
+        ET.SubElement(mode, "CycleTimeSync0", Factor="1").text = "0"
     ep = ET.SubElement(device, "Eeprom")
     ET.SubElement(ep, "ByteSize").text = "2048"
     ET.SubElement(ep, "ConfigData").text = image[:14].hex()
@@ -103,9 +110,10 @@ def generate(spec):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--dc-sync0", action="store_true")
     args = parser.parse_args()
     spec = json.loads((ROOT / "config/ethercat_gateway.json").read_text())
-    config, eeprom, xml, image = generate(spec)
+    config, eeprom, xml, image = generate(spec, dc_sync=args.dc_sync0)
     args.output.mkdir(parents=True, exist_ok=True)
     for name, text in (("gateway_config.h", config), ("eeprom.h", eeprom), ("DUST_HPM5E31_Gateway.xml", xml)):
         (args.output / name).write_text(text)

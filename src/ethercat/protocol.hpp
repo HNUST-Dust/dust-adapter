@@ -197,8 +197,10 @@ class Core {
                     const ImageLayout& tx);
     Error Process(Bytes image, uint64_t now_us, bool operational,
                   Actions& actions);
-    void Tick(uint64_t now_us, bool operational);
-    void Protect(Error reason);
+    void Tick(uint64_t now_us, bool operational,
+              const char* file = __builtin_FILE(), unsigned line = __builtin_LINE());
+    void Protect(Error reason, const char* file = __builtin_FILE(),
+                 unsigned line = __builtin_LINE());
     // 在 UART 后端已复制整个块并预留发送空间后调用，才推进累计 ACK。
     bool CommitUart(unsigned port, uint32_t sequence);
     // 上行窗口满返回 false；调用方须累计丢弃并显式标记流中断。

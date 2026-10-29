@@ -3,6 +3,7 @@
 #include "hpm5e_esc_hw.h"
 #include "rtt_trace.h"
 #include "esc_dma.h"
+#include "pdi_deferred.h"
 #include <string.h>
 
 #include <zephyr/device.h>
@@ -28,6 +29,9 @@ void hpm5e_ssc_hw_release(void)
 
 void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE)
+	const unsigned previous_phase = length >= 64 ? dust_trace_phase(DUST_PHASE_ESC_READ) : 0;
+#endif
 	dust_trace_read(DUST_TR_ESC_READ_BEGIN, address, length);
 	int result = dust_esc_dma_read((void *)data, address, length);
 	if (result == 1) {
@@ -36,22 +40,41 @@ void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 		memset((void *)data, 0, length);
 	}
 	dust_trace_read(DUST_TR_ESC_READ_END, address, length);
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE)
+	if (length >= 64) (void)dust_trace_phase(previous_phase);
+#endif
 }
 
 void hpm5e_ssc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE)
+	const unsigned previous_phase = length >= 64 ? dust_trace_phase(DUST_PHASE_ESC_WRITE) : 0;
+#endif
 	dust_trace_esc(DUST_TR_ESC_BEGIN, address, length);
 	if (dust_esc_dma_write((const void *)data, address, length) == 1) {
 		hpm_esc_write(esc, address, (const void *)data, length);
 	}
+	/* This checkpoint belongs to feedback still waiting for a snapshot, not
+	 * the later sequence-matched ESC_END publication interval. */
+	if (address == 0x1d00 && length >= 64) {
+		dust_trace_stamp(DUST_TR_PENDING_WRITE_END, 0);
+	}
 	dust_trace_esc(DUST_TR_ESC_END, address, length);
+#if defined(CONFIG_DUST_ECAT_RTT_TRACE)
+	if (length >= 64) (void)dust_trace_phase(previous_phase);
+#endif
 }
 
 uint16_t hpm5e_ssc_al_event(void)
 {
 	uint16_t event;
 	hpm_esc_read(esc, 0x0220U, &event, sizeof(event));
-	return event;
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+    // Independent Sync0 IRQ owns acknowledgement/service. Hide Sync0/1 AL
+    // bits from SSC PDI_Isr so the same pulse cannot invoke Sync0 twice.
+    event &= (uint16_t)~0x000cU;
+#endif
+    return event;
 }
 
 uint32_t hpm5e_ssc_timer_get(void)
@@ -71,12 +94,20 @@ uint16_t hpm5e_ssc_eeprom_reload(void)
 
 void hpm5e_ssc_irq_enable(void)
 {
-	irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
+#if defined(CONFIG_DUST_ECAT_SM_SYNC)
+    dust_pdi_enable();
+#else
+    irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
+#endif
 }
 
 void hpm5e_ssc_irq_disable(void)
 {
-	irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
+#if defined(CONFIG_DUST_ECAT_SM_SYNC)
+    dust_pdi_disable();
+#else
+    irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
+#endif
 }
 
 void hpm5e_ssc_enter_critical(void)

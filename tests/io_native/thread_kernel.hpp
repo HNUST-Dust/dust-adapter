@@ -14,8 +14,14 @@ struct k_mutex {
     std::mutex value;
 };
 #define K_MUTEX_DEFINE(name) k_mutex name
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+inline std::atomic<uint64_t> native_mutex_lock_count{0};
+#endif
 inline int k_mutex_lock(k_mutex* m, int) {
     m->value.lock();
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    ++native_mutex_lock_count;
+#endif
     return 0;
 }
 inline int k_mutex_unlock(k_mutex* m) {

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdarg>
@@ -7,7 +8,11 @@
 
 #include "ethercat/protocol.hpp"
 #include "gateway.h"
-namespace dust::ecat { extern bool native_can_dirty; }
+namespace dust::ecat {
+extern bool native_can_dirty, native_can_frame_enabled, native_can_invalid, native_offer_uart;
+extern unsigned native_can_checks;
+extern Core::CanEvent native_can_frame;
+}
 extern "C" {
 #include "coeappl.h"
 #include "ecat_def.h"
@@ -17,6 +22,12 @@ extern "C" {
 #include "applInterface.h"
 #undef _APPL_INTERFACE_
 #include "sampleappl.h"
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+void dust_sync0_period(uint32_t cycles) { assert(cycles > 0); }
+void dust_sync0_begin(void) {}
+unsigned dust_sync0_phase(unsigned) { return 0; }
+BOOL b32BitDc;
+#endif
 UINT8 nAlStatus = STATE_PREOP;
 BOOL bEcatOutputUpdateRunning = false;
 BOOL bEcatInputUpdateRunning = false;
@@ -26,6 +37,8 @@ UINT16 nPdOutputSize;
 BOOL bEscIntEnabled;
 BOOL bDcSyncActive;
 BOOL bEcatFirstOutputsReceived;
+static bool native_in_isr;
+bool k_is_in_isr(void) { return native_in_isr; }
 void hpm5e_ssc_enter_critical(void) {}
 void hpm5e_ssc_leave_critical(void) {}
 int printk(const char*, ...) {
@@ -50,11 +63,28 @@ extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
     assert(unsigned(address) + count <= esc.size());
     std::memcpy(const_cast<void*>(out), esc.data() + address, count);
 }
-static unsigned native_input_refreshes;
+static unsigned native_input_refreshes, native_pdram_writes;
+static bool native_fail_next_write;
+static std::array<UINT16, MAX_PD_INPUT_SIZE / 2> native_mapped_inputs;
+extern int native_esc_dma_fault;
+extern "C" void hpm5e_ssc_esc_write(const volatile void* data, uint16_t address,
+                                    uint16_t count) {
+    ++native_pdram_writes;
+    if (native_fail_next_write) {
+        native_fail_next_write = false;
+        native_esc_dma_fault = -5;
+        return;
+    }
+    assert(unsigned(address) + count <= esc.size());
+    std::memcpy(esc.data() + address, const_cast<const void*>(data), count);
+}
+static void WriteMappedInputs() {
+    APPL_InputMapping(native_mapped_inputs.data());
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+}
 extern "C" void PDO_InputMapping(void) {
     ++native_input_refreshes;
-    std::array<UINT16, MAX_PD_INPUT_SIZE / 2> mapped{};
-    APPL_InputMapping(mapped.data());
+    WriteMappedInputs();
 }
 static uint8_t Write(uint16_t index, uint8_t sub, uint32_t value,
                      unsigned bytes) {
@@ -138,6 +168,8 @@ static void Configure() {
     assert(Write(0x2100, 18, 0, 4) == 0);
     assert(APPL_GenerateMapping(&input, &output) == 0);
     assert(input == expected.tx.bytes && output == expected.rx.bytes);
+    nPdInputSize = input;
+    nPdOutputSize = output;
     // 经由真实 SSC 元数据接口读取逐项位宽、映射标记及业务记录大小。
     for (const auto* image : {&expected.rx, &expected.tx}) {
         for (unsigned i = 0; i < image->count; ++i) {
@@ -170,7 +202,23 @@ static void Configure() {
     sm[4] &= ~0x40;
     assert(APPL_StartInputHandler(nullptr) != 0);
     sm[4] |= 0x40;
+#if defined(CONFIG_DUST_ECAT_SM_SYNC)
+    // Reject unsupported mixed/SM3/DC tuples before configuring Core.
+    sSyncManOutPar.u16SyncType = SYNCTYPE_SM_SYNCHRON;
+    assert(APPL_StartInputHandler(nullptr) != 0);
+    sSyncManInPar.u16SyncType = SYNCTYPE_SM_SYNCHRON;
+    assert(APPL_StartInputHandler(nullptr) != 0);
+    sSyncManInPar.u16SyncType = SYNCTYPE_DCSYNC0;
+    assert(APPL_StartInputHandler(nullptr) != 0);
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+    sSyncManOutPar.u16SyncType = sSyncManInPar.u16SyncType = SYNCTYPE_DCSYNC0;
+#else
+    sSyncManInPar.u16SyncType = SYNCTYPE_SM2_SYNCHRON;
+#endif
+#endif
     assert(APPL_StartInputHandler(nullptr) == 0);
+    // Remaining native gateway contracts explicitly exercise legacy mode too.
+    sSyncManOutPar.u16SyncType = sSyncManInPar.u16SyncType = SYNCTYPE_FREERUN;
 }
 int main() {
     assert(COE_ObjDictionaryInit() == 0);
@@ -179,6 +227,29 @@ int main() {
     assert(COE_ObjDictionaryInit() == 0);
     esc[6] = 8;
     assert(dust_gateway_init() == 0);
+    // Mirror the standard CoE initialization which this dictionary-only harness
+    // otherwise omits. CheckSyncTypeValue also needs configured PDO sizes.
+    sSyncManOutPar.subindex0 = sSyncManInPar.subindex0 = 32;
+    nPdOutputSize = 96;
+    nPdInputSize = 400;
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
+    assert(sSyncManOutPar.u16SyncTypesSupported == 7);
+    assert(Write(0x1c32, 1, SYNCTYPE_DCSYNC0, 2) == 0);
+    assert(Write(0x1c33, 1, SYNCTYPE_DCSYNC0, 2) == 0);
+#elif defined(CONFIG_DUST_ECAT_SM_SYNC)
+    assert(sSyncManOutPar.u16SyncTypesSupported ==
+           (SYNCTYPE_FREERUNSUPP | SYNCTYPE_SYNCHRONSUPP));
+    assert(Write(0x1c32, 1, SYNCTYPE_SM_SYNCHRON, 2) == 0);
+    assert(Write(0x1c33, 1, SYNCTYPE_SM2_SYNCHRON, 2) == 0);
+#else
+    assert(sSyncManOutPar.u16SyncTypesSupported == SYNCTYPE_FREERUNSUPP);
+    assert(Write(0x1c32, 1, SYNCTYPE_SM_SYNCHRON, 2) != 0);
+#endif
+#if !defined(CONFIG_DUST_ECAT_DC_SYNC)
+    assert(Write(0x1c32, 1, SYNCTYPE_DCSYNC0, 2) != 0);
+#endif
+    assert(Write(0x1c32, 1, SYNCTYPE_FREERUN, 2) == 0);
+    assert(Write(0x1c33, 1, SYNCTYPE_FREERUN, 2) == 0);
     assert(!OBJ_GetObjectHandle(0x6000) && !OBJ_GetObjectHandle(0x7010));
     assert(Write(0x1600, 1, 0x20000120, 4) != 0);
     uint16_t data[2]{};
@@ -283,10 +354,81 @@ int main() {
     esc[0x440] = 1;
     bEcatInputUpdateRunning = true;
     bEscIntEnabled = false;
+    // Complete new publications once; suppress only repeated commits in Active FreeRun.
+    unsigned writes = native_pdram_writes;
+    WriteMappedInputs();
+    assert(native_pdram_writes == writes + 1);
+    WriteMappedInputs();
+#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
+    assert(native_pdram_writes == writes + 1);
+    assert(dust_ecat_input_write_stats.skipped > 0);
+#else
+    assert(native_pdram_writes == writes + 2);
+#endif
+    // Even a rejected lifecycle transition revokes a previous commit credit.
+    writes = native_pdram_writes;
+    assert(APPL_StartOutputHandler() != 0); // Already Active, not Ready.
+    WriteMappedInputs();
+    assert(native_pdram_writes == writes + 1);
+    // Sync/DC/ISR/stopped-input calls must execute normally, and invalidate credit.
+    for (unsigned mode = 0; mode < 4; ++mode) {
+        bEscIntEnabled = mode == 0;
+        bDcSyncActive = mode == 1;
+        native_in_isr = mode == 2;
+        bEcatInputUpdateRunning = mode != 3;
+        writes = native_pdram_writes;
+        WriteMappedInputs(); WriteMappedInputs();
+        assert(native_pdram_writes == writes + 2);
+        bEscIntEnabled = bDcSyncActive = native_in_isr = false;
+        bEcatInputUpdateRunning = true;
+        WriteMappedInputs();
+        assert(native_pdram_writes == writes + 3);
+    }
+    // An interrupted mapping handshake or partial/non-PDO write is never coalesced.
+    writes = native_pdram_writes;
+    APPL_InputMapping(native_mapped_inputs.data());
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, 4);
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, 4);
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), 0x1000, 4);
+    assert(native_pdram_writes == writes + 3);
+    WriteMappedInputs();
+    // A different source pointer does not match the mapping handoff.
+    writes = native_pdram_writes;
+    APPL_InputMapping(native_mapped_inputs.data());
+    dust_gateway_esc_write_isr(tx.data(), DUST_TX_ADDRESS, nPdInputSize);
+    dust_gateway_esc_write_isr(tx.data(), DUST_TX_ADDRESS, nPdInputSize);
+    assert(native_pdram_writes == writes + 2);
+    // A failed transport write cannot mark a publication as committed.
+    writes = native_pdram_writes;
+    bEscIntEnabled = true; // Force a write even if this revision already committed.
+    native_fail_next_write = true;
+    WriteMappedInputs();
+    bEscIntEnabled = false;
+    native_esc_dma_fault = 0;
+    WriteMappedInputs();
+    assert(native_pdram_writes == writes + 2);
+    // New CAN publication must reach ESC, then idle passes leave bytes/version unchanged.
+    writes = native_pdram_writes;
+    dust::ecat::native_can_dirty = true;
+    APPL_Application();
+    WriteMappedInputs();
+    assert(native_pdram_writes == writes + 1);
+    const auto committed_esc = esc;
+    WriteMappedInputs();
+#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
+    assert(native_pdram_writes == writes + 1);
+    assert(esc == committed_esc);
+    assert(dust_ecat_input_write_stats.requests == dust_ecat_input_write_stats.writes +
+                                                   dust_ecat_input_write_stats.skipped);
+#else
+    assert(native_pdram_writes == writes + 2);
+    assert(esc == committed_esc);
+#endif
+    // Account for the extra publication made above in the existing sequence checks.
     dust::ecat::native_can_dirty = true;
     dust_gateway_poll();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 24) == previous_publication + 2);
+    assert(U32(bytes + 24) == previous_publication + 3);
     assert(native_input_refreshes == 1);
     assert(native_io_dispatches == dispatched + 1);
     dust_gateway_poll();
@@ -316,5 +458,126 @@ int main() {
     assert(native_io_stops == stops_before_dma + 1);
     dust_gateway_poll();
     assert(native_io_stops == stops_before_dma + 1);
+    native_esc_dma_fault = 0;
+    APPL_Application();
+    writes = native_pdram_writes;
+    WriteMappedInputs(); WriteMappedInputs();
+    assert(native_pdram_writes == writes + 2);
+    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
+    assert(APPL_StopInputHandler() == 0);
+    APPL_InputMapping(native_mapped_inputs.data());
+    writes = native_pdram_writes;
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    assert(native_pdram_writes == writes + 2);
+    auto ArmFreshGateway = [&] {
+        native_can_dirty = native_can_frame_enabled = native_can_invalid = native_offer_uart = false;
+        bEcatOutputUpdateRunning = bEcatInputUpdateRunning = false;
+        nAlStatus = STATE_PREOP;
+        assert(COE_ObjDictionaryInit() == 0);
+        assert(dust_gateway_init() == 0);
+        Configure();
+        APPL_Application();
+        APPL_InputMapping(tx.data());
+        Put64(request + 16, U64(bytes + 8));
+        Put32(request + 24, 1);
+        Put32(request + 28, kArm);
+        assert(APPL_StartOutputHandler() == 0);
+        bEcatOutputUpdateRunning = bEcatInputUpdateRunning = true;
+        nAlStatus = STATE_OP;
+        esc[0x440] = 1;
+        APPL_OutputMapping(rx.data());
+        APPL_Application();
+        assert(dust_gateway_active());
+    };
+    ArmFreshGateway();
+    WriteMappedInputs(); WriteMappedInputs();
+#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+    // Publish a real UART block, then deliver CAN after the normal application snapshot.
+    native_offer_uart = true;
+    Put32(request + 24, 2);
+    APPL_OutputMapping(rx.data());
+    APPL_Application();
+    APPL_InputMapping(tx.data());
+    const unsigned uart_offset = expected.uart_tx[0];
+    assert(U16(bytes + uart_offset + 12) == 4);
+    std::array<uint8_t, 48> uart_before;
+    std::copy_n(bytes + uart_offset, uart_before.size(), uart_before.begin());
+    const auto before_late_publication = U32(bytes + 24);
+    const auto before_late_dispatches = native_io_dispatches;
+    const auto before_late_mappings = native_input_refreshes;
+    native_can_frame = {};
+    native_can_frame.id = 0x13; native_can_frame.sequence = 77;
+    native_can_frame.capture_us = 1000; native_can_frame.length = 8;
+    native_can_frame.data[0] = 3;
+    native_can_frame_enabled = native_can_dirty = true;
+    writes = native_pdram_writes;
+    WriteMappedInputs();
+    const auto* committed = esc.data() + DUST_TX_ADDRESS;
+    assert(U32(committed + 24) == before_late_publication + 1);
+    assert(U16(committed + expected.feedback[3] + 8) == 1);
+    assert(U32(committed + expected.feedback[3] + 20) == 77);
+    assert(std::equal(uart_before.begin(), uart_before.end(), committed + uart_offset));
+    assert(native_io_dispatches == before_late_dispatches);
+    assert(native_input_refreshes == before_late_mappings); // No recursive mapping.
+    assert(native_pdram_writes == writes + 1); // Replaces, never adds, an ESC write.
+    assert(dust_ecat_input_refresh_stats.refreshes == 1);
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    const auto checks_before_idle = native_can_checks;
+#endif
+    WriteMappedInputs();
+#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
+    assert(native_can_checks == checks_before_idle); // No full service on unchanged version.
+#endif
+    assert(dust_ecat_input_refresh_stats.refreshes == 1); // No change, no publication.
+    assert(U32(esc.data() + DUST_TX_ADDRESS + 24) == before_late_publication + 1);
+    for (unsigned mode = 0; mode < 5; ++mode) {
+        bEscIntEnabled = mode == 0;
+        bDcSyncActive = mode == 1;
+        native_in_isr = mode == 2;
+        bEcatInputUpdateRunning = mode != 3;
+        bEcatOutputUpdateRunning = mode != 4;
+        native_can_dirty = true;
+        const auto checks = native_can_checks;
+        APPL_InputMapping(tx.data());
+        assert(native_can_checks == checks && native_can_dirty);
+        bEscIntEnabled = bDcSyncActive = native_in_isr = false;
+        bEcatInputUpdateRunning = bEcatOutputUpdateRunning = true;
+        native_can_dirty = false;
+    }
+    // Do not consume late feedback against an output image still awaiting Process.
+    APPL_OutputMapping(rx.data());
+    native_can_dirty = true;
+    const auto checks = native_can_checks;
+    APPL_InputMapping(tx.data());
+    assert(native_can_checks == checks && native_can_dirty);
+    APPL_Application();
+    WriteMappedInputs();
+#endif
+    // A late checkpoint must not replace the independent watchdog poll.
+    const auto stops_before_watchdog = native_io_stops;
+    esc[0x440] = 0;
+    dust_gateway_poll();
+    assert(!dust_gateway_active());
+    assert(native_io_stops == stops_before_watchdog + 1);
+    APPL_Application();
+    WriteMappedInputs();
+    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
+#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+    ArmFreshGateway();
+    WriteMappedInputs();
+    native_can_frame_enabled = native_can_invalid = native_can_dirty = true;
+    const auto stops_before_invalid_snapshot = native_io_stops;
+    writes = native_pdram_writes;
+    WriteMappedInputs();
+    assert(!dust_gateway_active());
+    assert(native_io_stops == stops_before_invalid_snapshot + 1);
+    assert(native_pdram_writes == writes + 1);
+    assert(U32(esc.data() + DUST_TX_ADDRESS) == kMagic);
+    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
+    assert(U16(esc.data() + DUST_TX_ADDRESS + expected.feedback[3] + 8) == 0);
+    assert(dust_ecat_input_refresh_stats.failures == 1);
+    native_can_frame_enabled = native_can_invalid = native_can_dirty = false;
+#endif
     std::puts("Real SSC SDO / mapping / cycle integration contracts PASS");
 }

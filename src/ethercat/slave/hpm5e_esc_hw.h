@@ -3,6 +3,7 @@
 #ifndef WBR_HPM5E_ESC_HW_H_
 #define WBR_HPM5E_ESC_HW_H_
 
+#include "gateway.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <zephyr/drivers/ethercat/hpm_esc.h>
@@ -42,8 +43,13 @@ void hpm5e_ssc_leave_critical(void);
     HW_EscRead((pData), (Address), (Len))
 #define HW_EscWrite(pData, Address, Len) \
     hpm5e_ssc_esc_write((pData), (uint16_t)(Address), (uint16_t)(Len))
+#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE) || defined(CONFIG_DUST_ECAT_DC_SYNC)
+#define HW_EscWriteIsr(pData, Address, Len) \
+    dust_gateway_esc_write_isr((pData), (uint16_t)(Address), (uint16_t)(Len))
+#else
 #define HW_EscWriteIsr(pData, Address, Len) \
     HW_EscWrite((pData), (Address), (Len))
+#endif
 #define HW_EscWriteMbxMem(pData, Address, Len) \
     HW_EscWrite((pData), (Address), (Len))
 

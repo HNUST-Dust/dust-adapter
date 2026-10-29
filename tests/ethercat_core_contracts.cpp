@@ -523,4 +523,5 @@ int main() {
     WireContracts();
     std::printf("EtherCAT core contracts PASS; sizeof(Core)=%zu bytes\n",
                 sizeof(Core));
+    return 0;
 }
