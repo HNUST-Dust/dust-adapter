@@ -25,7 +25,7 @@ static unsigned protection_tick_line;
 namespace dust::ecat {
 namespace {
 uint32_t Digest(Bytes bytes) {
-#if defined(CONFIG_DUST_ECAT_REFERENCE_DIGEST)
+#if defined(DUST_TEST_REFERENCE_DIGEST)
     uint32_t crc = 0xffffffffU;
     for (size_t n = 0; n < bytes.size; ++n) {
         crc ^= bytes.data[n];

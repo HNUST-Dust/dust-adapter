@@ -14,7 +14,7 @@ for profile in 0 1 wait; do
   if [[ $profile == 1 ]]; then extra=(-DCONFIG_DUST_ECAT_DC_PROFILE=1); fi
   if [[ $profile == wait ]]; then extra=(-DCONFIG_DUST_ECAT_DC_WAIT_PROFILE=1); fi
   "${CC:-cc}" -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined \
-    -DCONFIG_DUST_ECAT_DC_SYNC=1 "${extra[@]}" -I "$root/tests/pdi_native" \
+    -DCONFIG_DUST_ECAT_DC_SYNC=1 "${extra[@]+"${extra[@]}"}" -I "$root/tests/pdi_native" \
     -I "$root/src/ethercat/slave" "$root/src/ethercat/slave/sync0_deferred.c" \
     "$root/src/ethercat/slave/wait_profile.c" "$root/tests/sync0_budget_contracts.c" -o "$build/budget"
   "$build/budget"

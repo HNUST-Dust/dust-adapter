@@ -87,7 +87,7 @@ class ConfigurationTests(unittest.TestCase):
         self.config['can_buses'][0]['devices'][0]['commmand_id'] = 1
         with self.assertRaises(ValueError): generator.compile_profile(self.config)
 
-    def test_protection_capacity_is_not_usb_packet_capacity(self):
+    def test_protection_capacity_limit(self):
         bus = self.config['can_buses'][0]
         bus['devices'] = [dict(name=f'd{i}', command_id=i, feedback_ids=[],
             protection_frame={'data':[0]*8}) for i in range(32)]

@@ -72,17 +72,6 @@ foreach(input IN LISTS ssc_inputs)
   list(APPEND ssc_sources "${gateway_generated}/${name}")
  endif()
 endforeach()
-if(CONFIG_DUST_ECAT_SSC_SKIP_UNUSED_AL_READ)
- set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-  ${DUST_ADAPTER_ROOT}/tools/ssc_build_adjustments.py)
- execute_process(COMMAND ${Python3_EXECUTABLE}
-  ${DUST_ADAPTER_ROOT}/tools/ssc_build_adjustments.py
-  ${gateway_generated}/ecatappl.c
-  RESULT_VARIABLE adjustment_result)
- if(NOT adjustment_result EQUAL 0)
-  message(FATAL_ERROR "Recognized SSC input mapping adjustment failed")
- endif()
-endif()
 configure_file(${DUST_ADAPTER_ROOT}/src/ethercat/slave/ssc/sampleappl.h
  ${gateway_generated}/sampleappl.h COPYONLY)
 target_sources(app PRIVATE
@@ -91,11 +80,11 @@ target_sources(app PRIVATE
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/wait_profile.c
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/pdi_deferred.c
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/esc_dma.c
- ${DUST_ADAPTER_ROOT}/src/ethercat/slave/rtt_trace.cpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/gateway.cpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/io_backend.cpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/boot_identity.cpp
  ${DUST_ADAPTER_ROOT}/src/drivers/uart_receive.cpp
+ ${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp
  ${generated}/can_profile_generated.hpp
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/hpm5e_esc_hw.c
  ${hpm_phy_dir}/hpm5e31_phy.c

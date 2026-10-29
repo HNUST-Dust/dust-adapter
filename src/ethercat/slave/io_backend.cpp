@@ -1,11 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "io_backend.hpp"
-#include "rtt_trace.h"
 #include "sync0_deferred.h"
 #include "wait_profile.h"
-#if defined(CONFIG_DUST_ECAT_RTT_TRACE) && defined(CONFIG_HPM_MCAN_RX_TIMING)
-#include <drivers/can/hpmicro_mcan_timing.h>
-#endif
 
 #include <drivers/can/hpmicro_mcan_batch.h>
 #include <zephyr/drivers/uart.h>
@@ -18,6 +14,9 @@
 #include <cstring>
 
 #include "drivers/firmware_can_profile.hpp"
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#include "drivers/imu_sensor.hpp"
+#endif
 #include "drivers/uart_receive.hpp"
 #include "ethercat/io_policy.hpp"
 
@@ -45,7 +44,6 @@ struct CanPort {
     atomic_t busy{}, fault{}, received{}, submitted{}, completed{}, errors{},
         drops{};
     bool ready = false;
-    bool trace_submission = false;
 };
 CanPort buses[] = {{DEVICE_DT_GET(DT_ALIAS(dust_can_0)), 0},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_1)), 1},
@@ -90,6 +88,11 @@ bool initialized = false, ready = false, capturing = false;
 uint32_t protection_errors = 0;
 uint64_t source_deadlines[2]{};
 Configuration configuration;
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+modules::ImuSensor onboard_imu;
+bool imu_ready = false;
+uint32_t imu_sequence = 0;
+#endif
 std::array<can_frame, 16> hardware_frames;
 std::array<PendingCan, 16> admitted;
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
@@ -201,17 +204,14 @@ public:
 #endif
 void CanRxLoop(void*, void*, void*) {
     for (;;) {
-        dust_trace_stamp(DUST_TR_WORKER_WAIT, 0);
         const int result = k_sem_take(
             &can_rx_wake, CONFIG_DUST_ECAT_CAN_RX_POLL_US
                               ? K_USEC(CONFIG_DUST_ECAT_CAN_RX_POLL_US)
                               : K_FOREVER);
-        dust_trace_stamp(DUST_TR_WORKER_WAKE, 0);
         CaptureGuard guard;
 #if defined(CONFIG_DUST_ECAT_DC_PROFILE) || defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
         WorkerElapsedScope worker_elapsed;
 #endif
-        dust_trace_stamp(DUST_TR_WORKER_LOCKED, 0);
         if (!can_capture_enabled) {
             continue;
         }
@@ -243,10 +243,6 @@ void CanRxLoop(void*, void*, void*) {
 
 void CanDone(const device*, int error, void* user) {
     auto& bus = *static_cast<CanPort*>(user);
-    if (bus.trace_submission) {
-        dust_trace_stamp(DUST_TR_TX_DONE, uint32_t(error));
-    }
-    bus.trace_submission = false;
     if (error && error != -ECANCELED && error != -ENETDOWN) {
         atomic_inc(&bus.errors);
         atomic_set(&bus.fault, 1);
@@ -258,13 +254,6 @@ void CanDone(const device*, int error, void* user) {
 void CanReceive(const device*, can_frame* frame, void* user) {
     auto& bus = *static_cast<CanPort*>(user);
     const uint32_t sequence = bus.rx_sequence++;
-    if (bus.index == 3 && frame->id == 0x13 && frame->dlc == 8 &&
-        !frame->flags && (frame->data[0] & 15) == 3) {
-        dust_trace_stamp(DUST_TR_CAN_RX, sequence);
-#if defined(CONFIG_DUST_ECAT_RTT_TRACE) && defined(CONFIG_HPM_MCAN_RX_TIMING)
-        dust_trace_can_timing(sequence, hpm_mcan_last_rx_timing(bus.dev));
-#endif
-    }
     atomic_inc(&bus.received);
     if (frame->dlc > 8 || frame->flags || frame->id > 0x7ff) {
         atomic_inc(&bus.drops);
@@ -286,8 +275,6 @@ void CanReceive(const device*, can_frame* frame, void* user) {
             atomic_inc(&bus.drops);
         }
     }
-    if (!queued && bus.index == 3 && value.id == 0x13)
-        dust_trace_can_queue(DUST_TR_CAN_ENQUEUED, sequence);
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     if (!queued) k_sem_give(&can_rx_wake);
 #endif
@@ -360,7 +347,7 @@ bool Validate(void*, unsigned, const CanFrame& frame) {
         frame.length > 8) {
         return false;
     }
-    dust::wire::CanFrame record{};
+    dust::can_profile::CanFrame record{};
     record.channel = frame.bus;
     record.id = frame.id;
     record.length = frame.length;
@@ -519,24 +506,12 @@ void PumpCan(Core* core, uint64_t now) {
         }
         bus.deadline = deadline;
         atomic_set(&bus.busy, 1);
-        bus.trace_submission = bus.index == 3 && count == 1 &&
-            hardware_frames[0].id == 3 && hardware_frames[0].dlc == 8 &&
-            hardware_frames[0].data[7] == 0xfd;
-        if (bus.trace_submission) {
-            dust_trace_stamp(DUST_TR_SUBMIT, 0);
-        }
         const int result =
             deadline ? hpm_mcan_send_batch_until(
                            bus.dev, hardware_frames.data(), count, K_NO_WAIT,
                            deadline, CanDone, &bus)
                      : hpm_mcan_send_batch(bus.dev, hardware_frames.data(),
                                            count, K_NO_WAIT, CanDone, &bus);
-        if (bus.index == 3 && count == 1 && hardware_frames[0].id == 3) {
-            dust_trace_stamp(DUST_TR_SUBMITTED, uint32_t(result));
-        }
-        if (result) {
-            bus.trace_submission = false;
-        }
         if (!result) {
             for (unsigned i = 0; i < count; ++i) {
                 bus.transmit.Pop();
@@ -655,6 +630,9 @@ int InitializeIo(uint64_t& boot) {
             }
             port.ready = true;
         }
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+        imu_ready = onboard_imu.Init() == 0;
+#endif
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
         k_thread_create(&can_rx_thread, can_rx_stack,
                         K_THREAD_STACK_SIZEOF(can_rx_stack), CanRxLoop,
@@ -697,6 +675,9 @@ void ApplyIoLimits(Limits& limits) {
             }
         }
     }
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+    limits.imu = imu_ready;
+#endif
 }
 void ConfigureIo(const Configuration& value) {
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
@@ -814,13 +795,6 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
         if (!batch.valid) {
             continue;
         }
-        bool trace = source == 0 && batch.count == 1 && batch.frames[0].bus == 3 &&
-            batch.frames[0].id == 3 && batch.frames[0].length == 8 &&
-            batch.frames[0].data[7] == 0xfd;
-        for (unsigned n=0; trace && n<7; ++n) trace = batch.frames[0].data[n] == 0xff;
-        if (trace) {
-            dust_trace_begin(core.session(), batch.sequence);
-        }
         const uint64_t deadline = std::min(
             batch.deadline_us, now + dust::can_profile::kCommandTimeoutUs);
         source_deadlines[source] = deadline;
@@ -830,9 +804,6 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
                 core.Protect(Error::Capacity);
                 return;
             }
-        }
-        if (trace) {
-            dust_trace_stamp(DUST_TR_ENQUEUE, 0);
         }
     }
     for (unsigned i = 0; i < 6; ++i) {
@@ -931,9 +902,6 @@ namespace {
 bool DrainCanReceive() {
     bool changed = false;
     for (auto& bus : buses) {
-        if (bus.index == 3) {
-            dust_trace_stamp(DUST_TR_CAN3_SCAN, 0);
-        }
         unsigned count = 0;
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
         // Coalesce IRQ wakeups until SSC takes a copy. Scheduling must not
@@ -962,9 +930,6 @@ bool DrainCanReceive() {
             if (k_msgq_get(&bus.receive, &value, K_NO_WAIT)) {
                 break;
             }
-            if (bus.index == 3 && value.id == 0x13) {
-                dust_trace_can_queue(DUST_TR_CAN_DEQUEUED, value.sequence);
-            }
             // 启动失能反馈可能早于 PDO
             // 配置。丢弃过期样本，禁止把旧反馈作为新应答发布。
             if (uint32_t(uint32_t(Now()) - value.capture_us) >= kTimeoutUs) {
@@ -974,6 +939,17 @@ bool DrainCanReceive() {
             if (!capacity) {
                 continue;
             }
+#if defined(CONFIG_DUST_ECAT_CAN_FEEDBACK_WINDOW)
+            if (!added) {
+                // Keep a bounded history, in receive-sequence order. A paired
+                // host deduplicates the retained prefix across new batches.
+                const auto current = uint32_t(Now());
+                for (unsigned i=0;i<bus.feedback_count;++i) {
+                    if (uint32_t(current-bus.feedback[i].capture_us)<kTimeoutUs)
+                        bus.feedback[count++]=bus.feedback[i];
+                }
+            }
+#endif
             if (count == capacity) {
                 std::move(bus.feedback.begin() + 1,
                           bus.feedback.begin() + count, bus.feedback.begin());
@@ -1008,13 +984,6 @@ bool DrainCanReceive() {
                 changed = true;
             }
         }
-        if (bus.index == 3) {
-            for (unsigned n = 0; n < bus.feedback_count; ++n) {
-                if (bus.feedback[n].id == 0x13) {
-                    dust_trace_capture(bus.feedback[n].sequence);
-                }
-            }
-        }
     }
     return changed;
 }
@@ -1035,7 +1004,6 @@ bool CanReceivePending() {
 #endif
 }
 bool ServiceCanReceive() {
-    dust_trace_stamp(DUST_TR_SSC_SERVICE, 0);
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     CaptureGuard guard;
     if (have_can_snapshot) ExpireCanSnapshots(uint32_t(Now()));
@@ -1050,11 +1018,9 @@ bool ServiceCanReceive() {
 #endif
 }
 void CaptureCanFeedback(Core::Feedback& feedback) {
-    dust_trace_stamp(DUST_TR_SNAPSHOT_BEGIN, 0);
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     {
         CaptureGuard guard;
-        dust_trace_stamp(DUST_TR_SNAPSHOT_LOCKED, 0);
         if (have_can_snapshot) {
             ExpireCanSnapshots(uint32_t(Now()));
         }
@@ -1065,15 +1031,6 @@ void CaptureCanFeedback(Core::Feedback& feedback) {
             feedback.can[bus.index] = {
                 bus.batch, uint32_t(atomic_get(&bus.drops)),
                 bus.published_feedback.data(), uint16_t(bus.feedback_count)};
-            if (bus.index == 3) {
-                for (unsigned n = 0; n < bus.feedback_count; ++n) {
-                    if (bus.published_feedback[n].id == 0x13) {
-                        dust_trace_can_queue(
-                            DUST_TR_CAN_SNAPSHOT,
-                            bus.published_feedback[n].sequence);
-                    }
-                }
-            }
         }
     }
 #endif
@@ -1082,14 +1039,6 @@ void CaptureCanFeedback(Core::Feedback& feedback) {
         feedback.can[bus.index] = {bus.batch, uint32_t(atomic_get(&bus.drops)),
                                    bus.feedback.data(),
                                    uint16_t(bus.feedback_count)};
-        if (bus.index == 3) {
-            for (unsigned n = 0; n < bus.feedback_count; ++n) {
-                if (bus.feedback[n].id == 0x13) {
-                    dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT,
-                                         bus.feedback[n].sequence);
-                }
-            }
-        }
 #endif
         uint8_t* p = feedback.diagnostics.data() + 32 + bus.index * 32;
         Put32(p, atomic_get(&bus.received));
@@ -1156,6 +1105,20 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
             port.discontinuity = false;
         }
     }
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+    if (imu_ready && configuration.imu) {
+        modules::ImuSensor::Burst burst{};
+        if (onboard_imu.TryTakeCompleted(burst)) {
+            feedback.imu_valid = true;
+            feedback.imu_sequence = ++imu_sequence;
+            feedback.imu_capture_us = k_cyc_to_us_floor32(burst.data_ready_cycle);
+            feedback.temperature = burst.temperature_c;
+            std::copy(burst.rx, burst.rx + sizeof(burst.rx),
+                      feedback.imu_raw.begin());
+        }
+        (void)onboard_imu.TryStartAsync();
+    }
+#endif
     Put32(feedback.diagnostics.data() + 16, protection_errors);
 }
 }  // namespace dust::ecat

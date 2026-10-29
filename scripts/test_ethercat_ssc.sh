@@ -30,7 +30,7 @@ for mode in baseline coalesce late_refresh fast_notice sm_sync; do
   elif [[ $mode == late_refresh ]]; then
     mode_flags=(-DCONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1 -DCONFIG_DUST_ECAT_SCHED_STATS=1)
   fi
-  "${CXX:-c++}" -std=c++17 "${mode_flags[@]}" -Wall -Wextra -Werror -fno-exceptions "${flags[@]}" \
+  "${CXX:-c++}" -std=c++17 "${mode_flags[@]+"${mode_flags[@]}"}" -Wall -Wextra -Werror -fno-exceptions "${flags[@]}" \
     "$root/src/ethercat/slave/gateway.cpp" "$root/src/ethercat/layout.cpp" \
     "$root/src/ethercat/core.cpp" "$root/src/ethercat/pdo_dictionary.cpp" \
     "$root/tests/ssc_native/io_stub.cpp" "$root/tests/ethercat_ssc_contracts.cpp" "$build/objdef.o" "$build/coeappl.o" \

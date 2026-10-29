@@ -498,6 +498,43 @@ int main() {
         assert(f.core->state() == BusinessState::Protected &&
                cans[2].batches == before);
     }
+#if defined(CONFIG_DUST_ECAT_CAN_FEEDBACK_WINDOW) && !defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
+    {
+        Fixture f;
+        Core::Feedback feedback;
+        // Other native cases may leave mock IRQ records queued. Expire those
+        // before starting this independent window observation.
+        native_now+=20001;
+        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count==0);
+        can_frame frame{}; frame.id=0x201; frame.dlc=8;
+        frame.data[0]=41;
+        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
+        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count==1);
+        const auto first_sequence=feedback.can[2].frames[0].sequence;
+        // A later IRQ must not replace the previous reply before the master
+        // gets a chance to observe it. The window keeps receive order.
+        frame.data[0]=42;
+        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
+        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count==2 &&
+               feedback.can[2].frames[0].sequence==first_sequence &&
+               feedback.can[2].frames[0].data[0]==41 &&
+               feedback.can[2].frames[1].data[0]==42);
+        frame.data[0]=43;
+        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
+        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count==2 &&
+               feedback.can[2].frames[0].data[0]==42 &&
+               feedback.can[2].frames[1].data[0]==43);
+        const auto saved_now=native_now;
+        native_now+=20000;
+        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count==0);
+        native_now=saved_now;
+    }
+#endif
 #if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
     NativeStopCanWorker();
 #endif

@@ -44,7 +44,7 @@ static void printk(const char *format,...) {
 }
 '''
 main=r'''
-#if defined(CONFIG_DUST_ECAT_DC_SYNC) && !defined(CONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS)
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
 static void poll_steps(struct device *d) {
  unsigned steps=0;bool complete;
  do {unsigned n=reads[0]+reads[1];complete=ecat_phy_update_link_step(d);
@@ -57,11 +57,7 @@ int main(void) {
  struct device d={0};
  for(unsigned i=0;i<20;++i) ecat_phy_update_link(&d);
  assert(links[0] && links[1]);
-#if defined(CONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS)
- assert(reads[0]==61 && reads[1]==41 && dumps==1);
-#else
  assert(reads[0]==60 && reads[1]==40 && dumps==0);
-#endif
  assert(transitions==2);
  unsigned before=reads[0];latch_low=true;status_reads[0]=0;
  ecat_phy_update_link(&d);assert(links[0] && reads[0]-before==3);
@@ -74,7 +70,7 @@ int main(void) {
  port0_configured=false;before=reads[0];ecat_phy_update_link(&d);
  assert(!links[0] && reads[0]==before);
 
-#if defined(CONFIG_DUST_ECAT_DC_SYNC) && !defined(CONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS)
+#if defined(CONFIG_DUST_ECAT_DC_SYNC)
  port0_configured=port1_configured=true;
  latch_low=true;status_reads[0]=status_reads[1]=0;
  unsigned n=reads[0]+reads[1];poll_steps(&d);
@@ -96,7 +92,6 @@ int main(void) {
 '''
 with tempfile.TemporaryDirectory() as t:
  p=Path(t)/'contracts.c';p.write_text(prefix+body+main)
- for flags in (['-DCONFIG_DUST_ECAT_DC_SYNC=1'],
-               ['-DCONFIG_DUST_ECAT_DC_SYNC=1','-DCONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS=1'], [], ['-DCONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS=1']):
+ for flags in (['-DCONFIG_DUST_ECAT_DC_SYNC=1'], []):
   subprocess.run([os.environ.get('CC','cc'),'-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',*flags,str(p),'-o',str(p.with_suffix(''))],check=True)
   subprocess.run([str(p.with_suffix(''))],check=True)

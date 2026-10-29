@@ -20,7 +20,7 @@ Actual baseline disassembly shows PDO_InputMapping calls hpm5e_ssc_al_event
 unconditionally when the auto timing branch is compiled. Its local event value
 is never used. This experiment removes ONLY that read/swap pair in the recognized
 build copy of the function; original licensed external/ssc is never rewritten.
-Optional CONFIG_DUST_ECAT_SSC_SKIP_UNUSED_AL_READ defaultn, FreeRun-only.
+Historical experiment: CONFIG_DUST_ECAT_SSC_SKIP_UNUSED_AL_READ was removed during 2026-10-30 cleanup; its source and test are archived in the dust-control handoff retired-experiments index.
 No fake nonzero calc-copy constants; timing measurement and SDO values remain.
 Reject source variants if the event has any remaining use or pattern differs.
 Actual-function native ASan/UBSan tests compare baseline/adjusted mapping writes

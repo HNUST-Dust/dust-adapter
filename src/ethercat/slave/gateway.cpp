@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "gateway.h"
-#include "rtt_trace.h"
 #include "sync0_deferred.h"
 #include "esc_dma.h"
 
@@ -139,7 +138,6 @@ void RefreshCanBeforeMapping() {
         can_dirty = false;
         last_publish = Now();
         published_state = core->state();
-        dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data() + 24));
     }
 }
 #endif
@@ -358,7 +356,6 @@ extern "C" int dust_gateway_init(void) {
         return -1;
     }
     core = new (core_storage) Core(boot, IoProtection());
-    dust_trace_reset(boot);
     can_dirty = false;
 #if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH) && defined(CONFIG_DUST_ECAT_SCHED_STATS)
     dust_ecat_input_refresh_stats = {1, 0, 0, 0};
@@ -437,8 +434,6 @@ extern "C" int dust_gateway_init(void) {
     return 0;
 }
 extern "C" void dust_gateway_poll(void) {
-    dust_trace_stamp(DUST_TR_POLL_ENTRY, 0);
-    DustTracePhaseScope phase(DUST_PHASE_POLL_TICK);
     if (!core) {
         return;
     }
@@ -449,21 +444,17 @@ extern "C" void dust_gateway_poll(void) {
         core->Protect(Error::Transport);
     }
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
-    (void)dust_trace_phase(DUST_PHASE_POLL_IO);
     ServiceIo(*core, now);
     if (core->state() == BusinessState::Active) {
-        (void)dust_trace_phase(DUST_PHASE_POLL_CAN);
         can_dirty |= ServiceCanReceive();
         // Main-thread FreeRun only; one bounded extra input refresh per poll.
         // Use SSC's mapping/write path instead of bypassing SyncManager handling.
         if (can_dirty && mapping_ready && bEcatInputUpdateRunning && !bEscIntEnabled) {
-            (void)dust_trace_phase(DUST_PHASE_POLL_PUBLISH);
             CaptureCanFeedback(feedback);
             if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
                               feedback, false) == Error::None) {
                 InputPublicationCommitted();
                 can_dirty = false;
-                dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data() + 24));
                 last_publish = Now();
                 published_state = core->state();
                 PDO_InputMapping();
@@ -483,9 +474,12 @@ extern "C" UINT16 APPL_GenerateMapping(UINT16* input, UINT16* output) {
     *input = 0;
     *output = 0;
     mapping_ready = false;
-    if (dictionary.Snapshot(mapped_rx, mapped_tx) != Error::None ||
-        transaction.Commit(limits, mapped_rx, mapped_tx, prepared) !=
-            Error::None) {
+    const Error snap_err = dictionary.Snapshot(mapped_rx, mapped_tx);
+    const Error commit_err =
+        snap_err == Error::None
+            ? transaction.Commit(limits, mapped_rx, mapped_tx, prepared)
+            : snap_err;
+    if (commit_err != Error::None) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
     data_entry_count = 0;
@@ -522,9 +516,18 @@ extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
 #else
     const bool dc0 = false;
 #endif
-    if (!mapping_ready || !CheckSm() || (!freerun && !sm2 && !dc0) ||
-        core->Configure(transaction, limits, mapped_rx, mapped_tx) !=
-            Error::None) {
+    if (!mapping_ready) {
+        return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
+    }
+    if (!CheckSm()) {
+        return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
+    }
+    if (!freerun && !sm2 && !dc0) {
+        return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
+    }
+    const Error cfg_err =
+        core->Configure(transaction, limits, mapped_rx, mapped_tx);
+    if (cfg_err != Error::None) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
 #if defined(CONFIG_DUST_ECAT_DC_SYNC)
@@ -548,9 +551,9 @@ extern "C" UINT16 APPL_StopInputHandler(void) {
 }
 extern "C" UINT16 APPL_StartOutputHandler(void) {
     InvalidateInputWrite();
-    return mapping_ready && core->state() == BusinessState::Ready
-               ? ALSTATUSCODE_NOERROR
-               : ALSTATUSCODE_INVALIDOUTPUTMAPPING;
+    const bool ok =
+        mapping_ready && core && core->state() == BusinessState::Ready;
+    return ok ? ALSTATUSCODE_NOERROR : ALSTATUSCODE_INVALIDOUTPUTMAPPING;
 }
 extern "C" UINT16 APPL_StopOutputHandler(void) {
     InvalidateInputWrite();
@@ -563,7 +566,6 @@ extern "C" UINT16 APPL_StopOutputHandler(void) {
 extern "C" void APPL_OutputMapping(UINT16* data) {
     if (mapping_ready) {
         std::memcpy(rx_image.data(), data, prepared.rx.bytes);
-        dust_trace_mapping(U64(rx_image.data()+8), U32(rx_image.data()+24));
         new_output = true;
     }
 }
@@ -577,7 +579,6 @@ extern "C" void APPL_InputMapping(UINT16* data) {
         RefreshCanBeforeMapping();
 #endif
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);
-        dust_trace_input(U32(tx_image.data()+24), prepared.tx.bytes);
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
         mapped_input_buffer = data;
         mapped_revision = input_revision;
@@ -631,7 +632,6 @@ extern "C" bool dust_gateway_active(void) {
 }
 extern "C" void APPL_Application(void) {
     DustSyncPhaseScope sync_phase(DUST_SYNC_TICK);
-    DustTracePhaseScope phase(DUST_PHASE_APP_TICK);
     if (!mapping_ready || !core ||
         core->state() == BusinessState::Unconfigured) {
         return;
@@ -643,13 +643,11 @@ extern "C" void APPL_Application(void) {
     const uint64_t now = Now();
     core->Tick(now, bEcatOutputUpdateRunning);
     if (core->state() == BusinessState::Active) {
-        (void)dust_trace_phase(DUST_PHASE_APP_CAN);
 #if defined(CONFIG_DUST_ECAT_DC_PROFILE)
         (void)dust_sync0_phase(DUST_SYNC_CAN);
 #endif
         can_dirty |= ServiceCanReceive();
     }
-    (void)dust_trace_phase(DUST_PHASE_APP_PROCESS);
 #if defined(CONFIG_DUST_ECAT_DC_PROFILE)
         (void)dust_sync0_phase(DUST_SYNC_PROCESS);
 #endif
@@ -657,7 +655,6 @@ extern "C" void APPL_Application(void) {
     if (received) {
         DustSyncPhaseScope process_phase(DUST_SYNC_CORE_PROCESS);
         new_output = false;
-        dust_trace_process();
 #if defined(CONFIG_DUST_ECAT_DC_SYNC)
         const bool was_active = core->state() == BusinessState::Active;
 #endif
@@ -667,12 +664,10 @@ extern "C" void APPL_Application(void) {
             if (!was_active && core->state() == BusinessState::Active)
                 dust_sync0_begin();
 #endif
-            dust_trace_processed();
             DustSyncPhaseScope dispatch_phase(DUST_SYNC_DISPATCH);
             DispatchIo(*core, actions, now);
         }
     }
-    (void)dust_trace_phase(DUST_PHASE_APP_IO);
 #if defined(CONFIG_DUST_ECAT_DC_PROFILE)
         (void)dust_sync0_phase(DUST_SYNC_IO);
 #endif
@@ -682,7 +677,6 @@ extern "C" void APPL_Application(void) {
     const bool regular = received || changed ||
         (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us);
     if (regular || can_dirty) {
-        (void)dust_trace_phase(DUST_PHASE_APP_PUBLISH);
 #if defined(CONFIG_DUST_ECAT_DC_PROFILE)
         (void)dust_sync0_phase(DUST_SYNC_PUBLISH);
 #endif
@@ -700,7 +694,6 @@ extern "C" void APPL_Application(void) {
                             feedback, regular) == Error::None) {
             InputPublicationCommitted();
             can_dirty = false;
-            dust_trace_stamp(DUST_TR_PUBLISH, U32(tx_image.data()+24));
         }
         last_publish = now;
         published_state = core->state();

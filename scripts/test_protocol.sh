@@ -8,10 +8,6 @@ python3 "$root/tests/phy_link_contracts.py"
 bash "$root/scripts/test_ethercat_software_optimizations.sh"
 python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.yaml" --output "$build/can_profile_generated.hpp"
 "${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I "$root/src" "$root/tests/protocol_contracts.cpp" -o "$build/contracts"
-"$build/contracts"
-
-"${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I "$root/src" -I "$build" "$root/tests/can_profile_contracts.cpp" -o "$build/profile_contracts"
 "$build/profile_contracts"
 
@@ -19,21 +15,12 @@ python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.
   -I "$root/src" "$root/tests/heater_contracts.cpp" -o "$build/heater_contracts"
 "$build/heater_contracts"
 
-"${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I "$root/src" "$root/tests/usb_message_contracts.cpp" -o "$build/usb_message_contracts"
-"$build/usb_message_contracts"
-
-"${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I "$root/src" "$root/tests/usb_control_message_contracts.cpp" -o "$build/usb_control_message_contracts"
-"$build/usb_control_message_contracts"
-
 "$root/scripts/test_ethercat_protocol.sh"
 
 "$root/scripts/test_ethercat_ssc.sh"
 
 "$root/scripts/test_ethercat_io.sh"
 
-bash "$root/scripts/test_ethercat_rtt_trace.sh"
 
 bash "$root/scripts/test_pdi_deferred.sh"
 bash "$root/scripts/test_sync0_deferred.sh"

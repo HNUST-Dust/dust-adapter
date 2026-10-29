@@ -1,13 +1,5 @@
 source "Kconfig.zephyr"
 
-config DUST_ECAT_RTT_TRACE
-    bool "Bounded DM disable RTT trace in RAM (lab only)"
-    default n
-    help
-      Record 128 sequential CAN3 ID3 disable requests without changing PDO ABI.
-      Export dust_ecat_trace through JTAG after stopping the master.
-
-
 config WBR_CONTROL_ONBOARD_IMU_RAW
     bool "Acquire raw HXY onboard IMU bursts"
     default n
@@ -147,10 +139,6 @@ config DUST_ECAT_DC_PROFILE
       Disable for controlled timing comparisons; keep total-cycle timing,
       histogram, safety faults and PLIC counters without per-phase hooks.
 
-config DUST_ECAT_REFERENCE_DIGEST
-    bool "Lab: original bitwise digest for A/B comparison"
-    default n
-
 config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
     bool "Skip clearing bytes fully overwritten by PDO publication"
     default n
@@ -160,19 +148,11 @@ config DUST_ECAT_DC_WAIT_PROFILE
     depends on DUST_ECAT_DC_SYNC
     default n
 
-config DUST_ECAT_PHY_RAW_DIAGNOSTICS
-    bool "Lab: periodic raw PHY register dump"
+config DUST_ECAT_CAN_FEEDBACK_WINDOW
+    bool "Experimental rolling CAN feedback window (paired host required)"
     default n
+    depends on !DUST_ECAT_CAN_RX_THREAD
     help
-      Extra diagnostic MDIO reads and printk every 20 link polls. Disabling
-      leaves the 100 ms link checks, latch-low double reads, speed/duplex
-      validation, link-state publication and link transition messages intact.
-
-config DUST_ECAT_SSC_SKIP_UNUSED_AL_READ
-    bool "Lab: omit unused SSC input-mapping AL event read"
-    depends on !DUST_ECAT_SM_SYNC && !DUST_ECAT_DC_SYNC
-    default n
-    help
-      Adjust only the build copy of the recognized PDO_InputMapping function.
-      Keep automatic timing measurement and reported timing values unchanged.
-      Refuse the adjustment if the event value has any remaining use.
+      Retain recent CAN events across batches within configured slot capacity.
+      A paired host must discard already consumed frame sequences. Legacy hosts
+      reject overlapping batches; do not enable for production deployments.

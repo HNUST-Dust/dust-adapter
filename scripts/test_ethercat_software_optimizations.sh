@@ -8,7 +8,7 @@ flags=(-std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I "$root/s
 "$build/digest"
 for mode in reference optimized; do
   options=()
-  if [[ $mode == reference ]]; then options=(-DCONFIG_DUST_ECAT_REFERENCE_DIGEST=1)
+  if [[ $mode == reference ]]; then options=(-DDUST_TEST_REFERENCE_DIGEST=1)
   else options=(-DCONFIG_DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR=1); fi
   "${CXX:-c++}" "${flags[@]}" "${options[@]}" "$root/src/ethercat/core.cpp" "$root/src/ethercat/layout.cpp" "$root/tests/publish_equivalence.cpp" -o "$build/publish"
   "$build/publish" > "$build/$mode.bin"

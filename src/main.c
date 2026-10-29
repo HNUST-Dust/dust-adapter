@@ -18,7 +18,6 @@
 #include "pdi_deferred.h"
 #include "sync0_deferred.h"
 #include "wait_profile.h"
-#include "rtt_trace.h"
 #include "hpm5e31_phy.h"
 #include "hpm5e_esc_hw.h"
 
@@ -30,46 +29,6 @@ static const struct device *const esc = DEVICE_DT_GET(DT_NODELABEL(esc0));
 static uint8_t sii_image[SII_SIZE];
 static atomic_t stack_ready;
 static atomic_t reset_requested;
-static uint32_t phy_present;
-static uint16_t previous_bmsr[32];
-
-static void phy_config_dump(void) {
-    ESC_Type *base = (ESC_Type *)DT_REG_ADDR(DT_NODELABEL(esc0));
-    printk(
-        "ESC PDI: type=%02x info=%04x cfg=%02x ext=%04x DL=%04x EEPROM=%04x "
-        "active=%u invalid=%u\n",
-        base->PDI_CTRL, base->PDI_INFO, base->PDI_CFG, base->PDI_EXT_CFG,
-        base->ESC_DL_STAT, base->EEPROM_CTRL_STAT,
-        ESC_PDI_INFO_PDIA_GET(base->PDI_INFO),
-        ESC_PDI_INFO_PDICN_GET(base->PDI_INFO));
-#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
-    const uint16_t pads[] = {IOC_PAD_PW21, IOC_PAD_PV12, IOC_PAD_PW17,
-                             IOC_PAD_PA27, IOC_PAD_PA28, IOC_PAD_PA29,
-                             IOC_PAD_PA30, IOC_PAD_PA31, IOC_PAD_PA20,
-                             IOC_PAD_PA21, IOC_PAD_PA22, IOC_PAD_PA23};
-    const char *names[] = {"PW21", "PV12", "PW17", "PA27", "PA28", "PA29",
-                           "PA30", "PA31", "PA20", "PA21", "PA22", "PA23"};
-#else
-    const uint16_t pads[] = {
-        IOC_PAD_PA09, IOC_PAD_PA16, IOC_PAD_PA21, IOC_PAD_PA28, IOC_PAD_PA30,
-        IOC_PAD_PA31, IOC_PAD_PF09, IOC_PAD_PF13, IOC_PAD_PF26, IOC_PAD_PF28};
-    const char *names[] = {"PA09", "PA16", "PA21", "PA28", "PA30",
-                           "PA31", "PF09", "PF13", "PF26", "PF28"};
-#endif
-    printk("ESC cfg: GPR0=%08x GPR1=%08x GPR2=%08x PHY0=%08x PHY1=%08x\n",
-           base->GPR_CFG0, base->GPR_CFG1, base->GPR_CFG2, base->PHY_CFG0,
-           base->PHY_CFG1);
-#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
-    printk("PHY reset: PV12 output=%u input=%u; PA28 level=%u\n",
-           gpio_get_pin_output_status(HPM_GPIO0, GPIO_DO_GPIOV, 12),
-           gpio_read_pin(HPM_GPIO0, GPIO_DI_GPIOV, 12),
-           gpio_read_pin(HPM_GPIO0, GPIO_DI_GPIOA, 28));
-#endif
-    for (size_t i = 0; i < ARRAY_SIZE(pads); i++) {
-        printk("IOC %s FUNC=%08x PAD=%08x\n", names[i],
-               HPM_IOC->PAD[pads[i]].FUNC_CTL, HPM_IOC->PAD[pads[i]].PAD_CTL);
-    }
-}
 
 #if defined(CONFIG_BOARD_DUST_HPM5E3Y)
 static void sip_phy_prepare(void) {
@@ -106,80 +65,6 @@ static void sip_phy_prepare(void) {
 }
 
 #endif
-
-/* The SDK takes PDI ownership for each MDIO read. Always return it to ESC,
- * including failed reads, so autonomous link monitoring can continue. */
-static hpm_stat_t phy_read(uint8_t address, uint8_t reg, uint16_t *value) {
-    ESC_Type *base = (ESC_Type *)DT_REG_ADDR(DT_NODELABEL(esc0));
-    hpm_stat_t rc = hpm_esc_mdio_read(
-        esc, (uint8_t)(ESC_PHY_ADDR_SHOW_MASK | address), reg, value);
-    base->MIIM_PDI_ACC_STAT = 0;
-    return rc;
-}
-
-static void phy_scan(void) {
-    printk("PHY diagnostic: offset=%u; scanning MDIO 0..31\n",
-           DT_PROP(DT_NODELABEL(esc0), phy_addr_offset));
-    phy_present = 0;
-    for (uint8_t address = 0; address < 32; address++) {
-        uint16_t id1 = 0xffff, id2 = 0xffff;
-        hpm_stat_t rc1 = phy_read(address, 2, &id1);
-        hpm_stat_t rc2 = phy_read(address, 3, &id2);
-        printk("PHY addr=%u ID=%04x:%04x rc=%ld/%ld\n", address, id1, id2,
-               (long)rc1, (long)rc2);
-        uint16_t bmcr = 0xffff, bmsr = 0xffff;
-        hpm_stat_t rc0 = phy_read(address, 0, &bmcr);
-        hpm_stat_t rcs = phy_read(address, 1, &bmsr);
-        printk("PHY addr=%u BMCR=%04x BMSR=%04x rc=%ld/%ld\n", address, bmcr,
-               bmsr, (long)rc0, (long)rcs);
-        if (rc0 != status_success || rcs != status_success || bmcr == 0xffff ||
-            bmsr == 0xffff || (bmcr == 0 && bmsr == 0)) {
-            continue;
-        }
-        phy_present |= BIT(address);
-        previous_bmsr[address] = 0xffff;
-        for (uint8_t reg = 0; reg <= 6; reg++) {
-            uint16_t value = 0xffff;
-            hpm_stat_t rc = phy_read(address, reg, &value);
-            printk("PHY addr=%u reg=%u value=%04x rc=%ld\n", address, reg,
-                   value, (long)rc);
-        }
-        /* Give the RTT reader time to consume the startup dump. */
-        k_msleep(20);
-    }
-    printk("PHY scan complete mask=%08x (multiple addresses may be aliases)\n",
-           phy_present);
-}
-
-static void phy_poll(bool heartbeat) {
-    for (uint8_t address = 0; address < 32; address++) {
-        if (!(phy_present & BIT(address))) {
-            continue;
-        }
-        uint16_t bmcr = 0, bmsr = 0;
-        /* BMSR link-down is latched; read twice for the current state. */
-        hpm_stat_t rc = phy_read(address, 1, &bmsr);
-        if (rc == status_success) {
-            rc = phy_read(address, 1, &bmsr);
-        }
-        if (rc != status_success ||
-            phy_read(address, 0, &bmcr) != status_success) {
-            printk("PHY addr=%u read failed\n", address);
-            continue;
-        }
-        if (heartbeat || bmsr != previous_bmsr[address]) {
-            printk(
-                "PHY t=%lld addr=%u BMCR=%04x BMSR=%04x link=%u "
-                "reset=%u powerdown=%u isolate=%u AN=%u ANdone=%u "
-                "speed_bit100=%u duplex_bit=%u\n",
-                (long long)k_uptime_get(), address, bmcr, bmsr,
-                !!(bmsr & BIT(2)), !!(bmcr & BIT(15)), !!(bmcr & BIT(11)),
-                !!(bmcr & BIT(10)), !!(bmcr & BIT(12)), !!(bmsr & BIT(5)),
-                !!(bmcr & BIT(13)), !!(bmcr & BIT(8)));
-        }
-        previous_bmsr[address] = bmsr;
-    }
-}
 
 static int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count,
                     void *user_data) {
@@ -358,9 +243,6 @@ int main(void) {
         "HPM5E31: external RTL8201F/TJA1101B MII; "
         "PHY reset handled by board DTS\n");
 #endif
-    phy_config_dump();
-    phy_scan();
-    phy_poll(true);
     printk("SSC stage: entering MainInit (ESC IRQs masked)\n");
 
 #if defined(CONFIG_DUST_ECAT_SM_SYNC)
@@ -390,10 +272,6 @@ int main(void) {
     printk(
         "DUST HPM5E31 DTC1 LAB ready: VID=0 PID=0x44544331; CAN/UART IO "
         "installed\n");
-#if defined(CONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS)
-    int64_t next_phy_poll = 0;
-    unsigned int poll_count = 0;
-#endif
     int64_t next_link_poll = 0;
 
     for (;;) {
@@ -437,20 +315,16 @@ int main(void) {
         if (bDcSyncActive && dust_gateway_active() && dust_sync0_error()) dust_gateway_sync_fault();
 #endif
 #endif
-        (void)dust_trace_phase(DUST_PHASE_OUTER);
 
 #if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
         dust_wait_phase(DUST_WAIT_POLL1);
 #endif
         dust_gateway_poll();
-        (void)dust_trace_phase(DUST_PHASE_SSC);
 
 #if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
         dust_wait_phase(DUST_WAIT_SSC);
 #endif
         MainLoop();
-        dust_trace_stamp(DUST_TR_SSC_RETURN, 0);
-        (void)dust_trace_phase(DUST_PHASE_OUTER);
 
 #if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
         dust_wait_phase(DUST_WAIT_POLL2);
@@ -465,7 +339,6 @@ int main(void) {
             continue;
         }
 #endif
-        (void)dust_trace_phase(DUST_PHASE_MAINTENANCE);
         if (k_uptime_get() >= next_link_poll) {
 
 #if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
@@ -480,22 +353,11 @@ int main(void) {
             next_link_poll = k_uptime_get() + 100;
 #endif
         }
-#if defined(CONFIG_DUST_ECAT_PHY_RAW_DIAGNOSTICS)
-        if (!dust_gateway_active() && !bDcSyncActive && k_uptime_get() >= next_phy_poll) {
-
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_PHY);
-#endif
-            phy_poll((poll_count++ % 10U) == 0U);
-            next_phy_poll = k_uptime_get() + 1000;
-        }
-#endif
         // Active 时避免 100 us 系统 tick 取整形成额外周期延迟；ISR 仍可抢占。
 
 #if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
         dust_wait_phase(DUST_WAIT_IDLE);
 #endif
-        (void)dust_trace_phase(DUST_PHASE_WAIT);
 #if defined(CONFIG_DUST_ECAT_SM_SYNC)
         if (bEscIntEnabled) {
 
