@@ -153,8 +153,9 @@ extern "C" void dust_trace_begin(uint64_t session, uint32_t batch) {
 }
 extern "C" void dust_trace_stamp(unsigned stage, uint32_t value) {
     const auto key = irq_lock();
-    // A publication is eligible only after the matching CAN event was captured.
-    if ((stage != DUST_TR_PUBLISH || Has(DUST_TR_CAPTURE)) &&
+    // A worker capture may preempt a publication using an older SSC snapshot.
+    // Only the matching main-thread snapshot makes that publication eligible.
+    if ((stage != DUST_TR_PUBLISH || Has(DUST_TR_CAN_SNAPSHOT)) &&
         (stage != DUST_TR_CAN_RX || Has(DUST_TR_SUBMIT))) {
         Stamp(stage, k_cycle_get_64(), value);
     }

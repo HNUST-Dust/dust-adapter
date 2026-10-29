@@ -79,7 +79,7 @@ config DUST_ECAT_CAN_RX_THREAD
 config DUST_ECAT_CAN_RX_POLL_US
     int "CAN RX worker fallback polling interval (0 = events only)"
     depends on DUST_ECAT_CAN_RX_THREAD
-    default 100
+    default 0
     range 0 20000
     help
       CAN IRQs always signal immediately. Zero blocks until an event. The SSC

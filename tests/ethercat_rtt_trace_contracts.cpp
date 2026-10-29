@@ -46,6 +46,8 @@ int main() {
     dust_trace_can_queue(DUST_TR_CAN_DEQUEUED, 9);
     assert(r.cycles[DUST_TR_CAN_DEQUEUED] > r.cycles[DUST_TR_CAN_ENQUEUED]);
     dust_trace_capture(9);
+    dust_trace_stamp(DUST_TR_PUBLISH, 98);
+    assert(!(r.valid & (1U << DUST_TR_PUBLISH))); // Worker capture alone is insufficient.
     dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT, 8);
     assert(!(r.valid & (1U << DUST_TR_CAN_SNAPSHOT)));
     dust_trace_can_queue(DUST_TR_CAN_SNAPSHOT, 9);

@@ -48,3 +48,9 @@ DUST_ECAT_CAN_RX_POLL_US。先各64条带v3定位，再按poll/event/event/poll�
 每轮主站退出后导出计数，带trace轮另外导出DTR1，再切换固件；连续三次唯一LAB从站PREOP
 后放行，NUC脚本还会复核枚举状态。实验尚未完成，不预判纯事件一定更快。
 若有效，再单独确认默认关闭计数时的结果，并决定是否调整默认值。
+
+## Measured decision (2026-10-29)
+
+Trace-disabled poll/event/event/poll (1000 commands per round) gives pooled mean 848.673 versus 749.799 us, P99 1124.008 versus 874.515 us, and >1 ms 41/2000 versus 0/2000. Empty worker wakes fall from about 50000 to one per run. All rounds pass with no timeout or WKC miss. Promote the default polling interval to zero; keep multithreading and CPU ESC transfers. This is a 100 Hz disable-frame probe with a 125 us PDO cycle, not a worst-case bound or full application load.
+
+The first v3 trace comparison exposed a publication observation race: worker capture can occur after the SSC copied an older snapshot but before that old snapshot is published. Require the matching SSC snapshot, rather than worker capture alone, before stamping publication. The two original traced rounds cannot support precise publication-stage conclusions and must be repeated. The trace-disabled performance measurements are unaffected.
