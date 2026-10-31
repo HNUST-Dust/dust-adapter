@@ -16,7 +16,7 @@ can_buses:
   - name: left_joint_d
     feedback_ids:
     - 19
-- channel: 2
+- channel: 0
   bitrate: 1000000
   devices:
   - name: right_wheel
@@ -28,7 +28,7 @@ can_buses:
   - name: right_joint_d
     feedback_ids:
     - 18
-- channel: 0
+- channel: 2
   bitrate: 1000000
   devices: []
 - channel: 1

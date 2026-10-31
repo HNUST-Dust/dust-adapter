@@ -23,7 +23,7 @@ struct Config {
 // Fixed production wiring (single source of truth).
 inline constexpr uint32_t kProductionCycleUs = 125;
 inline constexpr Config ProductionConfig() {
-    return {{6, 0}, {0, 0, 3, 3}, {0, 0, 0, 0, 0, 0}, {0, 128, 0, 0, 32, 0}, true};
+    return {{6, 0}, {3, 0, 0, 3}, {0, 0, 0, 0, 0, 0}, {0, 128, 0, 0, 32, 0}, true};
 }
 
 // ---- compile-time offsets for runtime encode/decode ----

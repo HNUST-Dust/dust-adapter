@@ -200,11 +200,11 @@ B 方案不触碰身份/时序语义，收益最大且风险可控，建议作�
 - IMU 0x3030 = **38 B**：sample_sequence 4 + capture_time_us 4 + flags 1 + temperature_c 4 + spi_bytes 25。
 - 诊断 0x3040 = **28 B**：stop_reason 4 + rejected 4 + status_reply_sequence 4 + status_result 4 + status_value0/1/2 各 4。
 
-### 9.4 目标尺寸（紧凑布局：CAN2/3 各 3 反馈、chassis 6 命令、UART2 rx128、UART5 rx32、IMU 开）
+### 9.4 目标尺寸（紧凑布局：CAN0/3 各 3 反馈、chassis 6 命令、UART2 rx128、UART5 rx32、IMU 开）
 
 - RxPDO = 18 + (11 + 6×12) + 15 + 15 = **131 B**（原 172）
 - TxPDO = 22 + 2×(9 + 3×19) + (15+128) + (15+32) + 38 + 28 = **410 B**（原 672）
-- 合计 844 B → **541 B**（**−36%**）。CAN3-only（无 CAN2）TxPDO ≈ 344 B。
+- 合计 844 B → **541 B**（**−36%**）。CAN3-only（无 CAN0）TxPDO ≈ 344 B。
 - 布局签名（紧凑布局）`0xf7babb63`。
 
 > 注：上述尺寸为规格推导，最终以主从两个生成器重新计算的 `layout_signature` 与字节数为准。

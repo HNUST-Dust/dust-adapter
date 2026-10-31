@@ -146,7 +146,7 @@ int uart_irq_tx_complete(const device* d) {
 }
 namespace dust::ecat {
 int AllocateBootIdentity(uint64_t& boot) {
-    assert(cans[2].batches && cans[3].batches);
+    assert(cans[0].batches && cans[3].batches);
     static uint64_t counter = 100;
     boot = ++counter;
     return 0;
@@ -180,7 +180,7 @@ struct Fixture {
         ApplyIoLimits(limits);
         assert(limits.uart_tx_mask == 47 && limits.uart_rx_mask == 63);
         config.can_tx = {1, 0};
-        config.can_rx = {0, 0, 3, 0};
+        config.can_rx = {3, 0, 0, 0};
         config.uart[0] = {8, 16};
         assert(BuildLayout(config, limits, layout) == Error::None);
         config.signature = layout.signature;
@@ -189,7 +189,7 @@ struct Fixture {
         Stage(t, config);
         assert(core->Configure(t, limits, layout.rx, layout.tx) == Error::None);
         Configuration insufficient = config;
-        insufficient.can_rx[2] = 2;
+        insufficient.can_rx[0] = 2;
         assert(!CanFeedbackCapacityValid(insufficient));
         assert(CanFeedbackCapacityValid(config));
         ConfigureIo(config);
@@ -216,7 +216,7 @@ struct Fixture {
         Put32(p + 4, 10000);
         p[8] = 1;
         p[9] = 1;
-        p[11] = 2;
+        p[11] = 0;
         p[12] = 8;
         Put16(p + 13, 0x200);
         p[15] = 0x42;
@@ -252,15 +252,15 @@ int main() {
         f.Uart(1);
         f.Process();
         assert(f.core->state() == BusinessState::Active);
-        const auto batches = cans[2].batches;
+        const auto batches = cans[0].batches;
         ServiceIo(*f.core, native_now);
-        assert(cans[2].batches == batches + 1 && cans[2].frames.size() == 1 &&
-               cans[2].frames[0].data[0] == 0x42);
+        assert(cans[0].batches == batches + 1 && cans[0].frames.size() == 1 &&
+               cans[0].frames[0].data[0] == 0x42);
         assert(uarts[0].output == std::vector<uint8_t>({'a', 'b', 'c'}));
         // 重复交换不产生第二次外设写入。
         f.Process();
         ServiceIo(*f.core, native_now);
-        assert(cans[2].batches == batches + 1);
+        assert(cans[0].batches == batches + 1);
         // 每 ID 只保留最新 CAN 帧，UART 原生 idle 块按 PDO 容量分片。
         // 过期启动反馈不能进入本轮 PDO（覆盖采样时钟回绕）。
         const uint64_t saved_now = native_now;
@@ -268,19 +268,19 @@ int main() {
         can_frame stale{};
         stale.id = 0x201;
         stale.dlc = 8;
-        cans[2].rx(&devices[2], &stale, cans[2].rx_user);
+        cans[0].rx(&devices[0], &stale, cans[0].rx_user);
         native_now = saved_now;
         Core::Feedback expired_feedback;
         FlushCan();
         CaptureIo(*f.core, expired_feedback, native_now);
-        assert(expired_feedback.can[2].count == 0 &&
-               expired_feedback.can[2].drops >= 1);
+        assert(expired_feedback.can[0].count == 0 &&
+               expired_feedback.can[0].drops >= 1);
         for (unsigned i = 0; i < 3; ++i) {
             can_frame frame{};
             frame.id = 0x201;
             frame.dlc = 8;
             frame.data[0] = i;
-            cans[2].rx(&devices[2], &frame, cans[2].rx_user);
+            cans[0].rx(&devices[0], &frame, cans[0].rx_user);
         }
         const uint64_t cycle_started = native_now;
         // 模拟周期开始后中断收到 UART 块：旧周期时间不能被当作采样上界。
@@ -295,7 +295,7 @@ int main() {
         FlushCan();
         assert(ServiceCanReceive());
         CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count == 1);
+        assert(feedback.can[0].count == 1);
         assert(!ServiceCanReceive());
 
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
@@ -304,18 +304,18 @@ int main() {
         FlushCan();
         CaptureIo(*f.core, feedback, cycle_started);
         assert(f.core->state() == BusinessState::Active);
-        assert(feedback.can[2].count == 1 &&
-               feedback.can[2].frames[0].data[0] == 2);
+        assert(feedback.can[0].count == 1 &&
+               feedback.can[0].frames[0].data[0] == 2);
         can_frame other{}; other.id = 0x011; other.dlc = 8; other.data[0] = 99;
-        cans[2].rx(&devices[2], &other, cans[2].rx_user);
+        cans[0].rx(&devices[0], &other, cans[0].rx_user);
         FlushCan(); assert(ServiceCanReceive()); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count == 2 && feedback.can[2].frames[0].id == 0x201 &&
-               feedback.can[2].frames[0].data[0] == 2 && feedback.can[2].frames[1].id == 0x011);
-        const auto retained_batch = feedback.can[2].sequence;
+        assert(feedback.can[0].count == 2 && feedback.can[0].frames[0].id == 0x201 &&
+               feedback.can[0].frames[0].data[0] == 2 && feedback.can[0].frames[1].id == 0x011);
+        const auto retained_batch = feedback.can[0].sequence;
         FlushCan();
         CaptureIo(*f.core, feedback, native_now);
-        assert(feedback.can[2].count == 2 &&
-               feedback.can[2].sequence == retained_batch);
+        assert(feedback.can[0].count == 2 &&
+               feedback.can[0].sequence == retained_batch);
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.uart_tx[0] + 4) == 1);
@@ -336,11 +336,11 @@ int main() {
         native_now += 20000;
         FlushCan();
         CaptureIo(*f.core, feedback, native_now);
-        assert(feedback.can[2].count == 0);
+        assert(feedback.can[0].count == 0);
         ServiceIo(*f.core, native_now);
         assert(f.core->state() == BusinessState::Protected && !uarts[0].busy);
         ServiceIo(*f.core, native_now);
-        assert(cans[2].frames[0].data[0] == 0 && cans[2].aborts > 1);
+        assert(cans[0].frames[0].data[0] == 0 && cans[0].aborts > 1);
     }
     {
         Fixture f;
@@ -375,12 +375,12 @@ int main() {
         f.Header(1);
         f.Can(1);
         f.Process();
-        unsigned before = cans[2].batches;
+        unsigned before = cans[0].batches;
         delay_admission = true;
         ServiceIo(*f.core, native_now);
         delay_admission = false;
         assert(f.core->state() == BusinessState::Protected &&
-               cans[2].batches == before);
+               cans[0].batches == before);
     }
 
     std::puts(

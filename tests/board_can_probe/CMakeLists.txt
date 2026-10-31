@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20.0)
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/prepare.cmake)
-set(CAN_CHANNEL 3 CACHE STRING "CAN controller number (0-3)")
+set(CAN_CHANNEL 0 CACHE STRING "CAN controller number (0-3)")
 if(NOT CAN_CHANNEL MATCHES "^[0-3]$")
   message(FATAL_ERROR "CAN_CHANNEL must be 0, 1, 2 or 3")
 endif()

@@ -20,9 +20,9 @@ int main() {
     assert(BuildLayout(config, limits, mapped) == Error::None);
     assert(mapped.rx.bytes == 131 && mapped.tx.bytes == 410);
     // Locked production signature (single source of truth: pdo_schema.yaml).
-    assert(mapped.signature == 0xf7babb63U);
+    assert(mapped.signature == 0x76788646U);
     const uint32_t values[] = {
-        0x78dabd14U, 125, 20000, 6, 0, 0, 0, 3, 3,
+        0x78dabd14U, 125, 20000, 6, 0, 3, 0, 0, 3,
         0, 0, 0, 128, 0, 0, 0, 0, 0, 32, 0, 0, 1,
     };
     ConfigurationTransaction transaction;

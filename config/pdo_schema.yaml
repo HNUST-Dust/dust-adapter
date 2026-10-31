@@ -17,14 +17,14 @@ chunk_bytes: 30
 # Fixed production wiring. The only channels shipped on the robot:
 #   CAN command (chassis) 6 slots — one per motor (left/right wheel + joints B/D),
 #     the wheel command 0x200 is shared by both buses and distinguished by the
-#     frame `channel` byte (2 = right, 3 = left).
-#   CAN feedback CAN2/CAN3, 3 slots each (3 feedback IDs per bus).
+#     frame `channel` byte (0 = right, 3 = left).
+#   CAN feedback CAN0/CAN3, 3 slots each (3 feedback IDs per bus).
 #   UART2 RX 128 B (HI91), UART5 RX 32 B (SBUS). No host->slave UART.
 #   Onboard SPI IMU enabled.
 production:
   cycle_us: 125
   can_tx: [6, 0]                     # chassis 6, gimbal 0
-  can_rx: [0, 0, 3, 3]               # CAN2 3, CAN3 3
+  can_rx: [3, 0, 0, 3]               # CAN0 3, CAN3 3
   uart_tx: [0, 0, 0, 0, 0, 0]
   uart_rx: [0, 128, 0, 0, 32, 0]     # UART2 128, UART5 32
   imu: true
