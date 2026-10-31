@@ -91,6 +91,28 @@ Configuration configuration;
 modules::ImuSensor onboard_imu;
 bool imu_ready = false;
 uint32_t imu_sequence = 0;
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+modules::ImuSensor::Burst latest_imu_burst;
+bool latest_imu_valid = false;
+
+/* Sample the local IMU on every poll (independent of the master's PDO
+ * configuration) so the heater PID always sees a temperature. The latest
+ * burst is published into the process image by CaptureIo. */
+void SampleImu() {
+    if (!imu_ready) {
+        return;
+    }
+    modules::ImuSensor::Burst burst{};
+    if (onboard_imu.TryTakeCompleted(burst)) {
+#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+        dust_imu_heater_observe(burst.temperature_c);
+#endif
+        latest_imu_burst = burst;
+        latest_imu_valid = true;
+    }
+    (void)onboard_imu.TryStartAsync();
+}
+#endif
 #endif
 std::array<can_frame, 16> hardware_frames;
 std::array<PendingCan, 16> admitted;
@@ -659,6 +681,9 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
     }
 }
 void ServiceIo(Core& core, uint64_t now) {
+#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+    SampleImu();
+#endif
 
     if (core.state() == BusinessState::Active) {
         EnterActive(core, now);
@@ -818,26 +843,17 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
         }
     }
 #if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
-    /* The IMU is a local sensor: sample it even before the master configures
-     * the PDO so the local heater PID always has a temperature. Publication
-     * into the process image still depends on the configured layout. */
-    if (imu_ready) {
-        modules::ImuSensor::Burst burst{};
-        if (onboard_imu.TryTakeCompleted(burst)) {
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
-            dust_imu_heater_observe(burst.temperature_c);
-#endif
-            if (configuration.imu) {
-                feedback.imu_valid = true;
-                feedback.imu_sequence = ++imu_sequence;
-                feedback.imu_capture_us =
-                    k_cyc_to_us_floor32(burst.data_ready_cycle);
-                feedback.temperature = burst.temperature_c;
-                std::copy(burst.rx, burst.rx + sizeof(burst.rx),
-                          feedback.imu_raw.begin());
-            }
-        }
-        (void)onboard_imu.TryStartAsync();
+    /* SampleImu() already feeds the heater; publish the newest burst here. */
+    if (latest_imu_valid && configuration.imu) {
+        feedback.imu_valid = true;
+        feedback.imu_sequence = ++imu_sequence;
+        feedback.imu_capture_us =
+            k_cyc_to_us_floor32(latest_imu_burst.data_ready_cycle);
+        feedback.temperature = latest_imu_burst.temperature_c;
+        std::copy(latest_imu_burst.rx,
+                  latest_imu_burst.rx + sizeof(latest_imu_burst.rx),
+                  feedback.imu_raw.begin());
+        latest_imu_valid = false;
     }
 #endif
 }
