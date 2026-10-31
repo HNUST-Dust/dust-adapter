@@ -19,9 +19,9 @@ int main(void)
     const struct device *dev = buses[CAN_CHANNEL];
     struct can_filter filter = { .id = 0, .mask = 0, .flags = 0 };
     int rc;
-    printk("CAN%d passive receive test, 1 Mbps; no transmit or ACK\n", CAN_CHANNEL);
+    printk("CAN%d receive test, 1 Mbps; ACK enabled, no transmit\n", CAN_CHANNEL);
     if (!device_is_ready(dev)) { printk("device unavailable\n"); return 1; }
-    rc = can_set_mode(dev, CAN_MODE_LISTENONLY);
+    rc = can_set_mode(dev, CAN_MODE_NORMAL);
     if (!rc) rc = can_set_bitrate(dev, 1000000);
     if (!rc) { int id = can_add_rx_filter(dev, receive, NULL, &filter); if (id < 0) rc = id; }
     if (!rc) rc = can_start(dev);
