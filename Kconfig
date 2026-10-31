@@ -35,6 +35,13 @@ config DUST_IMU_TARGET_C
     default 45
     range 25 50
 
+config DUST_IMU_HEATER_PERIOD_MS
+    int "Heater PID control period in milliseconds"
+    default 10
+    range 1 1000
+    help
+      Period of the temperature control loop; 10 ms is 100 Hz.
+
 config DUST_IMU_HEATER_KP_MILLI
     int "Heater proportional gain, multiplied by 1000"
     default 100

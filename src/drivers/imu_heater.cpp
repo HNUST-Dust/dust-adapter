@@ -44,9 +44,10 @@ void UpdateHeater(k_work*) {
     duty = 0;
 #endif
 #if defined(CONFIG_DUST_IMU_HEATER_DEBUG)
-    /* ~1 s of 20 ms loops; integer units avoid float printf support. */
+    /* ~1 s of control loops; integer units avoid float printf support. */
     static unsigned debug_divider;
-    if (++debug_divider >= 50U) {
+    if (++debug_divider >=
+        (1000U / CONFIG_DUST_IMU_HEATER_PERIOD_MS)) {
         debug_divider = 0U;
         printk("heater: T=%d mC target=%d C err=%d mC duty=%d/1000 fault=%d\n",
                (int)(measured * 1000.0f), CONFIG_DUST_IMU_TARGET_C,
@@ -59,7 +60,8 @@ void UpdateHeater(k_work*) {
         (void)dust_board_pwm_set(&heater, 0);
     }
     atomic_set(&heater_fault, controller.Faulted());
-    k_work_reschedule(&heater_work, K_MSEC(20));
+    k_work_reschedule(&heater_work,
+                      K_MSEC(CONFIG_DUST_IMU_HEATER_PERIOD_MS));
 }
 }  // namespace
 #endif
@@ -79,7 +81,8 @@ int InitializeImuHeater() {
     controller.kd = CONFIG_DUST_IMU_HEATER_KD_MILLI / 1000.0f;
     controller.max_duty = CONFIG_DUST_IMU_HEATER_MAX_PERMILLE / 1000.0f;
     boot_ms = previous_ms = k_uptime_get();
-    k_work_reschedule(&heater_work, K_MSEC(20));
+    k_work_reschedule(&heater_work,
+                      K_MSEC(CONFIG_DUST_IMU_HEATER_PERIOD_MS));
 #endif
     return 0;
 }
