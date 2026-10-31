@@ -152,8 +152,10 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 /*ECATCHANGE_START(V5.13) CIA402 3*/
 #include "sampleappl.h"
 
-#include "eeprom.h"
-#undef SET_EEPROM_PTR
+#include "eeprom.h"
+
+#undef SET_EEPROM_PTR
+
 #define SET_EEPROM_PTR pEEPROM = aEepromData;
 
 
@@ -559,7 +561,6 @@ void PDI_Isr(void)
 
 UINT16 MainInit(void)
 {
-    printk("SSC stage: MainInit entered\n");
     UINT16 Error = 0;
 /*Hardware init function need to be called from the application layer*/
 
@@ -586,10 +587,8 @@ pAPPL_EEPROM_Read = NULL;
 
     /* initialize the EtherCAT Slave Interface */
     ECAT_Init();
-    printk("SSC stage: ECAT_Init returned\n");
     /* initialize the objects */
     COE_ObjInit();
-    printk("SSC stage: COE_ObjInit returned\n");
 
 
     /*indicate that the slave stack initialization finished*/

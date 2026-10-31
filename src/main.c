@@ -210,7 +210,6 @@ int main(void) {
         "HPM5E31: external RTL8201F/TJA1101B MII; "
         "PHY reset handled by board DTS\n");
 #endif
-    printk("SSC stage: entering MainInit (ESC IRQs masked)\n");
 
     #if defined(CONFIG_DUST_BUZZER)
     int buzzer_rc = dust_buzzer_init();

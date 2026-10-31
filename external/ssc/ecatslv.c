@@ -2025,7 +2025,6 @@ void ECAT_Init(void)
 
     /* Get EEPROM loaded information */
     UpdateEEPROMLoadedState();
-    printk("SSC stage: EEPROM checked; SM count=%u\n", nMaxSyncMan);
 
     /* disable all Sync Manager channels */
     for (i = 0; i < nMaxSyncMan; i++)
@@ -2040,11 +2039,8 @@ void ECAT_Init(void)
         HW_EscReadByte(smActivate, smBase + 6);
         if (smLength == 0 && !(smActivate & 1))
         {
-            printk("SSC experiment: SM%u length=0 activate=%02x; skip startup disable wait\n",
-                   i, smActivate);
             continue;
         }
-        printk("SSC stage: disabling SM%u\n", i);
         DisableSyncManChannel(i);
     }
 
