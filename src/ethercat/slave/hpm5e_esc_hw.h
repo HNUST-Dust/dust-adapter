@@ -43,7 +43,7 @@ void hpm5e_ssc_leave_critical(void);
     HW_EscRead((pData), (Address), (Len))
 #define HW_EscWrite(pData, Address, Len) \
     hpm5e_ssc_esc_write((pData), (uint16_t)(Address), (uint16_t)(Len))
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE) || defined(CONFIG_DUST_ECAT_DC_SYNC)
+#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
 #define HW_EscWriteIsr(pData, Address, Len) \
     dust_gateway_esc_write_isr((pData), (uint16_t)(Address), (uint16_t)(Len))
 #else

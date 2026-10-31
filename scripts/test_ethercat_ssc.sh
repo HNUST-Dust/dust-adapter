@@ -19,16 +19,12 @@ for source in objdef coeappl; do
   # 保留真实 SSC 的 SDO 分派、长度和状态检查；只替换 ESC/时钟边界。
   "${CC:-cc}" -std=c11 "${flags[@]}" -c "$build/$source.c" -o "$build/$source.o"
 done
-for mode in baseline coalesce late_refresh fast_notice sm_sync; do
+for mode in baseline coalesce late_refresh; do
   mode_flags=()
-  if [[ $mode == sm_sync ]]; then
-    mode_flags=(-DCONFIG_DUST_ECAT_SM_SYNC=1)
-  elif [[ $mode == coalesce ]]; then
-    mode_flags=(-DCONFIG_DUST_ECAT_INPUT_WRITE_COALESCE=1 -DCONFIG_DUST_ECAT_SCHED_STATS=1)
-  elif [[ $mode == fast_notice ]]; then
-    mode_flags=(-DCONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1 -DCONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST=1 -DCONFIG_DUST_ECAT_SCHED_STATS=1)
+  if [[ $mode == coalesce ]]; then
+    mode_flags=(-DCONFIG_DUST_ECAT_INPUT_WRITE_COALESCE=1)
   elif [[ $mode == late_refresh ]]; then
-    mode_flags=(-DCONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1 -DCONFIG_DUST_ECAT_SCHED_STATS=1)
+    mode_flags=(-DCONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1)
   fi
   "${CXX:-c++}" -std=c++17 "${mode_flags[@]+"${mode_flags[@]}"}" -Wall -Wextra -Werror -fno-exceptions "${flags[@]}" \
     "$root/src/ethercat/slave/gateway.cpp" "$root/src/ethercat/layout.cpp" \

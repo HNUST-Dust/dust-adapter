@@ -33,6 +33,7 @@ Protection IoProtection() {
     return {nullptr, Validate, Stop, native_io_protected};
 }
 void ApplyIoLimits(Limits&) {}
+bool CanFeedbackCapacityValid(const Configuration&) { return true; }
 void ConfigureIo(const Configuration&) {}
 void DispatchIo(Core&, const Actions&, uint64_t) {
     ++native_io_dispatches;

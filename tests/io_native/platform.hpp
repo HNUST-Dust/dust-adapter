@@ -6,9 +6,6 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-#include "thread_kernel.hpp"
-#endif
 struct device {
     unsigned index;
 };
@@ -20,27 +17,14 @@ inline bool device_is_ready(const device*) {
 }
 using k_timeout_t = int;
 constexpr int K_NO_WAIT = 0;
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-extern std::atomic<uint64_t> native_now;
-#else
 extern uint64_t native_now;
-#endif
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-inline std::atomic<uint64_t> native_clock_read_count{0};
-#endif
 inline int64_t k_uptime_ticks() {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-    ++native_clock_read_count;
-#endif
     return native_now;
 }
 inline uint64_t k_ticks_to_us_floor64(uint64_t value) {
     return value;
 }
 struct k_msgq {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    std::mutex mutex;
-#endif
     char* data;
     size_t size, depth, head, count;
 };
@@ -48,9 +32,6 @@ inline void k_msgq_init(k_msgq* q, char* data, size_t size, size_t depth) {
     q->data = data; q->size = size; q->depth = depth; q->head = q->count = 0;
 }
 inline int k_msgq_put(k_msgq* q, const void* data, int) {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    std::lock_guard<std::mutex> guard(q->mutex);
-#endif
     if (q->count == q->depth) {
         return -ENOSPC;
     }
@@ -59,9 +40,6 @@ inline int k_msgq_put(k_msgq* q, const void* data, int) {
     return 0;
 }
 inline int k_msgq_get(k_msgq* q, void* data, int) {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    std::lock_guard<std::mutex> guard(q->mutex);
-#endif
     if (!q->count) {
         return -ENOMSG;
     }
@@ -71,20 +49,8 @@ inline int k_msgq_get(k_msgq* q, void* data, int) {
     return 0;
 }
 inline void k_msgq_purge(k_msgq* q) {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    std::lock_guard<std::mutex> guard(q->mutex);
-#endif
     q->head = q->count = 0;
 }
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-using atomic_t = std::atomic<int32_t>;
-inline int atomic_get(const atomic_t* p) { return p->load(); }
-inline int atomic_set(atomic_t* p, int v) { return p->exchange(v); }
-inline void atomic_clear(atomic_t* p) { p->store(0); }
-inline void atomic_inc(atomic_t* p) { p->fetch_add(1); }
-inline void atomic_add(atomic_t* p, int v) { p->fetch_add(v); }
-inline bool atomic_cas(atomic_t* p, int a, int b) { return p->compare_exchange_strong(a, b); }
-#else
 using atomic_t = int32_t;
 inline int atomic_get(const atomic_t* p) {
     return *p;
@@ -110,7 +76,6 @@ inline bool atomic_cas(atomic_t* p, int a, int b) {
     *p = b;
     return true;
 }
-#endif
 #define __nocache
 #define __aligned(n) alignas(n)
 struct can_frame {

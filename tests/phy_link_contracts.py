@@ -44,14 +44,6 @@ static void printk(const char *format,...) {
 }
 '''
 main=r'''
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-static void poll_steps(struct device *d) {
- unsigned steps=0;bool complete;
- do {unsigned n=reads[0]+reads[1];complete=ecat_phy_update_link_step(d);
- assert(reads[0]+reads[1]-n<=1);assert(++steps<=5);
- } while(!complete);
-}
-#endif
 
 int main(void) {
  struct device d={0};
@@ -70,28 +62,11 @@ int main(void) {
  port0_configured=false;before=reads[0];ecat_phy_update_link(&d);
  assert(!links[0] && reads[0]==before);
 
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
- port0_configured=port1_configured=true;
- latch_low=true;status_reads[0]=status_reads[1]=0;
- unsigned n=reads[0]+reads[1];poll_steps(&d);
- assert(links[0] && links[1] && reads[0]+reads[1]-n==5);
- latch_low=false;
- for(unsigned failure=1;failure<=5;++failure) {
-   fail_at=serial+failure;poll_steps(&d);fail_at=0;
-   assert(failure<=3 ? (!links[0] && links[1]) : (links[0] && !links[1]));
-   poll_steps(&d);assert(links[0] && links[1]);
- }
- invalid_status=true;poll_steps(&d);assert(!links[0] && links[1]);
- invalid_status=false;control=BIT(13);poll_steps(&d);assert(!links[0]);
- control=BIT(13)|BIT(8);poll_steps(&d);assert(links[0]);
- port0_configured=port1_configured=false;n=reads[0]+reads[1];
- poll_steps(&d);assert(!links[0] && !links[1] && reads[0]+reads[1]==n);
-#endif
  puts("Actual PHY link checks / latch-low / invalid-read / speed-duplex / quiet-diagnostics contracts PASS");
 }
 '''
 with tempfile.TemporaryDirectory() as t:
  p=Path(t)/'contracts.c';p.write_text(prefix+body+main)
- for flags in (['-DCONFIG_DUST_ECAT_DC_SYNC=1'], []):
+ for flags in ([],):
   subprocess.run([os.environ.get('CC','cc'),'-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',*flags,str(p),'-o',str(p.with_suffix(''))],check=True)
   subprocess.run([str(p.with_suffix(''))],check=True)

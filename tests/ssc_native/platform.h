@@ -22,12 +22,3 @@ int printk(const char*, ...);
 #ifdef __cplusplus
 }
 #endif
-
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-#define CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC 24000000
-#endif
-
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-#define HW_EscReadDWord(v, a) hpm5e_ssc_esc_read(&(v), (a), 4)
-#define HW_EscRead(p, a, n) hpm5e_ssc_esc_read((p), (a), (n))
-#endif

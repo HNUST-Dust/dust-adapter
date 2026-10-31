@@ -15,6 +15,11 @@ config DUST_DMA_BUFFER_ALIGNMENT
     default 4
     range 4 4096
 
+config DUST_BUZZER
+    bool "Board buzzer on PWM0 channel 1"
+    depends on PWM && BOARD_DUST_HPM5E31
+    default n
+
 config DUST_BOARD_OUTPUTS
     bool "Board LEDs, buzzer and IMU heater"
     depends on PWM && GPIO
@@ -52,36 +57,12 @@ config DUST_IMU_HEATER_MAX_PERMILLE
 
 config DUST_ECAT_ESC_DMA
     bool "Synchronous ESC PDO DMA experiment"
-    depends on BOARD_DUST_HPM5E31 && DMA
+    depends on BOARD_DUST_HPM5E31 && DMA && !SPI_HPM_SPI_DMA
     default n
     help
       Use a reserved XDMA channel and uncached staging buffer for aligned PDO
       blocks. Wait for completion; fail closed on DMA errors or 500 us timeout.
       Register/mailbox and IRQ-context accesses keep the CPU path.
-
-config DUST_ECAT_CAN_RX_THREAD
-    bool "Event-driven CAN receive worker"
-    depends on MULTITHREADING
-    default y
-    help
-      Priority 0 worker drains bounded CAN queues on IRQ semaphore wakeups.
-      SSC/Core remain on main priority 1 and consume a separately copied snapshot.
-      Disable for the single-thread RTT control experiment.
-
-config DUST_ECAT_CAN_RX_POLL_US
-    int "CAN RX worker fallback polling interval (0 = events only)"
-    depends on DUST_ECAT_CAN_RX_THREAD
-    default 0
-    range 0 20000
-    help
-      CAN IRQs always signal immediately. Zero blocks until an event. The SSC
-      owner expires retained snapshots before publishing, so expiry does not
-      require periodic high-priority worker wakeups. Use 100 as the control.
-
-config DUST_ECAT_SCHED_STATS
-    bool "Bounded CAN worker wakeup counters in RAM (lab only)"
-    depends on DUST_ECAT_CAN_RX_THREAD
-    default n
 
 config DUST_ECAT_INPUT_WRITE_COALESCE
     bool "Skip already committed input publications in active FreeRun"
@@ -102,57 +83,6 @@ config DUST_ECAT_INPUT_LATE_REFRESH
       fields and preserves the last UART image and window cursor. No recursive
       mapping or extra ESC write is performed. Experimental until board validation.
 
-config DUST_ECAT_CAN_RX_NOTIFY_FAST
-    bool "Use atomic receive-version hint for the late mapping checkpoint"
-    depends on DUST_ECAT_INPUT_LATE_REFRESH && DUST_ECAT_CAN_RX_THREAD
-    default n
-    help
-      The late checkpoint compares an atomic worker notification version with
-      the version observed under the capture mutex. No change avoids the late
-      mutex/time/trace work. Existing regular SSC receive service and capture
-      expiry checks remain unconditional; this hint is not an expiry validator.
-
-config DUST_ECAT_SM_SYNC
-    bool "Lab: SM2 synchronized publication in SSC owner thread"
-    depends on DUST_ECAT_CAN_RX_THREAD
-    depends on !DUST_ECAT_ESC_DMA && !DUST_ECAT_INPUT_WRITE_COALESCE && !DUST_ECAT_INPUT_LATE_REFRESH
-    default n
-    help
-      Advertise SM synchronization in addition to FreeRun. Defer PDI IRQ work
-      to the SSC owner thread; Core/CAN/UART mutex operations never run in ISR.
-      No DC/Sync0 support is advertised. Experimental until board validation.
-
-config DUST_ECAT_DC_SYNC
-    bool "Lab: DC Sync0 publication using independently generated SSC"
-    depends on DUST_ECAT_SM_SYNC
-    default n
-    help
-      Requires a separately generated DC-capable SSC directory. Independent
-      Sync0 IRQ acknowledges and queues work; main thread owns all SSC/Core
-      calls. Only Sync0, not Sync1/subordinate cycles, is advertised.
-
-config DUST_ECAT_DC_PROFILE
-    bool "Lab: detailed DC per-phase profiling"
-    depends on DUST_ECAT_DC_SYNC
-    default y
-    help
-      Disable for controlled timing comparisons; keep total-cycle timing,
-      histogram, safety faults and PLIC counters without per-phase hooks.
-
 config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
     bool "Skip clearing bytes fully overwritten by PDO publication"
     default n
-
-config DUST_ECAT_DC_WAIT_PROFILE
-    bool "Lab: correlate pending Sync0 time with owner-loop phases"
-    depends on DUST_ECAT_DC_SYNC
-    default n
-
-config DUST_ECAT_CAN_FEEDBACK_WINDOW
-    bool "Experimental rolling CAN feedback window (paired host required)"
-    default n
-    depends on !DUST_ECAT_CAN_RX_THREAD
-    help
-      Retain recent CAN events across batches within configured slot capacity.
-      A paired host must discard already consumed frame sequences. Legacy hosts
-      reject overlapping batches; do not enable for production deployments.

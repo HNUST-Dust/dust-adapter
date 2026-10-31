@@ -61,14 +61,4 @@ for changes in ({"tx_address": 0x1400}, {"rx_address": 0x1101},
         continue
     raise AssertionError(f"Accepted invalid partitions: {changes}")
 
-# DC is an explicit build variant. Preserve default descriptor/SII bytes.
-dc_config, dc_header, dc_xml, dc_image = generator.generate(spec, dc_sync=True)
-assert (dc_header, dc_image) == (header, image)
-assert dc_config == config.replace("#define MIN_PD_CYCLE_TIME 0xf4240U",
-                                   "#define MIN_PD_CYCLE_TIME 0x7a120U")
-dc_mode = ET.fromstring(dc_xml).find("./Descriptions/Devices/Device/Dc/OpMode")
-assert dc_mode is not None and dc_mode.findtext("AssignActivate") == "#x0300"
-assert dc_mode.find("CycleTimeSync0").attrib["Factor"] == "1"
-assert dc_mode.find("CycleTimeSync1") is None
 assert device.find("Dc") is None
-print("Explicit Sync0-only ESI variant, default/SII unchanged PASS")

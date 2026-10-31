@@ -3,7 +3,7 @@
 User selected FreeRun instead of continuing DC latency optimization. Default
 prj.conf now explicitly disables SM/DC synchronized publication, RTT tracing,
 worker scheduling statistics and periodic raw PHY diagnostics. Use original
-licensed external/ssc, not external/ssc_dc. CMake guards reject the wrong SSC.
+licensed external/ssc. The unused DC-generated SSC copy has been removed; CMake rejects DC-enabled SSC sources.
 
 Keep aligned word PDRAM access, event-driven CAN worker, table digest and
 byte-equivalent skipped overwrite clearing. Do not enable unproven late

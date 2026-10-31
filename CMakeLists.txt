@@ -16,19 +16,8 @@ endif()
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(dust_ethercat_slave)
 file(READ "${DUST_ADAPTER_SSC_DIR}/ecat_def.h" selected_ssc_config)
-if(CONFIG_DUST_ECAT_DC_SYNC)
- file(READ "${ZEPHYR_BASE}/drivers/interrupt_controller/intc_plic.c" plic_source)
- if(CONFIG_DUST_ECAT_DC_WAIT_PROFILE AND NOT plic_source MATCHES "dust_wait_irq_interval")
-  message(FATAL_ERROR "Wait profiling requires the PLIC hook: run python3 tools/apply_zephyr_plic_fix.py --zephyr ${ZEPHYR_BASE}")
- endif()
- if(NOT plic_source MATCHES "dust_plic_claim_stats")
-  message(FATAL_ERROR "DC lab requires the PLIC empty-claim backport: run python3 tools/apply_zephyr_plic_fix.py --zephyr ${ZEPHYR_BASE}")
- endif()
- if(NOT selected_ssc_config MATCHES "#define[ \t]+DC_SUPPORTED[ \t]+1")
-  message(FATAL_ERROR "DC experiment requires separately generated DC_SUPPORTED=1 SSC sources")
- endif()
-elseif(selected_ssc_config MATCHES "#define[ \t]+DC_SUPPORTED[ \t]+1")
- message(FATAL_ERROR "DC-generated SSC requires CONFIG_DUST_ECAT_DC_SYNC; use original SSC for baseline")
+if(selected_ssc_config MATCHES "#define[ \t]+DC_SUPPORTED[ \t]+1")
+ message(FATAL_ERROR "FreeRun requires DC_SUPPORTED=0 SSC sources")
 endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(generated "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -54,9 +43,6 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
  ${DUST_ADAPTER_ROOT}/config/ethercat_gateway.json
  ${DUST_ADAPTER_ROOT}/tools/generate_gateway_esi.py)
 set(gateway_esi_options)
-if(CONFIG_DUST_ECAT_DC_SYNC)
- list(APPEND gateway_esi_options --dc-sync0)
-endif()
 execute_process(COMMAND ${Python3_EXECUTABLE}
  ${DUST_ADAPTER_ROOT}/tools/generate_gateway_esi.py --output ${gateway_generated} ${gateway_esi_options}
  COMMAND_ERROR_IS_FATAL ANY)
@@ -76,8 +62,6 @@ configure_file(${DUST_ADAPTER_ROOT}/src/ethercat/slave/ssc/sampleappl.h
  ${gateway_generated}/sampleappl.h COPYONLY)
 target_sources(app PRIVATE
  ${DUST_ADAPTER_ROOT}/src/main.c
- ${DUST_ADAPTER_ROOT}/src/ethercat/slave/sync0_deferred.c
- ${DUST_ADAPTER_ROOT}/src/ethercat/slave/wait_profile.c
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/pdi_deferred.c
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/esc_dma.c
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/gateway.cpp
@@ -89,6 +73,15 @@ target_sources(app PRIVATE
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave/hpm5e_esc_hw.c
  ${hpm_phy_dir}/hpm5e31_phy.c
  ${ssc_sources})
+if(CONFIG_DUST_BUZZER OR CONFIG_DUST_BOARD_OUTPUTS)
+ target_sources(app PRIVATE ${DUST_ADAPTER_ROOT}/src/drivers/board_pwm.c)
+endif()
+if(CONFIG_DUST_BUZZER)
+ target_sources(app PRIVATE ${DUST_ADAPTER_ROOT}/src/drivers/buzzer.c)
+endif()
+if(CONFIG_DUST_BOARD_OUTPUTS)
+ target_sources(app PRIVATE ${DUST_ADAPTER_ROOT}/src/drivers/imu_heater.cpp)
+endif()
 target_include_directories(app PRIVATE
  ${DUST_ADAPTER_ROOT}/src/ethercat/slave ${gateway_generated} ${generated}
  ${hpm_phy_dir} ${hpm_phy_board_dir})

@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "gateway.h"
-#include "sync0_deferred.h"
 #include "esc_dma.h"
 
 #include <zephyr/kernel.h>
@@ -23,18 +22,6 @@ extern "C" {
 #include "sdoserv.h"
 }
 
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE) && defined(CONFIG_DUST_ECAT_SCHED_STATS)
-extern "C" {
-DustInputWriteStats dust_ecat_input_write_stats = {1, 0, 0, 0, 0};
-}
-static_assert(sizeof(DustInputWriteStats) == 20);
-#endif
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH) && defined(CONFIG_DUST_ECAT_SCHED_STATS)
-extern "C" {
-DustInputRefreshStats dust_ecat_input_refresh_stats = {1, 0, 0, 0};
-}
-static_assert(sizeof(DustInputRefreshStats) == 16);
-#endif
 namespace {
 using namespace dust::ecat;
 constexpr unsigned kObjectCount = 35;
@@ -105,12 +92,6 @@ void RefreshCanBeforeMapping() {
         k_is_in_isr() || dust_esc_dma_error()) {
         return;
     }
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-    ++dust_ecat_input_refresh_stats.checks;
-#endif
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-    if (!can_dirty && !CanReceivePending()) return;
-#endif
     can_dirty |= ServiceCanReceive();
     if (!can_dirty) return;
     CaptureCanFeedback(feedback);
@@ -118,9 +99,6 @@ void RefreshCanBeforeMapping() {
                                       Now(), feedback, false);
     bool published = result == Error::None;
     if (!published) {
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-        ++dust_ecat_input_refresh_stats.failures;
-#endif
         // Do not submit an old Active image after a rejected late snapshot.
         core->Protect(result);
         feedback = {};
@@ -129,9 +107,6 @@ void RefreshCanBeforeMapping() {
         if (!published) tx_image.fill(0);
         InvalidateInputWrite();
     } else {
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-        ++dust_ecat_input_refresh_stats.refreshes;
-#endif
     }
     if (published) {
         InputPublicationCommitted();
@@ -355,17 +330,11 @@ extern "C" int dust_gateway_init(void) {
         printk("Gateway IO/boot identity failed: %d\n", initialized);
         return -1;
     }
-    core = new (core_storage) Core(boot, IoProtection());
+    core = new (core_storage) Core(uint32_t(boot), IoProtection());
     can_dirty = false;
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH) && defined(CONFIG_DUST_ECAT_SCHED_STATS)
-    dust_ecat_input_refresh_stats = {1, 0, 0, 0};
-#endif
     InvalidateInputWrite();
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
     input_revision = mapped_revision = written_revision = 0;
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-    dust_ecat_input_write_stats = {1, 0, 0, 0, 0};
-#endif
 #endif
     last_publish = 0;
     published_state = BusinessState::Unconfigured;
@@ -419,14 +388,6 @@ extern "C" int dust_gateway_init(void) {
     }
     sSyncManOutPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
     sSyncManInPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    sSyncManOutPar.u16SyncTypesSupported |= SYNCTYPE_SYNCHRONSUPP;
-    sSyncManInPar.u16SyncTypesSupported |= SYNCTYPE_SYNCHRONSUPP;
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    sSyncManOutPar.u16SyncTypesSupported |= SYNCTYPE_DCSYNC0SUPP;
-    sSyncManInPar.u16SyncTypesSupported |= SYNCTYPE_DCSYNC0SUPP;
-#endif
-#endif
     printk(
         "DTC1 LAB dictionary ready; RAM=%u KiB, Rx<=%u Tx<=%u; IO protection "
         "installed\n",
@@ -479,7 +440,7 @@ extern "C" UINT16 APPL_GenerateMapping(UINT16* input, UINT16* output) {
         snap_err == Error::None
             ? transaction.Commit(limits, mapped_rx, mapped_tx, prepared)
             : snap_err;
-    if (commit_err != Error::None) {
+    if (commit_err != Error::None || !CanFeedbackCapacityValid(transaction.candidate())) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
     data_entry_count = 0;
@@ -504,18 +465,8 @@ extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
     InvalidateInputWrite();
     const bool freerun = sSyncManOutPar.u16SyncType == SYNCTYPE_FREERUN &&
                          sSyncManInPar.u16SyncType == SYNCTYPE_FREERUN;
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    const bool sm2 = sSyncManOutPar.u16SyncType == SYNCTYPE_SM_SYNCHRON &&
-                     sSyncManInPar.u16SyncType == SYNCTYPE_SM2_SYNCHRON;
-#else
     const bool sm2 = false;
-#endif
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    const bool dc0 = sSyncManOutPar.u16SyncType == SYNCTYPE_DCSYNC0 &&
-                     sSyncManInPar.u16SyncType == SYNCTYPE_DCSYNC0;
-#else
     const bool dc0 = false;
-#endif
     if (!mapping_ready) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
@@ -530,10 +481,6 @@ extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
     if (cfg_err != Error::None) {
         return ALSTATUSCODE_INVALIDOUTPUTMAPPING;
     }
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    dust_sync0_period(uint32_t((uint64_t(CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) *
-                                transaction.candidate().cycle_us) / 1000000U));
-#endif
     ConfigureIo(transaction.candidate());
     dictionary.Freeze();
     return ALSTATUSCODE_NOERROR;
@@ -570,7 +517,7 @@ extern "C" void APPL_OutputMapping(UINT16* data) {
     }
 }
 extern "C" void APPL_InputMapping(UINT16* data) {
-    DustSyncPhaseScope sync_phase(DUST_SYNC_MAPPING);
+
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
     input_write_pending = false;
 #endif
@@ -598,29 +545,15 @@ extern "C" void dust_gateway_esc_write_isr(const volatile void* data,
         !bEscIntEnabled && !bDcSyncActive && !k_is_in_isr() &&
         input_revision && mapped_revision == input_revision && !dust_esc_dma_error();
     input_write_pending = false;
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-    // Freeze benchmark counters once business state leaves Active.
-    const bool count_active = core && core->state() == BusinessState::Active;
-    if (count_active) ++dust_ecat_input_write_stats.requests;
-#endif
     if (eligible && input_write_valid && written_revision == mapped_revision) {
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-        ++dust_ecat_input_write_stats.skipped;
-#endif
         return;
     }
     // A fault or lifecycle/mode change may not inherit a previous write credit.
     input_write_valid = false;
 #endif
-    DustSyncPhaseScope sync_phase(DUST_SYNC_ESC);
+
     hpm5e_ssc_esc_write(data, address, length);
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-#if defined(CONFIG_DUST_ECAT_SCHED_STATS)
-    if (count_active) {
-        ++dust_ecat_input_write_stats.writes;
-        if (dust_esc_dma_error()) ++dust_ecat_input_write_stats.failures;
-    }
-#endif
     if (eligible && !dust_esc_dma_error()) {
         written_revision = mapped_revision;
         input_write_valid = true;
@@ -631,7 +564,7 @@ extern "C" bool dust_gateway_active(void) {
     return core && core->state() == BusinessState::Active;
 }
 extern "C" void APPL_Application(void) {
-    DustSyncPhaseScope sync_phase(DUST_SYNC_TICK);
+
     if (!mapping_ready || !core ||
         core->state() == BusinessState::Unconfigured) {
         return;
@@ -643,52 +576,33 @@ extern "C" void APPL_Application(void) {
     const uint64_t now = Now();
     core->Tick(now, bEcatOutputUpdateRunning);
     if (core->state() == BusinessState::Active) {
-#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
-        (void)dust_sync0_phase(DUST_SYNC_CAN);
-#endif
         can_dirty |= ServiceCanReceive();
     }
-#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
-        (void)dust_sync0_phase(DUST_SYNC_PROCESS);
-#endif
     const bool received = new_output;
     if (received) {
-        DustSyncPhaseScope process_phase(DUST_SYNC_CORE_PROCESS);
+
         new_output = false;
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-        const bool was_active = core->state() == BusinessState::Active;
-#endif
         if (core->Process({rx_image.data(), prepared.rx.bytes}, now,
                           bEcatOutputUpdateRunning, actions) == Error::None) {
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-            if (!was_active && core->state() == BusinessState::Active)
-                dust_sync0_begin();
-#endif
-            DustSyncPhaseScope dispatch_phase(DUST_SYNC_DISPATCH);
+
             DispatchIo(*core, actions, now);
         }
     }
-#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
-        (void)dust_sync0_phase(DUST_SYNC_IO);
-#endif
     ServiceIo(*core, now);
     // 常规发布推进 UART 窗口；额外 CAN 发布保留上一份 UART 字节及窗口状态。
     const bool changed = published_state != core->state();
     const bool regular = received || changed ||
         (!bEcatOutputUpdateRunning && now - last_publish >= transaction.candidate().cycle_us);
     if (regular || can_dirty) {
-#if defined(CONFIG_DUST_ECAT_DC_PROFILE)
-        (void)dust_sync0_phase(DUST_SYNC_PUBLISH);
-#endif
         {
-            DustSyncPhaseScope capture_phase(DUST_SYNC_CAPTURE);
+
             if (regular) {
                 CaptureIo(*core, feedback, now);
             } else {
                 CaptureCanFeedback(feedback);
             }
         }
-        DustSyncPhaseScope encode_phase(DUST_SYNC_ENCODE);
+
         // 捕获期间 IRQ 仍可入队；发布时刻必须晚于已取出的外设时间戳。
         if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
                             feedback, regular) == Error::None) {

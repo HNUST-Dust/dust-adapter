@@ -5,6 +5,8 @@ build="$(mktemp -d)"
 trap 'rm -rf "$build"' EXIT
 python3 "$root/tests/test_can_profile_generator.py"
 python3 "$root/tests/phy_link_contracts.py"
+bash "$root/scripts/test_buzzer.sh"
+bash "$root/scripts/test_latest_can.sh"
 bash "$root/scripts/test_ethercat_software_optimizations.sh"
 python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.yaml" --output "$build/can_profile_generated.hpp"
 "${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
@@ -22,8 +24,6 @@ python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.
 "$root/scripts/test_ethercat_io.sh"
 
 
-bash "$root/scripts/test_pdi_deferred.sh"
-bash "$root/scripts/test_sync0_deferred.sh"
 
 # MCAN 批次状态模块属于锁定的板级支持，参与工作区回归。
 support="${DUST_HPM_SUPPORT_DIR:-$root/../hpm_support}"

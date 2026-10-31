@@ -47,11 +47,6 @@ uint16_t hpm5e_ssc_al_event(void)
 {
 	uint16_t event;
 	hpm_esc_read(esc, 0x0220U, &event, sizeof(event));
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    // Independent Sync0 IRQ owns acknowledgement/service. Hide Sync0/1 AL
-    // bits from SSC PDI_Isr so the same pulse cannot invoke Sync0 twice.
-    event &= (uint16_t)~0x000cU;
-#endif
     return event;
 }
 
@@ -72,20 +67,12 @@ uint16_t hpm5e_ssc_eeprom_reload(void)
 
 void hpm5e_ssc_irq_enable(void)
 {
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    dust_pdi_enable();
-#else
     irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
-#endif
 }
 
 void hpm5e_ssc_irq_disable(void)
 {
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    dust_pdi_disable();
-#else
     irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
-#endif
 }
 
 void hpm5e_ssc_enter_critical(void)

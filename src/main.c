@@ -15,9 +15,8 @@
 #include "applInterface.h"
 #include "ecatappl.h"
 #include "gateway.h"
+#include "drivers/buzzer.h"
 #include "pdi_deferred.h"
-#include "sync0_deferred.h"
-#include "wait_profile.h"
 #include "hpm5e31_phy.h"
 #include "hpm5e_esc_hw.h"
 
@@ -146,43 +145,10 @@ int hpm5e_ssc_process_eeprom(void) {
 static void pdi_callback(const struct device *dev, void *user_data) {
     ARG_UNUSED(dev);
     ARG_UNUSED(user_data);
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    dust_pdi_notify();
-#else
     (void)hpm5e_ssc_process_eeprom();
     if (atomic_get(&stack_ready)) PDI_Isr();
-#endif
 }
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-static void service_pdi_owner(void) {
-    (void)hpm5e_ssc_process_eeprom();
-    // PDI_Isr invokes the application for any pending AL source once SM mode
-    // is enabled. Only a real SM2 output event may trigger this owner cycle.
-    if (atomic_get(&stack_ready) && bEscIntEnabled &&
-        (hpm5e_ssc_al_event() & PROCESS_OUTPUT_EVENT)) {
-        dust_pdi_cycle();
-        PDI_Isr();
-    }
-}
-#endif
 
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-static void sync0_callback(const struct device *dev, void *user_data) {
-    ARG_UNUSED(dev); ARG_UNUSED(user_data);
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-    dust_wait_irq_enter();
-#endif
-    uint8_t acknowledged;
-    // Acknowledge hardware immediately so subsequent pulses remain countable.
-    hpm5e_ssc_esc_read(&acknowledged, 0x098e, 1);
-    dust_sync0_notify();
-}
-static void service_sync0_owner(void) {
-    if (bDcSyncActive && dust_gateway_active() && dust_sync0_error()) dust_gateway_sync_fault();
-    if (atomic_get(&stack_ready)) Sync0_Isr();
-    dust_sync0_set_active(dust_gateway_active());
-}
-#endif
 
 static void reset_callback(const struct device *dev, void *user_data) {
     ARG_UNUSED(dev);
@@ -203,9 +169,6 @@ int main(void) {
     hpm_esc_irq_enable(esc, false);
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, pdi_callback, NULL);
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, reset_callback, NULL);
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_SYNC0, sync0_callback, NULL);
-#endif
     hpm_esc_configure_eeprom(esc, true, false);
     if (hpm5e_ssc_process_eeprom() != 0) {
         printk("SII startup response failed\n");
@@ -245,13 +208,11 @@ int main(void) {
 #endif
     printk("SSC stage: entering MainInit (ESC IRQs masked)\n");
 
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    dust_pdi_reset();
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-    dust_sync0_reset();
-#endif
-#endif
+    #if defined(CONFIG_DUST_BUZZER)
+    int buzzer_rc = dust_buzzer_init();
+    if (buzzer_rc) printk("Buzzer init failed: %d\n", buzzer_rc);
+    #endif
+
     if (MainInit() != 0U) {
         printk("SSC MainInit failed\n");
         return 0;
@@ -262,12 +223,8 @@ int main(void) {
     }
     atomic_set(&stack_ready, 1);
     hpm_esc_start(esc);
-    /* Independent Sync0 is enabled only in the separately generated DC build. */
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-#else
+    /* FreeRun leaves the ESC synchronization interrupts disabled. */
     irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-#endif
     irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
     printk(
         "DUST HPM5E31 DTC1 LAB ready: VID=0 PID=0x44544331; CAN/UART IO "
@@ -278,96 +235,29 @@ int main(void) {
         if (atomic_cas(&reset_requested, 1, 0)) {
             atomic_clear(&stack_ready);
             hpm_esc_irq_enable(esc, false);
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-            dust_pdi_reset();
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-            irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-            dust_sync0_reset();
-#endif
-#endif
             if (MainInit() != 0U || dust_gateway_init() != 0) {
                 printk("Gateway reset failed; IRQs remain disabled\n");
                 return 0;
             }
             atomic_set(&stack_ready, 1);
             hpm_esc_start(esc);
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-            irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-#else
             irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 1));
-#endif
             irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
             printk("SSC reset handled\n");
         }
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
 
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_PDI);
-#endif
-        (void)dust_pdi_service(service_pdi_owner);
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_SYNC);
-#endif
-        dust_sync0_set_active(dust_gateway_active());
-        (void)dust_sync0_service(service_sync0_owner);
-        if (bDcSyncActive && dust_gateway_active() && dust_sync0_error()) dust_gateway_sync_fault();
-#endif
-#endif
-
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_POLL1);
-#endif
         dust_gateway_poll();
 
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_SSC);
-#endif
         MainLoop();
 
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_POLL2);
-#endif
         dust_gateway_poll();
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-        /* Return to the normal PDI -> Sync0 owner entry before starting slow
-         * MDIO maintenance. Never consume an event or run SSC from this check.
-         * An IRQ after this snapshot can still wait for one maintenance step.
-         */
-        if (dust_pdi_pending() || dust_sync0_pending()) {
-            continue;
-        }
-#endif
         if (k_uptime_get() >= next_link_poll) {
 
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_LINK);
-#endif
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-            if (ecat_phy_update_link_step(esc)) {
-                next_link_poll = k_uptime_get() + 100;
-            }
-#else
             ecat_phy_update_link(esc);
             next_link_poll = k_uptime_get() + 100;
-#endif
         }
         // Active 时避免 100 us 系统 tick 取整形成额外周期延迟；ISR 仍可抢占。
 
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_IDLE);
-#endif
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-        if (bEscIntEnabled) {
-
-#if defined(CONFIG_DUST_ECAT_DC_WAIT_PROFILE)
-        dust_wait_phase(DUST_WAIT_SLEEP);
-#endif
-            dust_pdi_wait();
-            continue;
-        }
-#endif
         if (dust_gateway_active()) {
             k_busy_wait(10);
         } else {
