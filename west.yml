@@ -30,3 +30,4 @@ manifest:
       revision: b011c45b585e097d95d9cf93edf4f2e01588d3cd
   self:
     path: dust-adapter
+    west-commands: scripts/west-commands.yml
