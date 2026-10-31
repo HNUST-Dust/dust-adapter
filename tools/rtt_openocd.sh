@@ -59,6 +59,18 @@ if [[ ${#openocd_configs[@]} -eq 0 ]]; then
     exit 1
 fi
 
+# Honour the board's west runner arguments: --cmd-pre-init (e.g. adapter speed,
+# reset_config) must run after the configs and before `init`, and
+# --openocd-search adds extra script search paths.
+openocd_pre_init=()
+while IFS= read -r command; do
+    openocd_pre_init+=("-c" "${command}")
+done < <(sed -n 's/^[[:space:]]*- --cmd-pre-init=//p' "${runners_file}")
+openocd_searches=()
+while IFS= read -r search; do
+    openocd_searches+=("-s" "${search}")
+done < <(sed -n 's/^[[:space:]]*- --openocd-search=//p' "${runners_file}")
+
 rtt_address="$(nm -n "${elf_file}" | awk '$3 == "_SEGGER_RTT" && !address { address = "0x" $1 } END { print address }')"
 if [[ ! "${rtt_address}" =~ ^0x[0-9A-Fa-f]+$ ]]; then
     echo "Unable to find _SEGGER_RTT in ${elf_file}" >&2
@@ -76,7 +88,9 @@ fi
 exec "${openocd}" \
     -s "${openocd_scripts}" \
     -s "${hpm_openocd}" \
+    "${openocd_searches[@]}" \
     "${openocd_configs[@]}" \
+    "${openocd_pre_init[@]}" \
     -c init \
     -c 'echo "RTT target: [target current]"' \
     -c "riscv set_mem_access sysbus" \
