@@ -19,6 +19,10 @@
 #include "ethercat/io_policy.hpp"
 #include "ethercat/latest_can.hpp"
 
+#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+extern "C" void dust_imu_heater_observe(float temperature_c);
+#endif
+
 namespace dust::ecat {
 int AllocateBootIdentity(uint64_t& boot);
 namespace {
@@ -820,6 +824,9 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
             feedback.imu_sequence = ++imu_sequence;
             feedback.imu_capture_us = k_cyc_to_us_floor32(burst.data_ready_cycle);
             feedback.temperature = burst.temperature_c;
+#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+            dust_imu_heater_observe(burst.temperature_c);
+#endif
             std::copy(burst.rx, burst.rx + sizeof(burst.rx),
                       feedback.imu_raw.begin());
         }

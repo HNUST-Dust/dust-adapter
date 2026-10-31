@@ -20,6 +20,10 @@
 #include "hpm5e31_phy.h"
 #include "hpm5e_esc_hw.h"
 
+#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+extern int dust_imu_heater_init(void);
+#endif
+
 #define SII_SIZE 2048U
 
 extern unsigned char aEepromData[SII_SIZE];
@@ -211,6 +215,11 @@ int main(void) {
     #if defined(CONFIG_DUST_BUZZER)
     int buzzer_rc = dust_buzzer_init();
     if (buzzer_rc) printk("Buzzer init failed: %d\n", buzzer_rc);
+    #endif
+
+    #if defined(CONFIG_DUST_BOARD_OUTPUTS)
+    int heater_rc = dust_imu_heater_init();
+    if (heater_rc) printk("IMU heater init failed: %d\n", heater_rc);
     #endif
 
     if (MainInit() != 0U) {

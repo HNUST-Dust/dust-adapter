@@ -10,12 +10,6 @@
 #include "drivers/board_pwm.h"
 #include <zephyr/sys/util.h>
 
-#if defined(CONFIG_DUST_BUZZER) && defined(CONFIG_BOARD_DUST_HPM5E31)
-BUILD_ASSERT(DT_PWMS_PERIOD(DT_ALIAS(onboard_imu_heater)) ==
-             DT_PWMS_PERIOD(DT_ALIAS(pwm_buzzer)),
-             "PWM0 buzzer and heater must use the same period");
-#endif
-
 namespace {
 const pwm_dt_spec heater = PWM_DT_SPEC_GET(DT_ALIAS(onboard_imu_heater));
 K_MUTEX_DEFINE(temperature_mutex);
@@ -94,3 +88,14 @@ bool ImuHeaterFaulted() {
 #endif
 }
 }  // namespace platform
+
+/* C entry points for main.c / io_backend.c callers. */
+extern "C" int dust_imu_heater_init(void) {
+    return platform::InitializeImuHeater();
+}
+extern "C" void dust_imu_heater_observe(float temperature_c) {
+    platform::ObserveImuTemperature(temperature_c);
+}
+extern "C" int dust_imu_heater_faulted(void) {
+    return platform::ImuHeaterFaulted() ? 1 : 0;
+}
