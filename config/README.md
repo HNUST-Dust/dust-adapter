@@ -43,8 +43,7 @@ Protection order follows the first occurrence in the YAML. The default file keep
 left W/B/D then right W/B/D, without hardcoding that policy in generic C++ logic.
 
 Limits: four physical CAN channel indices, sixteen RX filters per configured bus
-(HPM driver limit), 32 protection frames overall (independent of the six-record USB
-transfer limit). The TX queue can hold 32 records per bus. Duplicate YAML keys,
+(HPM driver limit), 32 protection frames overall. The TX queue can hold 32 records per bus. Duplicate YAML keys,
 unknown keys, invalid IDs/bytes/types, duplicate bus indices, conflicting protection
 writes and limit overflow are build errors. Missing/disabled configured CAN hardware
 fails initialization instead of silently dropping a declared device.
@@ -63,20 +62,13 @@ The default robot profile contains:
 Custom profile selection:
 
 ```bash
-./dust-adapter/scripts/build.sh usb -- -DDUST_ADAPTER_CAN_CONFIG=/absolute/path/can_devices.yaml
+./dust-adapter/scripts/build.sh ethercat -- -DDUST_ADAPTER_CAN_CONFIG=/absolute/path/can_devices.yaml
 ```
 
-The firmware owns the CAN protection baseline. ConfigureSafety with zero records
-selects these defaults; it cannot erase them. An older client may confirm the exact
-list, but a partial or changed CAN list is rejected. Optional per-session UART stop
-actions can supplement CAN protection; they never replace it. A host cannot extend
-the configured maximum lease. Protection remains available after session reset.
-
-Ready exposes protection count, maximum lease and a CRC32 signature covering the
-serialized default CAN protection table plus lease, in YAML order. The paired robot
-host compares the expected stop addresses/payloads before Arm, so a wrong profile
-fails startup. This signature is configuration identity, not authentication or a
-complete hash of feedback routing. Both host and MCU wiring configuration must agree.
+The firmware owns the CAN protection baseline and maximum command lease. The
+EtherCAT configuration exposes its protection count and CRC32 signature so the
+host can check that its configuration matches before arming. This signature is
+configuration identity, not authentication or a complete feedback-routing hash.
 
 Protection is an attempted transmission, not proof of delivery or physical stopping.
 Already in-flight CAN frames cannot be recalled. Physical bus/electrical faults can

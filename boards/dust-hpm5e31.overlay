@@ -1,0 +1,26 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/ { aliases {
+    dust-can-0 = &mcan0; dust-can-1 = &mcan1;
+    dust-can-2 = &mcan2; dust-can-3 = &mcan3;
+    dust-uart-1 = &uart1; dust-uart-2 = &uart2;
+    dust-uart-3 = &uart3; dust-uart-4 = &uart4;
+    dust-uart-5 = &uart5; dust-uart-6 = &uart6;
+}; };
+
+/* HI91 实机使用 921600 baud；通用板级默认值保持不变。 */
+&uart2 {
+    current-speed = <921600>;
+};
+
+/* 板载 HXY IMU 使用 SPI3；CS=PC21、DRDY=PC18 由板级 DTS 别名提供。 */
+&spi3 {
+    status = "okay";
+    dmas = <&xdma 7 7>, <&xdma 6 6>;
+    dma-names = "tx", "rx";
+};
+
+/* XDMA 0..5 belong to UART4..6; channels 6/7 serve SPI3 RX/TX; ESC DMA cannot run simultaneously. */
+/ { zephyr,user {
+    dmas = <&xdma 6 0>;
+    dma-names = "esc";
+}; };

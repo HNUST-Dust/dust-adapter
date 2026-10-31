@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20.0)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/prepare.cmake)
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(board_buzzer_probe)
+target_include_directories(app PRIVATE ${DUST_ADAPTER_ROOT}/src)
+target_sources(app PRIVATE src/main.c ${DUST_ADAPTER_ROOT}/src/drivers/buzzer.c ${DUST_ADAPTER_ROOT}/src/drivers/board_pwm.c)

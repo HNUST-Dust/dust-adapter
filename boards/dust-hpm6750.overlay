@@ -1,5 +1,3 @@
-&cherryusb_usb0 { status = "okay"; };
-
 / {
     aliases {
         dust-uart-1 = &uart10;
@@ -12,7 +10,6 @@
         dust-can-1 = &can1;
         dust-can-2 = &can2;
         dust-can-3 = &can3;
-        dust-usb = &cherryusb_usb0;
     };
 };
 

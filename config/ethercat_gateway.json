@@ -1,0 +1,11 @@
+{
+  "name": "DUST HPM5E31 Gateway LAB",
+  "vendor_id": 0,
+  "product_code": 1146372913,
+  "revision": 65536,
+  "rx_address": 4352,
+  "rx_max": 1024,
+  "tx_address": 7424,
+  "tx_max": 1536,
+  "ram_end": 12288
+}

@@ -1,0 +1,133 @@
+# PDO schema — the single source of truth for the EtherCAT process image.
+# This file defines every field (name, bit width, order, object index) for both
+# RxPDO (host -> slave) and TxPDO (slave -> host). The code generator
+# `tools/generate_pdo_schema.py` turns it into a shared C++ header with named
+# offsets and the ordered field table used by BOTH dust-adapter (firmware) and
+# dust-control (host). Never edit the generated header or the two layout
+# builders by hand.
+#
+# Bit widths are multiples of 8. Byte arrays (e.g. CAN payload, UART data) are
+# chunked into entries of at most `chunk_bytes` (30) bytes for CoE, matching the
+# 240-bit entry limit; chunk offsets are embedded in the field name (data[0],
+# data[30], ...).
+
+abi: { major: 5, minor: 0 }
+chunk_bytes: 30
+
+# Fixed production wiring. The only channels shipped on the robot:
+#   CAN command (chassis) 6 slots — one per motor (left/right wheel + joints B/D),
+#     the wheel command 0x200 is shared by both buses and distinguished by the
+#     frame `channel` byte (2 = right, 3 = left).
+#   CAN feedback CAN2/CAN3, 3 slots each (3 feedback IDs per bus).
+#   UART2 RX 128 B (HI91), UART5 RX 32 B (SBUS). No host->slave UART.
+#   Onboard SPI IMU enabled.
+production:
+  cycle_us: 125
+  can_tx: [6, 0]                     # chassis 6, gimbal 0
+  can_rx: [0, 0, 3, 3]               # CAN2 3, CAN3 3
+  uart_tx: [0, 0, 0, 0, 0, 0]
+  uart_rx: [0, 128, 0, 0, 32, 0]     # UART2 128, UART5 32
+  imu: true
+
+rx:
+  - object: 0x2000
+    name: header
+    fields:
+      session_id: 32
+      expected_boot_id: 32
+      exchange_sequence: 32
+      control_flags: 8
+      active_source_mask: 8
+      status_target: 8
+      status_channel: 8
+      status_request_sequence: 16
+
+  - object: 0x2010
+    name: can
+    count: 2                       # chassis (0), gimbal (1)
+    prefix: [can.chassis, can.gimbal]
+    slots_from: can_tx             # per-source frame count from configuration
+    header:
+      source_sequence: 32
+      remaining_valid_us: 32
+      flags: 8
+      frame_count: 8
+      source_id: 8
+    frame:
+      channel: 8
+      length: 8
+      id: 16
+      data: { bytes: 8 }
+
+  - object: 0x2020
+    name: uart
+    count: 6
+    prefix: [uart1, uart2, uart3, uart4, uart5, uart6]
+    bytes_from: uart_tx           # host -> slave byte count from configuration
+    header:
+      block_sequence: 32
+      peer_ack_sequence: 32
+      capture_time_us: 32
+      length: 16
+      flags: 8
+
+tx:
+  - object: 0x3000
+    name: header
+    fields:
+      boot_id: 32
+      accepted_session_id: 32
+      publish_sequence: 32
+      slave_now_us: 32
+      capability_mask: 32
+      business_state: 8
+      fault_flags: 8
+
+  - object: 0x3010
+    name: can
+    count: 4
+    prefix: [can0, can1, can2, can3]
+    slots_from: can_rx           # per-bus frame count from configuration
+    header:
+      batch_sequence: 32
+      cumulative_drops: 32
+      frame_count: 8
+    frame:
+      id: 16
+      bus_sequence: 32
+      capture_time_us: 32
+      length: 8
+      data: { bytes: 8 }
+
+  - object: 0x3020
+    name: uart
+    count: 6
+    prefix: [uart1, uart2, uart3, uart4, uart5, uart6]
+    bytes_from: uart_rx          # slave -> host byte count from configuration
+    header:
+      block_sequence: 32
+      peer_ack_sequence: 32
+      capture_time_us: 32
+      length: 16
+      flags: 8
+
+  - object: 0x3030
+    name: imu
+    if: imu
+    fields:
+      sample_sequence: 32
+      capture_time_us: 32
+      flags: 8
+      temperature_c: 32
+      spi_bytes: { bytes: 25 }
+
+  - object: 0x3040
+    name: diagnostics
+    fields:
+      stop_reason: 32
+      rejected: 32
+      status_reply_sequence: 32
+      status_result: 32
+      status_value0: 32
+      status_value1: 32
+      status_value2: 32

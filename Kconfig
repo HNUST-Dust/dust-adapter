@@ -15,6 +15,11 @@ config DUST_DMA_BUFFER_ALIGNMENT
     default 4
     range 4 4096
 
+config DUST_BUZZER
+    bool "Board buzzer on PWM0 channel 1"
+    depends on PWM && BOARD_DUST_HPM5E31
+    default n
+
 config DUST_BOARD_OUTPUTS
     bool "Board LEDs, buzzer and IMU heater"
     depends on PWM && GPIO
@@ -49,3 +54,35 @@ config DUST_IMU_HEATER_MAX_PERMILLE
     int "Maximum heater duty in permille"
     default 1000
     range 0 1000
+
+config DUST_ECAT_ESC_DMA
+    bool "Synchronous ESC PDO DMA experiment"
+    depends on BOARD_DUST_HPM5E31 && DMA && !SPI_HPM_SPI_DMA
+    default n
+    help
+      Use a reserved XDMA channel and uncached staging buffer for aligned PDO
+      blocks. Wait for completion; fail closed on DMA errors or 500 us timeout.
+      Register/mailbox and IRQ-context accesses keep the CPU path.
+
+config DUST_ECAT_INPUT_WRITE_COALESCE
+    bool "Skip already committed input publications in active FreeRun"
+    default n
+    help
+      Keep SSC input mapping calls, but omit the synchronous PDRAM write for
+      an unchanged successfully committed application publication. Restricted
+      to active FreeRun in thread context. State/mapping changes and transport
+      errors force normal writes. Experimental until board validation.
+
+config DUST_ECAT_INPUT_LATE_REFRESH
+    bool "Refresh pending CAN feedback once immediately before input mapping"
+    depends on !DUST_ECAT_INPUT_WRITE_COALESCE
+    default n
+    help
+      In Active FreeRun thread context, check CAN receive generation once before
+      copying the next SSC input image. A new snapshot rebuilds only CAN/status
+      fields and preserves the last UART image and window cursor. No recursive
+      mapping or extra ESC write is performed. Experimental until board validation.
+
+config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
+    bool "Skip clearing bytes fully overwritten by PDO publication"
+    default n

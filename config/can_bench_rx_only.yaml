@@ -1,0 +1,36 @@
+# 台架首轮仅接收配置；不声明任何 CAN 发送地址或停止帧。
+# 电机动力断开时验证 EtherCAT，避免无人 ACK 的启动发送触发总线故障。
+schema_version: 1
+command_timeout_us: 20000
+protect_on_boot: true
+can_buses:
+- channel: 3
+  bitrate: 1000000
+  devices:
+  - name: left_wheel
+    feedback_ids:
+    - 513
+  - name: left_joint_b
+    feedback_ids:
+    - 16
+  - name: left_joint_d
+    feedback_ids:
+    - 19
+- channel: 2
+  bitrate: 1000000
+  devices:
+  - name: right_wheel
+    feedback_ids:
+    - 513
+  - name: right_joint_b
+    feedback_ids:
+    - 17
+  - name: right_joint_d
+    feedback_ids:
+    - 18
+- channel: 0
+  bitrate: 1000000
+  devices: []
+- channel: 1
+  bitrate: 1000000
+  devices: []

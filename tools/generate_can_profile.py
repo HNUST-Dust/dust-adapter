@@ -143,8 +143,9 @@ def header(profile):
 // Generated from config/can_devices.yaml; do not edit.
 #pragma once
 #include <array>
-#include "usb_protocol.hpp"
+#include <cstdint>
 namespace dust::can_profile {
+struct CanFrame { uint8_t channel; uint8_t length; uint8_t flags; uint32_t id; uint8_t data[8]; };
 struct Bus { uint8_t channel; uint32_t bitrate; };
 struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
 '''
@@ -154,7 +155,7 @@ struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
     result += array('kBuses', 'Bus', [f'{{{ch}, {rate}U}}' for ch, rate in profile['buses']])
     for name, key in [('kReceiveFilters', 'filters'), ('kTransmitAddresses', 'addresses')]:
         result += array(name, 'Address', [f'{{{ch}, 0x{can_id:x}U, {flags}}}' for ch, can_id, flags in profile[key]])
-    result += array('kProtectionFrames', 'wire::CanFrame', [
+    result += array('kProtectionFrames', 'CanFrame', [
         f'{{{ch}, {length}, {flags}, 0x{can_id:x}U, {{{", ".join(hex(v) for v in data)}}}}}'
         for ch, length, flags, can_id, data in profile['stops']])
     return result + '} // namespace dust::can_profile\n'

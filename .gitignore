@@ -1,7 +1,8 @@
 /build*/
-/external/ssc/
 __pycache__/
 *.pyc
 .DS_Store
 
 /dist/
+
+/external/ssc_dc/

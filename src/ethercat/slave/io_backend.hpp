@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+#pragma once
+#include "ethercat/protocol.hpp"
+namespace dust::ecat {
+// 仅由 FreeRun 周期线程调用。初始化含启动保护及 NVS 启动计数提交，不在 ISR
+// 调用。
+int InitializeIo(uint64_t& boot);
+Protection IoProtection();
+void ApplyIoLimits(Limits& limits);
+bool CanFeedbackCapacityValid(const Configuration& configuration);
+void ConfigureIo(const Configuration& configuration);
+// 同步复制完整动作；失败会使 Core 进入保护并丢弃软件队列。
+void DispatchIo(Core& core, const Actions& actions, uint64_t now);
+// SSC owner: observe worker snapshots (or drain in single-thread mode), no UART rotation.
+bool ServiceCanReceive();
+// Advisory version hint for the optional late checkpoint only. Never replace
+// regular ServiceCanReceive expiry checks with this probe. No acknowledgement.
+bool CanReceivePending();
+void CaptureCanFeedback(Core::Feedback& feedback);
+// service 高频检查截止时间/故障；capture 在常规发布时采样 UART 窗口。
+void ServiceIo(Core& core, uint64_t now);
+void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now);
+}  // namespace dust::ecat

@@ -14,6 +14,14 @@ class ConfigurationTests(unittest.TestCase):
     def setUp(self):
         self.config = yaml.safe_load((ROOT/'config/can_devices.yaml').read_text())
 
+    def test_bench_profile_never_declares_outputs(self):
+        bench = generator.load_config((ROOT/'config/can_bench_rx_only.yaml').read_text())
+        profile = generator.compile_profile(bench)
+        self.assertFalse(profile['addresses'])
+        self.assertFalse(profile['stops'])
+        self.assertEqual(profile['filters'], generator.compile_profile(self.config)['filters'])
+        self.assertTrue(profile['boot'])
+
     def test_duplicate_yaml_keys_are_errors(self):
         with self.assertRaises(ValueError):
             generator.load_config('command_timeout_us: 20000\ncommand_timeout_us: 1000000\n')
@@ -79,7 +87,7 @@ class ConfigurationTests(unittest.TestCase):
         self.config['can_buses'][0]['devices'][0]['commmand_id'] = 1
         with self.assertRaises(ValueError): generator.compile_profile(self.config)
 
-    def test_protection_capacity_is_not_usb_packet_capacity(self):
+    def test_protection_capacity_limit(self):
         bus = self.config['can_buses'][0]
         bus['devices'] = [dict(name=f'd{i}', command_id=i, feedback_ids=[],
             protection_frame={'data':[0]*8}) for i in range(32)]

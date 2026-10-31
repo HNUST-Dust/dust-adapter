@@ -20,9 +20,11 @@ HPM UART 功能补丁单独保存，未把用户工作树中的 CAN 追踪实验
 
 迁移不自动刷写，原已运行固件不受影响。新仓库完成编译不表示已完成新硬件验证。
 
-2026-10-22 分支拆分：main/usb 仅保留 USB；EtherCAT 基础转至 ethercat 分支。
-此前双应用构建记录为拆分前的历史验证。
+2026-10-22 分支拆分：本分支只保留 EtherCAT 从站基础；USB 位于 main/usb。
+此前 USB 构建记录为拆分前的历史验证，本分支不需要 UART 功能补丁。
 
+2026-10-22 后续：维护者确认厂商授权并明确批准公开 SSC，现将配置源码纳入
+external/ssc，保留原许可；EtherCAT CI 升级为完整固件构建。此前外部导入策略为历史记录。
 2026-10-22 后续：UART RX 修复已提交到 HNUST-Dust/hpm_support，
 west.yml 固定到 a31c06940e8d11ee360b970c89523a7727b63fff；删除补丁与 CI/README 手工应用步骤。
 旧版构建与补丁记录仅为历史记录。
@@ -104,3 +106,10 @@ udev 规则也应避免固定旧 PID。当前未同步上位机实现，未做�
 删除 build.sh usb 参数、未使用的 USB polling 入口及 PC/MPC、AHRS 旧条件分支。
 保护配置只允许选用 MCU 默认 CAN 表和补充 UART 停止动作，不再接受上传完整
 CAN 默认表的旧确认方式。历史交接记录保留为追溯资料，不代表当前接口。
+
+### EtherCAT 合并 generic USB 基线（2026-10-26）
+
+将 feature/generic-usb-adapter 合入 ethercat。保留根目录 USB v4 应用的 CAN/UART、
+保护配置、原始 IMU 和温控，以及 . 与 external/ssc 的旧从站基础。
+构建入口显式区分 ethercat/usb，默认选择 ethercat；双方都不自动刷写。
+本次仅建立开发基线，计数器 PDO 尚未升级为 HPM5E31 网关协议。

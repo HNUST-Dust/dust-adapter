@@ -1,0 +1,22 @@
+# RTT 台架：仅 CAN3 的 DM ID3；主机工具固定发送失能帧，不允许其它电机地址。
+schema_version: 1
+command_timeout_us: 20000
+protect_on_boot: true
+can_buses:
+- channel: 3
+  bitrate: 1000000
+  devices:
+  - name: dm_rtt
+    command_id: 0x003
+    feedback_ids: [0x013]
+    protection_frame:
+      data: [255, 255, 255, 255, 255, 255, 255, 253]
+- channel: 0
+  bitrate: 1000000
+  devices: []
+- channel: 1
+  bitrate: 1000000
+  devices: []
+- channel: 2
+  bitrate: 1000000
+  devices: []
