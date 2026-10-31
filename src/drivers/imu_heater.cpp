@@ -10,6 +10,12 @@
 #include "drivers/heater_pid.hpp"
 #include "drivers/board_pwm.h"
 #include <zephyr/sys/util.h>
+#if defined(CONFIG_BOARD_DUST_HPM5E31)
+#include <soc.h>
+#include "hpm_common.h"
+#include "hpm_soc_ip.h"
+#include "hpm_ioc_regs.h"
+#endif
 
 namespace {
 const pwm_dt_spec heater = PWM_DT_SPEC_GET(DT_ALIAS(onboard_imu_heater));
@@ -72,6 +78,14 @@ int InitializeImuHeater() {
     if (!pwm_is_ready_dt(&heater)) {
         return -ENODEV;
     }
+#if defined(CONFIG_BOARD_DUST_HPM5E31)
+    /* PD04 defaults to the GPIO heater gate; route it to PWM0_P_4 so the
+     * PWM0 channel 4 output actually reaches the heater MOSFET. */
+    HPM_IOC->PAD[IOC_PAD_PD04].FUNC_CTL =
+        IOC_PAD_FUNC_CTL_ALT_SELECT_SET(16);
+    HPM_IOC->PAD[IOC_PAD_PD04].PAD_CTL =
+        (HPM_IOC->PAD[IOC_PAD_PD04].PAD_CTL & ~0x7U) | 0x7U;
+#endif
     int rc = dust_board_pwm_set(&heater, 0);
     if (rc) {
         return rc;
