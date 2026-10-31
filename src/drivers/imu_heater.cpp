@@ -93,6 +93,7 @@ int InitializeImuHeater() {
     controller.kp = CONFIG_DUST_IMU_HEATER_KP_MILLI / 1000.0f;
     controller.ki = CONFIG_DUST_IMU_HEATER_KI_MILLI / 1000.0f;
     controller.kd = CONFIG_DUST_IMU_HEATER_KD_MILLI / 1000.0f;
+    controller.feedforward = CONFIG_DUST_IMU_HEATER_FF_PERMILLE / 1000.0f;
     controller.max_duty = CONFIG_DUST_IMU_HEATER_MAX_PERMILLE / 1000.0f;
     boot_ms = previous_ms = k_uptime_get();
     k_work_reschedule(&heater_work,

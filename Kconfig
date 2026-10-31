@@ -57,6 +57,14 @@ config DUST_IMU_HEATER_KD_MILLI
     default 0
     range 0 1000
 
+config DUST_IMU_HEATER_FF_PERMILLE
+    int "Heater feed-forward duty in permille"
+    default 265
+    range 0 1000
+    help
+      Static duty added to the PID output, matching the heater power needed to
+      hold the target at room temperature (about 265/1000 at 45 C).
+
 config DUST_IMU_HEATER_MAX_PERMILLE
     int "Maximum heater duty in permille"
     default 1000
