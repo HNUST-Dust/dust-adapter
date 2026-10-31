@@ -61,7 +61,7 @@ struct Fixture {
     Actions actions;
     Core::Feedback feedback;
     explicit Fixture(bool protected_backend = true,
-                     uint64_t boot = 0x123456789abcdef0ULL,
+                     uint32_t boot = 0x12345678U,
                      Configuration candidate = Config())
         : core(boot, {&guard, Guard::Validate, Guard::Stop, protected_backend}),
           config(candidate) {
@@ -74,31 +74,27 @@ struct Fixture {
         tx.resize(layout.tx.bytes);
     }
     void Header(uint32_t exchange, uint32_t flags = kArm, uint32_t sources = 0,
-                uint64_t session = 9) {
+                uint32_t session = 9) {
         std::fill(rx.begin(), rx.end(), 0);
-        Put32(rx.data(), kMagic);
-        Put16(rx.data() + 4, 1);
-        Put64(rx.data() + 8, session);
-        Put64(rx.data() + 16, flags == kDiscover ? 0 : 0x123456789abcdef0ULL);
-        Put32(rx.data() + 24, exchange);
-        Put32(rx.data() + 28, flags);
-        Put32(rx.data() + 32, layout.signature);
-        Put32(rx.data() + 36, sources);
-        Put32(rx.data() + 40, config.cycle_us);
+        Put32(rx.data(), session);
+        Put32(rx.data() + 4, flags == kDiscover ? 0 : 0x12345678U);
+        Put32(rx.data() + 8, exchange);
+        rx[12] = uint8_t(flags);
+        rx[13] = uint8_t(sources);
     }
     void Batch(unsigned source, uint32_t sequence, uint32_t remaining = 10000,
                unsigned count = 1) {
         auto* p = rx.data() + layout.source[source];
         Put32(p, sequence);
         Put32(p + 4, remaining);
-        Put16(p + 8, 1);
-        p[10] = uint8_t(count);
-        p[11] = uint8_t(source);
+        p[8] = 1;
+        p[9] = uint8_t(count);
+        p[10] = uint8_t(source);
         if (count) {
-            p[16] = uint8_t(source);
-            p[17] = 8;
-            Put32(p + 20, source ? 0x200 : 0x100);
-            p[24] = uint8_t(sequence);
+            p[11] = uint8_t(source);
+            p[12] = 8;
+            Put16(p + 13, source ? 0x200 : 0x100);
+            p[15] = uint8_t(sequence);
         }
     }
     Error Process(uint64_t now = 1000, bool op = true) {
@@ -109,10 +105,10 @@ struct Fixture {
         auto* p = rx.data() + layout.uart_rx[0];
         Put32(p, sequence);
         Put32(p + 4, ack);
-        Put16(p + 14, flags);
+        p[14] = uint8_t(flags);
         if (flags & kDataValid) {
             Put16(p + 12, 3);
-            std::memcpy(p + 16, "abc", 3);
+            std::memcpy(p + 15, "abc", 3);
         }
     }
     void Publish(uint64_t now) {
@@ -167,9 +163,9 @@ static void SessionContracts() {
     CHECK(f.Process() == Error::None);
     CHECK(f.core.state() == BusinessState::Ready);
     f.Publish(1000);
-    CHECK(U64(f.tx.data() + 8) == 0x123456789abcdef0ULL);
-    CHECK(U64(f.tx.data() + 16) == 0);
-    CHECK(U32(f.tx.data() + 36) & kProtectionCapability);
+    CHECK(U32(f.tx.data()) == 0x12345678U);
+    CHECK(U32(f.tx.data() + 4) == 0);
+    CHECK(U32(f.tx.data() + 16) & kProtectionCapability);
     f.Header(2);
     CHECK(f.Process(2000) == Error::None);
     CHECK(f.core.state() == BusinessState::Active);
@@ -184,16 +180,16 @@ static void SessionContracts() {
     CHECK(f.Process(23000) == Error::Lease);
     CHECK(f.guard.stops == 1);
     f.Publish(23000);
-    CHECK(U32(f.tx.data() + 40) == 3);
-    CHECK(U32(f.tx.data() + 44) != 0);
+    CHECK(f.tx[20] == 3);
+    CHECK(f.tx[21] != 0);
     Fixture no_guard(false);
     no_guard.Publish(1);
-    CHECK(!(U32(no_guard.tx.data() + 36) & kProtectionCapability));
+    CHECK(!(U32(no_guard.tx.data() + 16) & kProtectionCapability));
     no_guard.Header(1);
     CHECK(no_guard.Process() == Error::Protection);
     Fixture boot;
     boot.Header(1);
-    Put64(boot.rx.data() + 16, 0x99);
+    Put32(boot.rx.data() + 4, 0x99);
     CHECK(boot.Process() == Error::Session);
     Fixture session;
     session.Header(1);
@@ -261,13 +257,13 @@ static void LeaseContracts() {
     CHECK(changed.Process() == Error::None);
     changed.Header(2, kArm, 1);
     changed.Batch(0, 7);
-    changed.rx[changed.layout.source[0] + 24]++;
+    changed.rx[changed.layout.source[0] + 15]++;
     CHECK(changed.Process(2000) == Error::Sequence);
     Fixture invalid;
     invalid.Header(1, kArm, 3);
     invalid.Batch(0, 1);
     invalid.Batch(1, 1);
-    Put32(invalid.rx.data() + invalid.layout.source[1] + 20, 0x123);
+    Put16(invalid.rx.data() + invalid.layout.source[1] + 13, 0x123);
     CHECK(invalid.Process() == Error::Protection);
     CHECK(!invalid.actions.can[0].valid);
     Fixture wrap;
@@ -315,7 +311,7 @@ static void UartContracts() {
         const auto* p = f.tx.data() + f.layout.uart_tx[0];
         CHECK(U32(p) == i % 4 + 1);
         CHECK(U32(p + 4) == 2);
-        CHECK(U16(p + 14) == 3);
+        CHECK(p[14] == 3);
     }
     f.Header(5);
     f.Uart(0, kAckValid, 2);
@@ -326,10 +322,10 @@ static void UartContracts() {
     f.Uart(0, kAckValid, 4);
     CHECK(f.Process(6000) == Error::None);
     f.Publish(6001);
-    CHECK(!(U16(f.tx.data() + f.layout.uart_tx[0] + 14) & kDataValid));
+    CHECK(!(f.tx.data()[f.layout.uart_tx[0] + 14] & kDataValid));
     CHECK(f.core.QueueUart(0, {bytes, 3}, 6000, 6000, true));
     f.Publish(6002);
-    CHECK(U16(f.tx.data() + f.layout.uart_tx[0] + 14) & kDiscontinuity);
+    CHECK(f.tx.data()[f.layout.uart_tx[0] + 14] & kDiscontinuity);
     f.core.Tick(26000, true);
     CHECK(f.core.state() == BusinessState::Protected);
     Fixture unsent;
@@ -359,48 +355,44 @@ static void UartContracts() {
 static void WireContracts() {
     Fixture f;
     f.Header(1);
-    Put32(f.rx.data() + 44, 8);
-    f.rx[48] = 12;
+    Put16(f.rx.data() + 16, 8);
+    f.rx[14] = 12;
     CHECK(f.Process() == Error::None);
     CHECK(f.actions.status_sequence == 8);
     f.core.CompleteStatus(7, -22, {1, 2, 3});
     f.Publish(1000);
-    CHECK(U32(f.tx.data() + 56) == 0);
+    CHECK(U32(f.tx.data() + f.layout.diagnostics + 8) == 0);
     f.core.CompleteStatus(8, -22, {1, 2, 3});
     Core::CanEvent event{0x321, 10, 1000, 8, {1, 2, 3, 4, 5, 6, 7, 8}};
     f.feedback.can[0] = {3, 2, &event, 1};
     f.Publish(1001);
-    CHECK(U32(f.tx.data() + 56) == 8);
+    CHECK(U32(f.tx.data() + f.layout.diagnostics + 8) == 8);
     const auto* diagnostic = f.tx.data() + f.layout.diagnostics;
-    CHECK(U32(diagnostic + 208) == uint32_t(-22));
-    CHECK(U32(diagnostic + 220) == 3);
+    CHECK(U32(diagnostic + 12) == uint32_t(-22));
+    CHECK(U32(diagnostic + 24) == 3);
     const auto* can = f.tx.data() + f.layout.feedback[0];
-    CHECK(U32(can) == 3 && U32(can + 4) == 2 && U16(can + 8) == 1);
-    CHECK(U32(can + 16) == 0x321 && U32(can + 20) == 10 && can[28] == 8);
-    for (size_t n = 0; n < 64; ++n) {
+    CHECK(U32(can) == 3 && U32(can + 4) == 2 && can[8] == 1);
+    CHECK(U16(can + 9) == 0x321 && U32(can + 11) == 10 && can[19] == 8);
+    for (size_t n = 0; n < 18; ++n) {
         RxHeader h;
         CHECK(DecodeHeader({f.rx.data(), n}, h) == Error::Wire);
     }
     Fixture reserved;
     reserved.Header(1);
-    reserved.rx[63] = 1;
+    reserved.rx[13] = 0x80;
     CHECK(reserved.Process() == Error::Wire);
     Fixture mixed;
     mixed.Header(1, kDiscover | kArm);
     CHECK(mixed.Process() == Error::Wire);
-    Fixture signature;
-    signature.Header(1);
-    signature.rx[32] ^= 1;
-    CHECK(signature.Process() == Error::Signature);
     Fixture replay;
     replay.Header(1);
     CHECK(replay.Process() == Error::None);
-    replay.rx[24] = 0;
+    replay.rx[8] = 0;
     CHECK(replay.Process(2000) == Error::Sequence);
     Fixture rewritten;
     rewritten.Header(1);
     CHECK(rewritten.Process() == Error::None);
-    rewritten.rx[44] = 9;
+    rewritten.rx[16] = 9;
     CHECK(rewritten.Process(2000) == Error::Sequence);
     // 从站时间低 32 位回绕，不影响真实的样本年龄。
     event.capture_us = 0xfffffffeU;
@@ -411,7 +403,7 @@ static void AdditionalContracts() {
     Guard lifecycle;
     {
         Fixture mapping;
-        Core owned(0x123456789abcdef0ULL,
+        Core owned(0x12345678U,
                    {&lifecycle, Guard::Validate, Guard::Stop, true});
         CHECK(owned.Configure(mapping.transaction, AllLimits(),
                               mapping.layout.rx,
@@ -424,8 +416,8 @@ static void AdditionalContracts() {
 
     Configuration c;
     c.uart[0] = {0, 8};
-    Fixture one_way(true, 0x123456789abcdef0ULL, c);
-    CHECK(one_way.layout.rx.bytes == 80);
+    Fixture one_way(true, 0x12345678U, c);
+    CHECK(one_way.layout.rx.bytes == 33);
     one_way.Header(1);
     CHECK(one_way.Process() == Error::None);
     const uint8_t data[] = {1, 2};
@@ -435,12 +427,12 @@ static void AdditionalContracts() {
     one_way.Uart(0, kAckValid, 1);
     CHECK(one_way.Process(2000) == Error::None);
     one_way.Publish(2001);
-    CHECK(!(U16(one_way.tx.data() + one_way.layout.uart_tx[0] + 14) &
+    CHECK(!(one_way.tx.data()[one_way.layout.uart_tx[0] + 14] &
             kDataValid));
 
     c.uart[0] = {8, 8};
     c.uart[1] = {8, 8};
-    Fixture independent(true, 0x123456789abcdef0ULL, c);
+    Fixture independent(true, 0x12345678U, c);
     independent.Header(1);
     CHECK(independent.Process() == Error::None);
     CHECK(independent.core.QueueUart(0, {data, 2}, 1000, 1000));
@@ -449,12 +441,12 @@ static void AdditionalContracts() {
     independent.Header(2);
     auto* second = independent.rx.data() + independent.layout.uart_rx[1];
     Put32(second + 4, 1);
-    Put16(second + 14, kAckValid);
+    second[14] = kAckValid;
     CHECK(independent.Process(2000) == Error::None);
     independent.Publish(2001);
-    CHECK(U16(independent.tx.data() + independent.layout.uart_tx[0] + 14) &
+    CHECK(independent.tx.data()[independent.layout.uart_tx[0] + 14] &
           kDataValid);
-    CHECK(!(U16(independent.tx.data() + independent.layout.uart_tx[1] + 14) &
+    CHECK(!(independent.tx.data()[independent.layout.uart_tx[1] + 14] &
             kDataValid));
 
     Fixture wrapped;
@@ -503,14 +495,14 @@ static void CycleContracts() {
     for (auto cycle : {125U, 250U, 500U, 1000U}) {
         auto config = Config();
         config.cycle_us = cycle;
-        Fixture good(true, 0x123456789abcdef0ULL, config);
+        Fixture good(true, 0x12345678U, config);
         good.Header(1, kDiscover);
         CHECK(good.Process() == Error::None);
-        Fixture mismatch(true, 0x123456789abcdef0ULL, config);
-        mismatch.Header(1, kDiscover);
-        Put32(mismatch.rx.data() + 40, cycle == 1000 ? 500 : 1000);
-        CHECK(mismatch.Process() == Error::Wire);
-        CHECK(mismatch.core.state() == BusinessState::Protected);
+        auto other = config;
+        other.cycle_us = cycle == 1000 ? 500 : 1000;
+        Layout other_layout;
+        CHECK(BuildLayout(other, AllLimits(), other_layout) == Error::None);
+        CHECK(other_layout.signature != good.layout.signature);
     }
 }
 int main() {

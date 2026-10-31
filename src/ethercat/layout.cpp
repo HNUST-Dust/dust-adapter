@@ -4,8 +4,10 @@
 #include <cstring>
 
 #include "protocol.hpp"
+#include "pdo_schema.hpp"
 
 namespace dust::ecat {
+namespace pdo = dust::pdo;
 uint16_t U16(const uint8_t* p) {
     return uint16_t(p[0]) | uint16_t(p[1]) << 8;
 }
@@ -77,18 +79,21 @@ class Builder {
             image_.mappings = {};
         }
     }
-    void Object(uint16_t index, const char* prefix) {
-        index_ = index;
-        subindex_ = 0;
-        prefix_ = prefix;
-    }
-    void Field(const char* name, unsigned bytes) {
+    // Consume one (object, full name, bit length) tuple from the generated
+    // field walk. The name is already fully qualified ("header.boot_id",
+    // "can2.frames[0].id", ...) so no per-side prefix/naming logic remains.
+    void Emit(uint16_t index, const char* name, uint8_t bits) {
+        if (index != index_) {
+            index_ = index;
+            subindex_ = 0;
+        }
+        const unsigned bytes = bits / 8;
         if (error_ || count_ >= kMaxEntries || subindex_ == 255 || !bytes ||
             bytes > 30 || offset_ + bytes > kMaxImageBytes) {
             error_ = true;
             return;
         }
-        const Entry entry{index_, uint8_t(++subindex_), uint8_t(bytes * 8),
+        const Entry entry{index_, uint8_t(++subindex_), bits,
                           uint16_t(offset_)};
         if (signature_) {
             if (count_ % 255 == 0) {
@@ -100,9 +105,7 @@ class Builder {
             signature_->Integer(entry.subindex);
             signature_->Integer(entry.bits);
             signature_->Integer(entry.offset);
-            char qualified[96];
-            std::snprintf(qualified, sizeof(qualified), "%s.%s", prefix_, name);
-            signature_->String(qualified);
+            signature_->String(name);
         } else {
             if (count_ % 255 == 0) {
                 image_.mappings[count_ / 255] = {
@@ -117,13 +120,6 @@ class Builder {
         count_++;
         offset_ += bytes;
     }
-    void BytesField(const char* name, unsigned bytes) {
-        for (unsigned n = 0; n < bytes; n += 30) {
-            char chunk[64];
-            std::snprintf(chunk, sizeof(chunk), "%s[%u]", name, n);
-            Field(chunk, std::min(30U, bytes - n));
-        }
-    }
     uint16_t offset() const {
         return uint16_t(offset_);
     }
@@ -136,161 +132,47 @@ class Builder {
     Signature* signature_;
     uint16_t first_, index_ = 0;
     unsigned subindex_ = 0, offset_ = 0, count_ = 0;
-    const char* prefix_ = "";
     bool error_ = false;
 };
-void Header(Builder& b, bool tx) {
-    b.Object(tx ? 0x3000 : 0x2000, "header");
-    b.Field("magic", 4);
-    b.Field("abi_major", 2);
-    b.Field("abi_minor", 2);
-    if (tx) {
-        b.Field("boot_id", 8);
-        b.Field("accepted_session_id", 8);
-        for (const char* name :
-             {"publish_sequence", "slave_now_us", "configuration_signature",
-              "capability_mask", "business_state", "fault_flags",
-              "accepted_chassis_sequence", "accepted_gimbal_sequence",
-              "status_reply_sequence", "reserved"}) {
-            b.Field(name, 4);
-        }
-    } else {
-        b.Field("session_id", 8);
-        b.Field("expected_boot_id", 8);
-        for (const char* name :
-             {"exchange_sequence", "control_flags", "configuration_signature",
-              "active_source_mask", "cycle_time_us",
-              "status_request_sequence"}) {
-            b.Field(name, 4);
-        }
-        b.Field("status_target", 1);
-        b.Field("status_channel", 1);
-        b.BytesField("reserved", 14);
-    }
-}
-void Can(Builder& b, unsigned number, unsigned slots, bool tx) {
-    char prefix[32];
-    if (tx) {
-        std::snprintf(prefix, sizeof(prefix), "can%u", number);
-    } else {
-        std::snprintf(prefix, sizeof(prefix), "can.%s",
-                      number ? "gimbal" : "chassis");
-    }
-    b.Object(uint16_t((tx ? 0x3010 : 0x2010) + number), prefix);
-    if (tx) {
-        b.Field("batch_sequence", 4);
-        b.Field("cumulative_drops", 4);
-        b.Field("frame_count", 2);
-        b.Field("flags", 2);
-        b.Field("reserved", 4);
-    } else {
-        b.Field("source_sequence", 4);
-        b.Field("remaining_valid_us", 4);
-        b.Field("flags", 2);
-        b.Field("frame_count", 1);
-        b.Field("source_id", 1);
-        b.Field("reserved", 4);
-    }
-    for (unsigned i = 0; i < slots; ++i) {
-        auto field = [&](const char* name, unsigned size, bool bytes = false) {
-            char text[64];
-            std::snprintf(text, sizeof(text), "frames[%u].%s", i, name);
-            if (bytes) {
-                b.BytesField(text, size);
-            } else {
-                b.Field(text, size);
-            }
-        };
-        if (tx) {
-            field("id", 4);
-            field("bus_sequence", 4);
-            field("capture_time_us", 4);
-            field("length", 1);
-            field("flags", 1);
-            field("reserved", 2);
-        } else {
-            field("channel", 1);
-            field("length", 1);
-            field("flags", 1);
-            field("reserved", 1);
-            field("id", 4);
-        }
-        field("data", 8, true);
-    }
-}
-void Uart(Builder& b, unsigned port, unsigned bytes, bool tx) {
-    char prefix[16];
-    std::snprintf(prefix, sizeof(prefix), "uart%u", port + 1);
-    b.Object(uint16_t((tx ? 0x3020 : 0x2020) + port), prefix);
-    b.Field("block_sequence", 4);
-    b.Field("peer_ack_sequence", 4);
-    b.Field("capture_time_us", 4);
-    b.Field("length", 2);
-    b.Field("flags", 2);
-    b.BytesField("data", bytes);
-}
-void Diagnostics(Builder& b) {
-    b.Object(0x3040, "diagnostics");
-    for (const char* name :
-         {"stop_reason", "rejected", "can_drops", "uart_drops",
-          "protection_errors", "configuration_errors", "firmware_flags",
-          "reserved"}) {
-        b.Field(name, 4);
-    }
-    for (unsigned bus = 0; bus < 4; ++bus) {
-        for (const char* name :
-             {"received", "submitted", "completed", "dropped", "errors",
-              "queue_depth", "controller_state", "packed_error_counts"}) {
-            char field[64];
-            std::snprintf(field, sizeof(field), "can%u.%s", bus, name);
-            b.Field(field, 4);
-        }
-    }
-    for (unsigned port = 1; port <= 6; ++port) {
-        char field[32];
-        std::snprintf(field, sizeof(field), "uart%u.rx_drops", port);
-        b.Field(field, 4);
-        std::snprintf(field, sizeof(field), "uart%u.tx_errors", port);
-        b.Field(field, 4);
-    }
-    for (const char* name :
-         {"status_result", "status_value0", "status_value1", "status_value2"}) {
-        b.Field(name, 4);
+// Record the byte offset of each region into the Layout on the first field of
+// the region's object. Object index ranges mirror the schema's object bases.
+void NoteRegion(Layout& l, uint16_t object, uint16_t offset) {
+    if (object >= 0x2010 && object <= 0x2011) {
+        l.source[object - 0x2010] = offset;
+    } else if (object >= 0x3010 && object <= 0x3013) {
+        l.feedback[object - 0x3010] = offset;
+    } else if (object >= 0x2020 && object <= 0x2025) {
+        l.uart_rx[object - 0x2020] = offset;
+    } else if (object >= 0x3020 && object <= 0x3025) {
+        l.uart_tx[object - 0x3020] = offset;
+    } else if (object == 0x3030) {
+        l.imu = offset;
+    } else if (object == 0x3040) {
+        l.diagnostics = offset;
     }
 }
 bool Image(const Configuration& c, Layout& l, bool tx, Signature* signature) {
     Builder b(tx ? l.tx : l.rx, tx ? 0x1a00 : 0x1600, signature);
-    Header(b, tx);
-    for (unsigned i = 0; i < (tx ? 4U : 2U); ++i) {
-        const unsigned slots = tx ? c.can_rx[i] : c.can_tx[i];
-        if (slots) {
-            if (tx) {
-                l.feedback[i] = b.offset();
-            } else {
-                l.source[i] = b.offset();
-            }
-            Can(b, i, slots, tx);
-        }
-    }
+    dust::pdo::Config cfg;
+    cfg.can_tx = c.can_tx;
+    cfg.can_rx = c.can_rx;
     for (unsigned i = 0; i < 6; ++i) {
-        if (c.uart[i].tx_bytes || c.uart[i].rx_bytes) {
-            (tx ? l.uart_tx : l.uart_rx)[i] = b.offset();
-            Uart(b, i, tx ? c.uart[i].rx_bytes : c.uart[i].tx_bytes, tx);
+        cfg.uart_tx[i] = c.uart[i].tx_bytes;
+        cfg.uart_rx[i] = c.uart[i].rx_bytes;
+    }
+    cfg.imu = c.imu;
+    uint16_t last_object = 0;
+    const auto emit = [&](uint16_t object, const char* name, uint8_t bits) {
+        if (object != last_object) {
+            NoteRegion(l, object, b.offset());
+            last_object = object;
         }
-    }
-    if (tx && c.imu) {
-        l.imu = b.offset();
-        b.Object(0x3030, "imu");
-        b.Field("sample_sequence", 4);
-        b.Field("capture_time_us", 4);
-        b.Field("flags", 4);
-        b.Field("temperature_c", 4);
-        b.BytesField("spi_bytes", 25);
-        b.BytesField("reserved", 7);
-    }
+        b.Emit(object, name, bits);
+    };
     if (tx) {
-        l.diagnostics = b.offset();
-        Diagnostics(b);
+        dust::pdo::WalkTx(cfg, emit);
+    } else {
+        dust::pdo::WalkRx(cfg, emit);
     }
     return !b.failed();
 }
@@ -356,6 +238,8 @@ Error BuildLayout(const Configuration& c, const Limits& limits, Layout& out) {
     }
     Signature crc;
     crc.Integer(1);
+    crc.Integer(kAbiMajor);
+    crc.Integer(kAbiMinor);
     crc.Integer(c.cycle_us);
     Image(c, out, false, &crc);
     Image(c, out, true, &crc);
@@ -424,19 +308,16 @@ void ConfigurationTransaction::Clear() {
     present_ = 0;
 }
 Error DecodeHeader(Bytes image, RxHeader& out) {
-    if (!image.data || image.size < 64 || U32(image.data) != kMagic ||
-        U16(image.data + 4) != kAbiMajor || U16(image.data + 6) != kAbiMinor ||
-        !ValidCycle(U32(image.data + 40))) {
-        return Error::Wire;
-    }
+    if (!image.data || image.size < pdo::rx::header::size) return Error::Wire;
     const auto* p = image.data;
-    for (unsigned i = 50; i < 64; ++i) {
-        if (p[i]) {
-            return Error::Wire;
-        }
-    }
-    out = {U64(p + 8),  U64(p + 16), U32(p + 24), U32(p + 28), U32(p + 32),
-           U32(p + 36), U32(p + 44), p[48],       p[49]};
+    out = {U32(p + pdo::rx::header::session_id),
+           U32(p + pdo::rx::header::expected_boot_id),
+           U32(p + pdo::rx::header::exchange_sequence),
+           p[pdo::rx::header::control_flags],
+           p[pdo::rx::header::active_source_mask],
+           U16(p + pdo::rx::header::status_request_sequence),
+           p[pdo::rx::header::status_target],
+           p[pdo::rx::header::status_channel]};
     if (!out.session || (out.sources & ~3U) ||
         (out.flags != kDiscover && out.flags != kArm && out.flags != kStop)) {
         return Error::Wire;

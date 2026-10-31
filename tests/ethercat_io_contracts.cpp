@@ -10,15 +10,8 @@
 #include "io_backend.hpp"
 #include "platform.hpp"
 using namespace dust::ecat;
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-std::atomic<uint64_t> native_now{1000};
-#else
 uint64_t native_now = 1000;
-#endif
 static void FlushCan() {
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    NativeFlushCanWorker();
-#endif
 }
 static device devices[10] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}};
 const device* NativeDevice(const char* name) {
@@ -187,14 +180,18 @@ struct Fixture {
         ApplyIoLimits(limits);
         assert(limits.uart_tx_mask == 47 && limits.uart_rx_mask == 63);
         config.can_tx = {1, 0};
-        config.can_rx = {0, 0, 2, 0};
+        config.can_rx = {0, 0, 3, 0};
         config.uart[0] = {8, 16};
         assert(BuildLayout(config, limits, layout) == Error::None);
         config.signature = layout.signature;
-        core = new Core(boot, IoProtection());
+        core = new Core(uint32_t(boot), IoProtection());
         ConfigurationTransaction t;
         Stage(t, config);
         assert(core->Configure(t, limits, layout.rx, layout.tx) == Error::None);
+        Configuration insufficient = config;
+        insufficient.can_rx[2] = 2;
+        assert(!CanFeedbackCapacityValid(insufficient));
+        assert(CanFeedbackCapacityValid(config));
         ConfigureIo(config);
         rx.resize(layout.rx.bytes);
         tx.resize(layout.tx.bytes);
@@ -207,33 +204,29 @@ struct Fixture {
     }
     void Header(uint32_t exchange, uint32_t sources = 1) {
         std::fill(rx.begin(), rx.end(), 0);
-        Put32(rx.data(), kMagic);
-        Put16(rx.data() + 4, 1);
-        Put64(rx.data() + 8, 9);
-        Put64(rx.data() + 16, boot);
-        Put32(rx.data() + 24, exchange);
-        Put32(rx.data() + 28, kArm);
-        Put32(rx.data() + 32, layout.signature);
-        Put32(rx.data() + 36, sources);
-        Put32(rx.data() + 40, 1000);
+        Put32(rx.data(), 9);
+        Put32(rx.data() + 4, uint32_t(boot));
+        Put32(rx.data() + 8, exchange);
+        rx[12] = uint8_t(kArm);
+        rx[13] = uint8_t(sources);
     }
     void Can(uint32_t seq) {
         auto* p = rx.data() + layout.source[0];
         Put32(p, seq);
         Put32(p + 4, 10000);
-        Put16(p + 8, 1);
-        p[10] = 1;
-        p[16] = 2;
-        p[17] = 8;
-        Put32(p + 20, 0x200);
-        p[24] = 0x42;
+        p[8] = 1;
+        p[9] = 1;
+        p[11] = 2;
+        p[12] = 8;
+        Put16(p + 13, 0x200);
+        p[15] = 0x42;
     }
     void Uart(uint32_t seq) {
         auto* p = rx.data() + layout.uart_rx[0];
         Put32(p, seq);
         Put16(p + 12, 3);
-        Put16(p + 14, kDataValid);
-        std::memcpy(p + 16, "abc", 3);
+        p[14] = kDataValid;
+        std::memcpy(p + 15, "abc", 3);
     }
     void Process() {
         assert(core->Process({rx.data(), rx.size()}, native_now, true,
@@ -268,7 +261,7 @@ int main() {
         f.Process();
         ServiceIo(*f.core, native_now);
         assert(cans[2].batches == batches + 1);
-        // 最新 CAN 窗口保留最后两帧，UART 原生 idle 块按 PDO 容量分片。
+        // 每 ID 只保留最新 CAN 帧，UART 原生 idle 块按 PDO 容量分片。
         // 过期启动反馈不能进入本轮 PDO（覆盖采样时钟回绕）。
         const uint64_t saved_now = native_now;
         native_now -= 20000;
@@ -302,7 +295,7 @@ int main() {
         FlushCan();
         assert(ServiceCanReceive());
         CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count == 2);
+        assert(feedback.can[2].count == 1);
         assert(!ServiceCanReceive());
 
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
@@ -311,9 +304,13 @@ int main() {
         FlushCan();
         CaptureIo(*f.core, feedback, cycle_started);
         assert(f.core->state() == BusinessState::Active);
-        assert(feedback.can[2].count == 2 &&
-               feedback.can[2].frames[0].data[0] == 1 &&
-               feedback.can[2].frames[1].data[0] == 2);
+        assert(feedback.can[2].count == 1 &&
+               feedback.can[2].frames[0].data[0] == 2);
+        can_frame other{}; other.id = 0x011; other.dlc = 8; other.data[0] = 99;
+        cans[2].rx(&devices[2], &other, cans[2].rx_user);
+        FlushCan(); assert(ServiceCanReceive()); CaptureCanFeedback(feedback);
+        assert(feedback.can[2].count == 2 && feedback.can[2].frames[0].id == 0x201 &&
+               feedback.can[2].frames[0].data[0] == 2 && feedback.can[2].frames[1].id == 0x011);
         const auto retained_batch = feedback.can[2].sequence;
         FlushCan();
         CaptureIo(*f.core, feedback, native_now);
@@ -335,15 +332,6 @@ int main() {
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
         assert(U32(f.tx.data() + f.layout.uart_tx[0]) != first_chunk);
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-        const auto old_sequence = feedback.can[2].frames[0].sequence;
-        can_frame concurrent{};
-        concurrent.id = 0x201; concurrent.dlc = 8;
-        cans[2].rx(&devices[2], &concurrent, cans[2].rx_user);
-        FlushCan();
-        assert(feedback.can[2].frames[0].sequence == old_sequence);
-        assert(ServiceCanReceive());
-#endif
         // 租约过期撤销在途批次，下一次服务只发送 YAML 本地保护。
         native_now += 20000;
         FlushCan();
@@ -380,112 +368,8 @@ int main() {
         DispatchIo(*f.core, status, native_now);
         assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
                                feedback) == Error::None);
-        assert(U32(f.tx.data() + f.layout.diagnostics + 208) == 0);
+        assert(U32(f.tx.data() + f.layout.diagnostics + 12) == 0);
     }
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    {
-        Fixture f;
-        f.Header(1);
-        f.Can(1);
-        f.Process();
-        assert(f.core->state() == BusinessState::Active);
-        std::thread irq_producer([&] {
-            for (unsigned i = 0; i < 2000; ++i) {
-                can_frame frame{};
-                frame.id = 0x201; frame.dlc = 8;
-                std::memcpy(frame.data, &i, sizeof(i));
-                cans[2].rx(&devices[2], &frame, cans[2].rx_user);
-            }
-        });
-        for (unsigned i = 0; i < 100; ++i) {
-            Core::Feedback snapshot;
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-            if (CanReceivePending()) (void)ServiceCanReceive();
-#endif
-            CaptureCanFeedback(snapshot);
-            assert(snapshot.can[2].count <= 2);
-            std::array<Core::CanEvent, 2> held{};
-            std::copy_n(snapshot.can[2].frames, snapshot.can[2].count, held.begin());
-            std::this_thread::yield();
-            // Worker is free to update its array while Core holds this copy.
-            for (unsigned n = 0; n < snapshot.can[2].count; ++n)
-                assert(held[n].sequence == snapshot.can[2].frames[n].sequence &&
-                       held[n].data == snapshot.can[2].frames[n].data);
-            assert(f.core->Publish({f.tx.data(), f.tx.size()}, native_now,
-                                  snapshot) == Error::None);
-        }
-        // Protect while IRQs can still enqueue; worker cannot resurrect data.
-        f.core->Protect(Error::State);
-        irq_producer.join();
-        FlushCan();
-        Core::Feedback stopped;
-        CaptureCanFeedback(stopped);
-        assert(stopped.can[2].count == 0);
-    }
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-    {
-        Fixture f;
-        f.Header(1); f.Can(1); f.Process();
-        FlushCan();
-        (void)ServiceCanReceive();
-        const auto locks = native_mutex_lock_count.load();
-        const auto clocks = native_clock_read_count.load();
-        for (unsigned n = 0; n < 100; ++n) assert(!CanReceivePending());
-        assert(native_mutex_lock_count.load() == locks);
-        assert(native_clock_read_count.load() == clocks);
-        // An event arriving after a negative probe stays visible; probing
-        // repeatedly cannot clear it before the normal service observes it.
-        can_frame frame{}; frame.id = 0x201; frame.dlc = 8;
-        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
-        FlushCan();
-        assert(CanReceivePending()); assert(CanReceivePending());
-        assert(ServiceCanReceive());
-        assert(!CanReceivePending());
-        Core::Feedback snapshot;
-        CaptureCanFeedback(snapshot);
-        assert(snapshot.can[2].count == 1);
-        frame.data[0] = 91;
-        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
-        FlushCan();
-        assert(CanReceivePending());
-        assert(ServiceCanReceive());
-        CaptureCanFeedback(snapshot);
-        assert(snapshot.can[2].count == 1 && snapshot.can[2].frames[0].data[0] == 91);
-        f.core->Protect(Error::State);
-        FlushCan();
-        assert(CanReceivePending()); // Stop clear is a notified generation too.
-        assert(ServiceCanReceive());
-        CaptureCanFeedback(snapshot);
-        assert(snapshot.can[2].count == 0 && !CanReceivePending());
-    }
-#endif
-    // Expiry must be performed by SSC even if the event worker never wakes.
-    // Exercise the uint32 capture timestamp wrap without advancing Core's lease.
-    const uint64_t saved_clock = native_now;
-    native_now = (uint64_t(1) << 32) - 10000;
-    {
-        Fixture f;
-        f.Header(1); f.Can(1); f.Process();
-        assert(f.core->state() == BusinessState::Active);
-        can_frame frame{}; frame.id = 0x201; frame.dlc = 8;
-        cans[2].rx(&devices[2], &frame, cans[2].rx_user);
-        FlushCan();
-        Core::Feedback snapshot;
-        CaptureCanFeedback(snapshot);
-        assert(snapshot.can[2].count == 1);
-        (void)ServiceCanReceive();
-        native_now += 20001;
-        // No FlushCan or IRQ notification: only SSC expires the snapshot.
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-        assert(!CanReceivePending()); // Version hint does not validate age.
-#endif
-        assert(ServiceCanReceive());
-        CaptureCanFeedback(snapshot);
-        assert(snapshot.can[2].count == 0);
-        assert(!ServiceCanReceive());
-    }
-    native_now = saved_clock;
-#endif
     {
         Fixture f;
         f.Header(1);
@@ -498,46 +382,7 @@ int main() {
         assert(f.core->state() == BusinessState::Protected &&
                cans[2].batches == before);
     }
-#if defined(CONFIG_DUST_ECAT_CAN_FEEDBACK_WINDOW) && !defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    {
-        Fixture f;
-        Core::Feedback feedback;
-        // Other native cases may leave mock IRQ records queued. Expire those
-        // before starting this independent window observation.
-        native_now+=20001;
-        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count==0);
-        can_frame frame{}; frame.id=0x201; frame.dlc=8;
-        frame.data[0]=41;
-        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
-        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count==1);
-        const auto first_sequence=feedback.can[2].frames[0].sequence;
-        // A later IRQ must not replace the previous reply before the master
-        // gets a chance to observe it. The window keeps receive order.
-        frame.data[0]=42;
-        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
-        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count==2 &&
-               feedback.can[2].frames[0].sequence==first_sequence &&
-               feedback.can[2].frames[0].data[0]==41 &&
-               feedback.can[2].frames[1].data[0]==42);
-        frame.data[0]=43;
-        cans[2].rx(&devices[2],&frame,cans[2].rx_user);
-        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count==2 &&
-               feedback.can[2].frames[0].data[0]==42 &&
-               feedback.can[2].frames[1].data[0]==43);
-        const auto saved_now=native_now;
-        native_now+=20000;
-        FlushCan(); ServiceCanReceive(); CaptureCanFeedback(feedback);
-        assert(feedback.can[2].count==0);
-        native_now=saved_now;
-    }
-#endif
-#if defined(CONFIG_DUST_ECAT_CAN_RX_THREAD)
-    NativeStopCanWorker();
-#endif
+
     std::puts(
         "EtherCAT real IO backend contracts passed (mock peripheral "
         "boundaries).");

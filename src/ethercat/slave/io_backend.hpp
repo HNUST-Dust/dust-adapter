@@ -7,6 +7,7 @@ namespace dust::ecat {
 int InitializeIo(uint64_t& boot);
 Protection IoProtection();
 void ApplyIoLimits(Limits& limits);
+bool CanFeedbackCapacityValid(const Configuration& configuration);
 void ConfigureIo(const Configuration& configuration);
 // 同步复制完整动作；失败会使 Core 进入保护并丢弃软件队列。
 void DispatchIo(Core& core, const Actions& actions, uint64_t now);

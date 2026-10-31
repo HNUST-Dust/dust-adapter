@@ -5,24 +5,11 @@
 
 #include "protocol.hpp"
 #include "digest.hpp"
+#include "pdo_schema.hpp"
 
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-// RAM-only first protection snapshot. File points into the matching ELF rodata.
-extern "C" {
-struct DustFirstProtection {
-    uint32_t version, valid, reason, state, file, line;
-    uint32_t now_lo, now_hi, exchange_lo, exchange_hi, operational, watchdog_us, tick_file, tick_line;
-};
-volatile DustFirstProtection dust_first_protection = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-}
-static uint64_t protection_tick_now;
-static uint64_t protection_tick_exchange;
-static bool protection_tick_operational;
-static const char* protection_tick_file;
-static unsigned protection_tick_line;
-#endif
 
 namespace dust::ecat {
+namespace pdo = dust::pdo;
 namespace {
 uint32_t Digest(Bytes bytes) {
 #if defined(DUST_TEST_REFERENCE_DIGEST)
@@ -47,7 +34,7 @@ bool Zero(const uint8_t* p, size_t size) {
     return true;
 }
 }  // namespace
-Core::Core(uint64_t boot_id, Protection protection)
+Core::Core(uint32_t boot_id, Protection protection)
     : protection_(protection), boot_(boot_id) {}
 Core::~Core() {
     if (state_ == BusinessState::Active) {
@@ -75,25 +62,7 @@ void Core::Protect(Error reason, const char* file, unsigned line) {
     if (state_ == BusinessState::Protected) {
         return;
     }
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    if (!dust_first_protection.valid) {
-        dust_first_protection.reason = uint32_t(reason);
-        dust_first_protection.state = uint32_t(state_);
-        dust_first_protection.file = uint32_t(reinterpret_cast<uintptr_t>(file));
-        dust_first_protection.line = line;
-        dust_first_protection.now_lo = uint32_t(protection_tick_now);
-        dust_first_protection.now_hi = uint32_t(protection_tick_now >> 32);
-        dust_first_protection.exchange_lo = uint32_t(protection_tick_exchange);
-        dust_first_protection.exchange_hi = uint32_t(protection_tick_exchange >> 32);
-        dust_first_protection.operational = protection_tick_operational;
-        dust_first_protection.watchdog_us = config_.watchdog_us;
-        dust_first_protection.tick_file = uint32_t(reinterpret_cast<uintptr_t>(protection_tick_file));
-        dust_first_protection.tick_line = protection_tick_line;
-        dust_first_protection.valid = 1;
-    }
-#else
     (void)file; (void)line;
-#endif
     fault_ = reason == Error::None ? Error::Protection : reason;
     state_ = BusinessState::Protected;
     have_uart_offer_.fill(false);
@@ -103,15 +72,7 @@ void Core::Protect(Error reason, const char* file, unsigned line) {
     }
 }
 void Core::Tick(uint64_t now, bool operational, const char* file, unsigned line) {
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    protection_tick_file = file;
-    protection_tick_line = line;
-    protection_tick_now = now;
-    protection_tick_exchange = exchange_at_;
-    protection_tick_operational = operational;
-#else
     (void)file; (void)line;
-#endif
     if (state_ != BusinessState::Active) {
         return;
     }
@@ -192,15 +153,11 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
     Tick(now, operational);
     RxHeader h;
     Error error = DecodeHeader(image, h);
-    if (error != Error::None || image.size != layout_.rx.bytes ||
-        U32(image.data + 40) != config_.cycle_us) {
+    if (error != Error::None || image.size != layout_.rx.bytes) {
         return reject(Error::Wire);
     }
-    if (h.signature != layout_.signature) {
-        return reject(Error::Signature);
-    }
     if (h.flags == kStop) {
-        if (!Zero(image.data + 64, image.size - 64)) {
+        if (!Zero(image.data + 28, image.size - 28)) {
             return reject(Error::Wire);
         }
         if (state_ == BusinessState::Active &&
@@ -263,45 +220,54 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
             continue;
         }
         const auto* p = image.data + layout_.source[source];
-        const uint16_t flags = U16(p + 8);
-        const unsigned count = p[10];
-        if (flags > 1 || count > config_.can_tx[source] || U32(p + 12)) {
+        const unsigned flags = p[pdo::rx::can::flags];
+        const unsigned count = p[pdo::rx::can::frame_count];
+        if (flags > 1 || count > config_.can_tx[source]) {
             return reject(Error::Wire);
         }
         if (!flags) {
-            if (!Zero(p, 16 + 16 * config_.can_tx[source])) {
+            if (!Zero(p, pdo::rx::can::header_size +
+                           pdo::rx::can::frame_stride * config_.can_tx[source])) {
                 return reject(Error::Wire);
             }
             continue;
         }
-        if (!(h.sources & (1U << source)) || p[11] != source || !U32(p + 4) ||
-            U32(p + 4) > kTimeoutUs) {
+        if (!(h.sources & (1U << source)) ||
+            p[pdo::rx::can::source_id] != source ||
+            !U32(p + pdo::rx::can::remaining_valid_us) ||
+            U32(p + pdo::rx::can::remaining_valid_us) > kTimeoutUs) {
             return reject(Error::Lease);
         }
         CanBatch& batch = actions.can[source];
-        batch.sequence = U32(p);
+        batch.sequence = U32(p + pdo::rx::can::source_sequence);
         batch.count = uint8_t(count);
         for (unsigned i = 0; i < count; ++i) {
-            const auto* f = p + 16 + 16 * i;
+            const auto* f = p + pdo::rx::can::header_size +
+                            pdo::rx::can::frame_stride * i;
             CanFrame& frame = batch.frames[i];
-            frame.bus = f[0];
-            frame.length = f[1];
-            frame.id = U32(f + 4);
+            frame.bus = f[pdo::rx::can::frame_channel];
+            frame.length = f[pdo::rx::can::frame_length];
+            frame.id = U16(f + pdo::rx::can::frame_id);
             if (frame.bus >= 4 || !(limits_.can_mask & (1U << frame.bus)) ||
-                frame.length > 8 || frame.id > 0x7ff || f[2] || f[3]) {
+                frame.length > 8 || frame.id > 0x7ff) {
                 return reject(Error::Wire);
             }
-            std::copy_n(f + 8, 8, frame.data.begin());
+            std::copy_n(f + pdo::rx::can::frame_data, 8, frame.data.begin());
             if (!protection_.validate_can ||
                 !protection_.validate_can(protection_.context, source, frame)) {
                 return reject(Error::Protection);
             }
         }
-        if (!Zero(p + 16 + count * 16, (config_.can_tx[source] - count) * 16)) {
+        if (!Zero(p + pdo::rx::can::header_size +
+                      count * pdo::rx::can::frame_stride,
+                  (config_.can_tx[source] - count) * pdo::rx::can::frame_stride)) {
             return reject(Error::Wire);
         }
         const uint32_t batch_digest =
-            Digest({p + 8, size_t(8 + 16 * config_.can_tx[source])});
+            Digest({p + pdo::rx::can::flags,
+                    size_t(pdo::rx::can::header_size - pdo::rx::can::flags +
+                           pdo::rx::can::frame_stride *
+                               config_.can_tx[source])});
         auto& previous = next_sources[source];
         if (previous.present && batch.sequence == previous.sequence) {
             if (previous.digest != batch_digest) {
@@ -311,7 +277,9 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
             if (previous.present && !Newer(batch.sequence, previous.sequence)) {
                 return reject(Error::Sequence);
             }
-            previous = {true, batch.sequence, now + U32(p + 4), batch_digest};
+            previous = {true, batch.sequence,
+                        now + U32(p + pdo::rx::can::remaining_valid_us),
+                        batch_digest};
             batch.valid = h.flags == kArm;
             batch.deadline_us = previous.deadline;
         }
@@ -322,12 +290,14 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
             continue;
         }
         const auto* p = image.data + layout_.uart_rx[i];
-        const unsigned length = U16(p + 12), flags = U16(p + 14);
+        const unsigned length = U16(p + pdo::rx::uart::length),
+                       flags = p[pdo::rx::uart::flags];
         if ((flags & ~7U) || length > config_.uart[i].tx_bytes ||
             (!(flags & kDataValid) && length)) {
             return reject(Error::Wire);
         }
-        if ((flags & kAckValid) && !windows_[i].CanAck(U32(p + 4))) {
+        if ((flags & kAckValid) &&
+            !windows_[i].CanAck(U32(p + pdo::rx::uart::peer_ack_sequence))) {
             return reject(Error::Sequence);
         }
         if (!(flags & kDataValid)) {
@@ -336,11 +306,12 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
         if (!length || h.flags != kArm) {
             return reject(Error::Wire);
         }
-        const uint32_t sequence = U32(p);
+        const uint32_t sequence = U32(p + pdo::rx::uart::block_sequence);
         const uint32_t expected = have_uart_ack_[i] ? uart_ack_[i] + 1U : 1U;
         if (sequence == expected) {
             actions.uart[i] = {
-                true, sequence, bool(flags & kDiscontinuity), {p + 16, length}};
+                true, sequence, bool(flags & kDiscontinuity),
+                {p + pdo::rx::uart::header_size, length}};
         }
     }
     if (arming) {
@@ -356,8 +327,8 @@ Error Core::Process(Bytes image, uint64_t now, bool operational,
         uart_offered_[i] = actions.uart[i].sequence;
         if (layout_.uart_rx[i] != kAbsent) {
             const auto* p = image.data + layout_.uart_rx[i];
-            if (U16(p + 14) & kAckValid) {
-                windows_[i].Ack(U32(p + 4));
+            if (p[pdo::rx::uart::flags] & kAckValid) {
+                windows_[i].Ack(U32(p + pdo::rx::uart::peer_ack_sequence));
             }
         }
     }
@@ -406,9 +377,6 @@ bool Core::QueueUart(unsigned port, Bytes bytes, uint32_t capture, uint64_t now,
     std::copy_n(bytes.data, bytes.size, b.data.begin());
     window.count++;
     return true;
-}
-uint32_t Core::AcceptedCan(unsigned source) const {
-    return source < 2 ? sources_[source].sequence : 0;
 }
 uint32_t Core::UartAck(unsigned port) const {
     return port < 6 ? uart_ack_[port] : 0;
@@ -463,16 +431,16 @@ Error Core::Publish(MutableBytes image, uint64_t now,
         advance_uart = true;
     }
     if (!advance_uart &&
-        (U32(image.data) != kMagic || U64(image.data + 8) != boot_ ||
-         U64(image.data + 16) != session_ ||
-         U32(image.data + 32) != layout_.signature)) {
+        (U32(image.data + pdo::tx::header::boot_id) != boot_ ||
+         U32(image.data + pdo::tx::header::accepted_session_id) != session_)) {
         return invalid(Error::State);
     }
     auto clear = [&](unsigned from, unsigned to) {
 #if defined(CONFIG_DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR)
-        // Header bytes0..59 and the entire diagnostics block are overwritten
-        // on every successful publication. Keep reserved/payload clearing.
-        from = std::max(from, 60U);
+        // Header bytes0..(size-1) and the entire diagnostics block are
+        // overwritten on every successful publication. Keep reserved/payload
+        // clearing between them.
+        from = std::max(from, unsigned(pdo::tx::header::size));
         to = std::min(to, unsigned(layout_.diagnostics));
 #endif
         if (from < to) std::fill(image.data + from, image.data + to, uint8_t(0));
@@ -484,20 +452,16 @@ Error Core::Publish(MutableBytes image, uint64_t now,
                 continue;
             }
             clear(clear_from, layout_.uart_tx[port]);
-            clear_from =
-                layout_.uart_tx[port] + 16 + config_.uart[port].rx_bytes;
+            clear_from = layout_.uart_tx[port] + pdo::tx::uart::header_size +
+                         config_.uart[port].rx_bytes;
         }
     }
     clear(clear_from, image.size);
     auto* p = image.data;
-    Put32(p, kMagic);
-    Put16(p + 4, kAbiMajor);
-    Put16(p + 6, kAbiMinor);
-    Put64(p + 8, boot_);
-    Put64(p + 16, session_);
-    Put32(p + 24, ++publish_sequence_);
-    Put32(p + 28, uint32_t(now));
-    Put32(p + 32, layout_.signature);
+    Put32(p + pdo::tx::header::boot_id, boot_);
+    Put32(p + pdo::tx::header::accepted_session_id, session_);
+    Put32(p + pdo::tx::header::publish_sequence, ++publish_sequence_);
+    Put32(p + pdo::tx::header::slave_now_us, uint32_t(now));
     uint32_t capabilities =
         limits_.can_mask ? 1U | (uint32_t(limits_.can_mask) << 16) : 0;
     for (unsigned i = 0; i < 6; ++i) {
@@ -513,29 +477,30 @@ Error Core::Publish(MutableBytes image, uint64_t now,
          protection_.validate_can)) {
         capabilities |= kProtectionCapability;
     }
-    Put32(p + 36, capabilities);
-    Put32(p + 40, uint32_t(state_));
-    Put32(p + 44, uint32_t(fault_));
-    Put32(p + 48, AcceptedCan(0));
-    Put32(p + 52, AcceptedCan(1));
-    Put32(p + 56, status_reply_);
+    Put32(p + pdo::tx::header::capability_mask, capabilities);
+    static_assert(uint32_t(Error::UartTimeout) <= UINT8_MAX);
+    static_assert(uint32_t(BusinessState::Protected) <= UINT8_MAX);
+    p[pdo::tx::header::business_state] = uint8_t(state_);
+    p[pdo::tx::header::fault_flags] = uint8_t(fault_);
     for (unsigned bus = 0; bus < 4; ++bus) {
         if (layout_.feedback[bus] == kAbsent) {
             continue;
         }
         auto* out = p + layout_.feedback[bus];
         const auto& batch = feedback.can[bus];
-        Put32(out, batch.sequence);
-        Put32(out + 4, batch.drops);
-        Put16(out + 8, batch.count);
+        Put32(out + pdo::tx::can::batch_sequence, batch.sequence);
+        Put32(out + pdo::tx::can::cumulative_drops, batch.drops);
+        out[pdo::tx::can::frame_count] = uint8_t(batch.count);
         for (unsigned n = 0; n < batch.count; ++n) {
-            auto* f = out + 16 + 24 * n;
+            auto* f = out + pdo::tx::can::header_size +
+                      pdo::tx::can::frame_stride * n;
             const auto& event = batch.frames[n];
-            Put32(f, event.id);
-            Put32(f + 4, event.sequence);
-            Put32(f + 8, event.capture_us);
-            f[12] = event.length;
-            std::copy(event.data.begin(), event.data.end(), f + 16);
+            Put16(f + pdo::tx::can::frame_id, event.id);
+            Put32(f + pdo::tx::can::frame_bus_sequence, event.sequence);
+            Put32(f + pdo::tx::can::frame_capture_time_us, event.capture_us);
+            f[pdo::tx::can::frame_length] = event.length;
+            std::copy(event.data.begin(), event.data.end(),
+                      f + pdo::tx::can::frame_data);
         }
     }
     for (unsigned port = 0; port < 6; ++port) {
@@ -543,10 +508,10 @@ Error Core::Publish(MutableBytes image, uint64_t now,
             continue;
         }
         auto* out = p + layout_.uart_tx[port];
-        uint16_t flags = 0;
+        uint8_t flags = 0;
         if (have_uart_ack_[port]) {
             flags |= kAckValid;
-            Put32(out + 4, uart_ack_[port]);
+            Put32(out + pdo::tx::uart::peer_ack_sequence, uart_ack_[port]);
         }
         auto& w = windows_[port];
         if (state_ == BusinessState::Active && w.count) {
@@ -555,34 +520,37 @@ Error Core::Publish(MutableBytes image, uint64_t now,
                 b.sent = true;
                 b.sent_at = now;
             }
-            Put32(out, b.sequence);
-            Put32(out + 8, b.capture);
-            Put16(out + 12, b.length);
+            Put32(out + pdo::tx::uart::block_sequence, b.sequence);
+            Put32(out + pdo::tx::uart::capture_time_us, b.capture);
+            Put16(out + pdo::tx::uart::length, b.length);
             flags |= kDataValid | (b.discontinuity ? kDiscontinuity : 0);
-            std::copy_n(b.data.begin(), b.length, out + 16);
+            std::copy_n(b.data.begin(), b.length, out + pdo::tx::uart::header_size);
             w.cursor = (w.cursor + 1) % w.count;
         }
-        Put16(out + 14, flags);
+        out[pdo::tx::uart::flags] = flags;
     }
     if (layout_.imu != kAbsent && feedback.imu_valid) {
         auto* out = p + layout_.imu;
         uint32_t temperature;
         static_assert(sizeof(float) == 4, "Wire temperature requires binary32");
         std::memcpy(&temperature, &feedback.temperature, sizeof(temperature));
-        Put32(out, feedback.imu_sequence);
-        Put32(out + 4, feedback.imu_capture_us);
-        Put32(out + 8, 1);
-        Put32(out + 12, temperature);
-        std::copy(feedback.imu_raw.begin(), feedback.imu_raw.end(), out + 16);
+        Put32(out + pdo::tx::imu::sample_sequence, feedback.imu_sequence);
+        Put32(out + pdo::tx::imu::capture_time_us, feedback.imu_capture_us);
+        out[pdo::tx::imu::flags] = 1;
+        Put32(out + pdo::tx::imu::temperature_c, temperature);
+        std::copy(feedback.imu_raw.begin(), feedback.imu_raw.end(),
+                  out + pdo::tx::imu::spi_bytes);
     }
     auto* diagnostics = p + layout_.diagnostics;
-    std::copy(feedback.diagnostics.begin(), feedback.diagnostics.end(),
-              diagnostics);
-    Put32(diagnostics, uint32_t(fault_));
-    Put32(diagnostics + 4, rejected_);
-    Put32(diagnostics + 208, uint32_t(status_result_));
+    Put32(diagnostics + pdo::tx::diagnostics::stop_reason, uint32_t(fault_));
+    Put32(diagnostics + pdo::tx::diagnostics::rejected, rejected_);
+    Put32(diagnostics + pdo::tx::diagnostics::status_reply_sequence,
+          status_reply_);
+    Put32(diagnostics + pdo::tx::diagnostics::status_result,
+          uint32_t(status_result_));
     for (unsigned i = 0; i < 3; ++i) {
-        Put32(diagnostics + 212 + 4 * i, status_values_[i]);
+        Put32(diagnostics + pdo::tx::diagnostics::status_value0 + 4 * i,
+              status_values_[i]);
     }
     return Error::None;
 }

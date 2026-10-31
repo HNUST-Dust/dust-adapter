@@ -22,12 +22,6 @@ extern "C" {
 #include "applInterface.h"
 #undef _APPL_INTERFACE_
 #include "sampleappl.h"
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-void dust_sync0_period(uint32_t cycles) { assert(cycles > 0); }
-void dust_sync0_begin(void) {}
-unsigned dust_sync0_phase(unsigned) { return 0; }
-BOOL b32BitDc;
-#endif
 UINT8 nAlStatus = STATE_PREOP;
 BOOL bEcatOutputUpdateRunning = false;
 BOOL bEcatInputUpdateRunning = false;
@@ -202,20 +196,6 @@ static void Configure() {
     sm[4] &= ~0x40;
     assert(APPL_StartInputHandler(nullptr) != 0);
     sm[4] |= 0x40;
-#if defined(CONFIG_DUST_ECAT_SM_SYNC)
-    // Reject unsupported mixed/SM3/DC tuples before configuring Core.
-    sSyncManOutPar.u16SyncType = SYNCTYPE_SM_SYNCHRON;
-    assert(APPL_StartInputHandler(nullptr) != 0);
-    sSyncManInPar.u16SyncType = SYNCTYPE_SM_SYNCHRON;
-    assert(APPL_StartInputHandler(nullptr) != 0);
-    sSyncManInPar.u16SyncType = SYNCTYPE_DCSYNC0;
-    assert(APPL_StartInputHandler(nullptr) != 0);
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    sSyncManOutPar.u16SyncType = sSyncManInPar.u16SyncType = SYNCTYPE_DCSYNC0;
-#else
-    sSyncManInPar.u16SyncType = SYNCTYPE_SM2_SYNCHRON;
-#endif
-#endif
     assert(APPL_StartInputHandler(nullptr) == 0);
     // Remaining native gateway contracts explicitly exercise legacy mode too.
     sSyncManOutPar.u16SyncType = sSyncManInPar.u16SyncType = SYNCTYPE_FREERUN;
@@ -232,22 +212,9 @@ int main() {
     sSyncManOutPar.subindex0 = sSyncManInPar.subindex0 = 32;
     nPdOutputSize = 96;
     nPdInputSize = 400;
-#if defined(CONFIG_DUST_ECAT_DC_SYNC)
-    assert(sSyncManOutPar.u16SyncTypesSupported == 7);
-    assert(Write(0x1c32, 1, SYNCTYPE_DCSYNC0, 2) == 0);
-    assert(Write(0x1c33, 1, SYNCTYPE_DCSYNC0, 2) == 0);
-#elif defined(CONFIG_DUST_ECAT_SM_SYNC)
-    assert(sSyncManOutPar.u16SyncTypesSupported ==
-           (SYNCTYPE_FREERUNSUPP | SYNCTYPE_SYNCHRONSUPP));
-    assert(Write(0x1c32, 1, SYNCTYPE_SM_SYNCHRON, 2) == 0);
-    assert(Write(0x1c33, 1, SYNCTYPE_SM2_SYNCHRON, 2) == 0);
-#else
     assert(sSyncManOutPar.u16SyncTypesSupported == SYNCTYPE_FREERUNSUPP);
     assert(Write(0x1c32, 1, SYNCTYPE_SM_SYNCHRON, 2) != 0);
-#endif
-#if !defined(CONFIG_DUST_ECAT_DC_SYNC)
     assert(Write(0x1c32, 1, SYNCTYPE_DCSYNC0, 2) != 0);
-#endif
     assert(Write(0x1c32, 1, SYNCTYPE_FREERUN, 2) == 0);
     assert(Write(0x1c33, 1, SYNCTYPE_FREERUN, 2) == 0);
     assert(!OBJ_GetObjectHandle(0x6000) && !OBJ_GetObjectHandle(0x7010));
@@ -271,43 +238,38 @@ int main() {
     std::array<uint16_t, 2048> tx{};
     APPL_InputMapping(tx.data());
     auto* bytes = reinterpret_cast<uint8_t*>(tx.data());
-    assert(U32(bytes) == kMagic &&
-           U32(bytes + 40) == uint32_t(BusinessState::Ready));
-    assert(!(U32(bytes + 36) & kProtectionCapability));
-    assert(ReadScalar(0x3000, 1) == kMagic);
-    const auto boot = U64(bytes + 8);
+    assert(bytes[20] == uint32_t(BusinessState::Ready));
+    assert(!(U32(bytes + 16) & kProtectionCapability));
+    assert(ReadScalar(0x3000, 5) == U32(bytes + 16));
+    const auto boot = U32(bytes);
     assert(boot);
     assert(APPL_StartOutputHandler() == 0);
     bEcatOutputUpdateRunning = true;
     nAlStatus = STATE_OP;
     std::array<uint16_t, 2048> rx{};
     auto* request = reinterpret_cast<uint8_t*>(rx.data());
-    Put32(request, kMagic);
-    Put16(request + 4, 1);
-    Put64(request + 8, 99);
-    Put32(request + 24, 1);
-    Put32(request + 28, kDiscover);
-    Put32(request + 32, expected.signature);
-    Put32(request + 40, 1000);
+    Put32(request, 99);
+    Put32(request + 8, 1);
+    request[12] = uint8_t(kDiscover);
     APPL_OutputMapping(rx.data());
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 40) == uint32_t(BusinessState::Ready));
+    assert(bytes[20] == uint32_t(BusinessState::Ready));
     const auto published = tx;
     for (unsigned i = 0; i < 10; ++i) {
         APPL_Application();
     }
     APPL_InputMapping(tx.data());
     assert(tx == published);  // OP 空转不能推进 UART 发布窗口。
-    Put64(request + 16, boot);
-    Put32(request + 24, 2);
-    Put32(request + 28, kArm);
+    Put32(request + 4, boot);
+    Put32(request + 8, 2);
+    request[12] = uint8_t(kArm);
     APPL_OutputMapping(rx.data());
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 40) == uint32_t(BusinessState::Protected));
-    assert(U32(bytes + 44) == uint32_t(Error::Protection));
-    assert(!(U32(bytes + 36) & kProtectionCapability));
+    assert(bytes[20] == uint32_t(BusinessState::Protected));
+    assert(bytes[21] == uint32_t(Error::Protection));
+    assert(!(U32(bytes + 16) & kProtectionCapability));
     nAlStatus = STATE_PREOP;
     APPL_AckErrorInd(0);
     assert(Write(0x2100, 2, 1000, 4) != 0);  // AL 错误确认不清除业务保护。
@@ -317,7 +279,7 @@ int main() {
     Configure();
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U64(bytes + 8) != boot);
+    assert(U32(bytes) != boot);
     // 后端声明保护就绪时，真实 SSC 周期允许 Arm 并调用动作派发入口。
     native_io_protected = true;
     assert(COE_ObjDictionaryInit() == 0);
@@ -325,31 +287,31 @@ int main() {
     Configure();
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 36) & kProtectionCapability);
-    const auto next_boot = U64(bytes + 8);
+    assert(U32(bytes + 16) & kProtectionCapability);
+    const auto next_boot = U32(bytes);
     assert(APPL_StartOutputHandler() == 0);
     nAlStatus = STATE_OP;
-    Put64(request + 16, next_boot);
-    Put32(request + 24, 1);
+    Put32(request + 4, next_boot);
+    Put32(request + 8, 1);
     const auto dispatched = native_io_dispatches;
     APPL_OutputMapping(rx.data());
     APPL_Application();
     APPL_InputMapping(tx.data());
     assert(dust_gateway_active());
-    assert(U32(bytes + 40) == uint32_t(BusinessState::Active));
+    assert(bytes[20] == uint32_t(BusinessState::Active));
     assert(native_io_dispatches == dispatched + 1);
     APPL_Application();
     assert(native_io_dispatches == dispatched + 1);
     // A new CAN snapshot publishes without a new output PDO or IO dispatch.
-    const auto previous_publication = U32(bytes + 24);
+    const auto previous_publication = U32(bytes + 8);
     dust::ecat::native_can_dirty = true;
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 24) == previous_publication + 1);
+    assert(U32(bytes + 8) == previous_publication + 1);
     assert(native_io_dispatches == dispatched + 1);
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 24) == previous_publication + 1);
+    assert(U32(bytes + 8) == previous_publication + 1);
     // Main-thread CAN service also performs one SSC input refresh immediately.
     esc[0x440] = 1;
     bEcatInputUpdateRunning = true;
@@ -361,7 +323,7 @@ int main() {
     WriteMappedInputs();
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
     assert(native_pdram_writes == writes + 1);
-    assert(dust_ecat_input_write_stats.skipped > 0);
+
 #else
     assert(native_pdram_writes == writes + 2);
 #endif
@@ -418,8 +380,7 @@ int main() {
 #if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
     assert(native_pdram_writes == writes + 1);
     assert(esc == committed_esc);
-    assert(dust_ecat_input_write_stats.requests == dust_ecat_input_write_stats.writes +
-                                                   dust_ecat_input_write_stats.skipped);
+
 #else
     assert(native_pdram_writes == writes + 2);
     assert(esc == committed_esc);
@@ -428,7 +389,7 @@ int main() {
     dust::ecat::native_can_dirty = true;
     dust_gateway_poll();
     APPL_InputMapping(tx.data());
-    assert(U32(bytes + 24) == previous_publication + 3);
+    assert(U32(bytes + 8) == previous_publication + 3);
     assert(native_input_refreshes == 1);
     assert(native_io_dispatches == dispatched + 1);
     dust_gateway_poll();
@@ -450,7 +411,7 @@ int main() {
     extern unsigned native_io_stops;
     const auto stops_before_dma = native_io_stops;
     native_esc_dma_fault = -5;
-    Put32(request + 24, 2);
+    Put32(request + 8, 2);
     APPL_OutputMapping(rx.data());
     APPL_Application();
     assert(!dust_gateway_active());
@@ -463,7 +424,7 @@ int main() {
     writes = native_pdram_writes;
     WriteMappedInputs(); WriteMappedInputs();
     assert(native_pdram_writes == writes + 2);
-    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
+    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
     assert(APPL_StopInputHandler() == 0);
     APPL_InputMapping(native_mapped_inputs.data());
     writes = native_pdram_writes;
@@ -479,9 +440,9 @@ int main() {
         Configure();
         APPL_Application();
         APPL_InputMapping(tx.data());
-        Put64(request + 16, U64(bytes + 8));
-        Put32(request + 24, 1);
-        Put32(request + 28, kArm);
+        Put32(request + 4, U32(bytes));
+        Put32(request + 8, 1);
+        request[12] = uint8_t(kArm);
         assert(APPL_StartOutputHandler() == 0);
         bEcatOutputUpdateRunning = bEcatInputUpdateRunning = true;
         nAlStatus = STATE_OP;
@@ -495,7 +456,7 @@ int main() {
 #if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
     // Publish a real UART block, then deliver CAN after the normal application snapshot.
     native_offer_uart = true;
-    Put32(request + 24, 2);
+    Put32(request + 8, 2);
     APPL_OutputMapping(rx.data());
     APPL_Application();
     APPL_InputMapping(tx.data());
@@ -503,7 +464,7 @@ int main() {
     assert(U16(bytes + uart_offset + 12) == 4);
     std::array<uint8_t, 48> uart_before;
     std::copy_n(bytes + uart_offset, uart_before.size(), uart_before.begin());
-    const auto before_late_publication = U32(bytes + 24);
+    const auto before_late_publication = U32(bytes + 8);
     const auto before_late_dispatches = native_io_dispatches;
     const auto before_late_mappings = native_input_refreshes;
     native_can_frame = {};
@@ -514,23 +475,17 @@ int main() {
     writes = native_pdram_writes;
     WriteMappedInputs();
     const auto* committed = esc.data() + DUST_TX_ADDRESS;
-    assert(U32(committed + 24) == before_late_publication + 1);
-    assert(U16(committed + expected.feedback[3] + 8) == 1);
-    assert(U32(committed + expected.feedback[3] + 20) == 77);
+    assert(U32(committed + 8) == before_late_publication + 1);
+    assert(committed[expected.feedback[3] + 8] == 1);
+    assert(U32(committed + expected.feedback[3] + 11) == 77);
     assert(std::equal(uart_before.begin(), uart_before.end(), committed + uart_offset));
     assert(native_io_dispatches == before_late_dispatches);
     assert(native_input_refreshes == before_late_mappings); // No recursive mapping.
     assert(native_pdram_writes == writes + 1); // Replaces, never adds, an ESC write.
-    assert(dust_ecat_input_refresh_stats.refreshes == 1);
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-    const auto checks_before_idle = native_can_checks;
-#endif
+
     WriteMappedInputs();
-#if defined(CONFIG_DUST_ECAT_CAN_RX_NOTIFY_FAST)
-    assert(native_can_checks == checks_before_idle); // No full service on unchanged version.
-#endif
-    assert(dust_ecat_input_refresh_stats.refreshes == 1); // No change, no publication.
-    assert(U32(esc.data() + DUST_TX_ADDRESS + 24) == before_late_publication + 1);
+
+    assert(U32(esc.data() + DUST_TX_ADDRESS + 8) == before_late_publication + 1);
     for (unsigned mode = 0; mode < 5; ++mode) {
         bEscIntEnabled = mode == 0;
         bDcSyncActive = mode == 1;
@@ -562,7 +517,7 @@ int main() {
     assert(native_io_stops == stops_before_watchdog + 1);
     APPL_Application();
     WriteMappedInputs();
-    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
+    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
 #if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
     ArmFreshGateway();
     WriteMappedInputs();
@@ -573,10 +528,10 @@ int main() {
     assert(!dust_gateway_active());
     assert(native_io_stops == stops_before_invalid_snapshot + 1);
     assert(native_pdram_writes == writes + 1);
-    assert(U32(esc.data() + DUST_TX_ADDRESS) == kMagic);
-    assert(U32(esc.data() + DUST_TX_ADDRESS + 40) == uint32_t(BusinessState::Protected));
-    assert(U16(esc.data() + DUST_TX_ADDRESS + expected.feedback[3] + 8) == 0);
-    assert(dust_ecat_input_refresh_stats.failures == 1);
+    assert(U32(esc.data() + DUST_TX_ADDRESS) != 0);
+    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
+    assert(esc.data()[DUST_TX_ADDRESS + expected.feedback[3] + 8] == 0);
+
     native_can_frame_enabled = native_can_invalid = native_can_dirty = false;
 #endif
     std::puts("Real SSC SDO / mapping / cycle integration contracts PASS");

@@ -15,9 +15,11 @@
 /* 板载 HXY IMU 使用 SPI3；CS=PC21、DRDY=PC18 由板级 DTS 别名提供。 */
 &spi3 {
     status = "okay";
+    dmas = <&xdma 7 7>, <&xdma 6 6>;
+    dma-names = "tx", "rx";
 };
 
-/* XDMA 0..5 belong to UART4..6; channel 6 is reserved for optional ESC DMA. */
+/* XDMA 0..5 belong to UART4..6; channels 6/7 serve SPI3 RX/TX; ESC DMA cannot run simultaneously. */
 / { zephyr,user {
     dmas = <&xdma 6 0>;
     dma-names = "esc";

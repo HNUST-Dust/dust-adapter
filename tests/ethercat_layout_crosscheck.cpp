@@ -141,10 +141,10 @@ int main() {
                 return 1;
             }
             if (i == 0) {
-                assert(actual.rx.bytes == 976 && actual.tx.bytes == 1536);
+                assert(actual.rx.bytes == 786 && actual.tx.bytes == 1094);
             }
             if (i == 1) {
-                assert(actual.rx.bytes == 208 && actual.tx.bytes == 656);
+                assert(actual.rx.bytes == 131 && actual.tx.bytes == 372);
             }
             if (actual.tx.MappingCount() > 1) {
                 multi++;
@@ -161,7 +161,8 @@ int main() {
     assert(slave::U64(bytes + 1) == 0x123456789abcdef0ULL);
     slave::Put64(bytes + 1, 0xfedcba9876543210ULL);
     assert(host::wire::U64(bytes + 1) == 0xfedcba9876543210ULL);
-    assert(valid > 10 && rejected > 10 && multi > 0);
+    // ABI 5 压缩后，命中容量/线速预算的配置数明显减少；仍须覆盖有效、拒绝与多 PDO 三路。
+    assert(valid > 10 && rejected > 0 && multi > 0);
     std::printf(
         "Host/slave crosscheck PASS: %u layouts, %u rejected, %u multi-PDO\n",
         valid, rejected, multi);

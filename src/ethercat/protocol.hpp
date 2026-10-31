@@ -6,8 +6,7 @@
 #include <cstdint>
 
 namespace dust::ecat {
-constexpr uint32_t kMagic = 0x31435444;
-constexpr uint16_t kAbiMajor = 1;
+constexpr uint16_t kAbiMajor = 5;
 constexpr uint16_t kAbiMinor = 0;
 constexpr uint32_t kCycleUs = 1000;  // 默认交换周期；控制器可以独立保持 1 kHz。
 constexpr bool ValidCycle(uint32_t us) {
@@ -131,11 +130,10 @@ class ConfigurationTransaction {
 };
 
 struct RxHeader {
-    uint64_t session = 0;
-    uint64_t boot = 0;
+    uint32_t session = 0;
+    uint32_t boot = 0;
     uint32_t exchange = 0;
     uint32_t flags = 0;
-    uint32_t signature = 0;
     uint32_t sources = 0;
     uint32_t status_sequence = 0;
     uint8_t status_target = 0;
@@ -186,7 +184,7 @@ enum class BusinessState : uint32_t {
 // 单个执行上下文拥有整个核心；ISR/业务线程通过集成层队列交换数据。
 class Core {
    public:
-    explicit Core(uint64_t boot_id, Protection protection = {});
+    explicit Core(uint32_t boot_id, Protection protection = {});
     ~Core();
     Core(const Core&) = delete;
     Core& operator=(const Core&) = delete;
@@ -217,13 +215,12 @@ class Core {
     const Layout& layout() const {
         return layout_;
     }
-    uint64_t session() const {
+    uint32_t session() const {
         return session_;
     }
     uint32_t active_sources() const {
         return source_mask_;
     }
-    uint32_t AcceptedCan(unsigned source) const;
     uint32_t UartAck(unsigned port) const;
     bool UartAckValid(unsigned port) const;
 
@@ -239,7 +236,6 @@ class Core {
     };
     struct Feedback {
         std::array<CanFeedback, 4> can{};
-        std::array<uint8_t, 224> diagnostics{};
         bool imu_valid = false;
         uint32_t imu_sequence = 0, imu_capture_us = 0;
         float temperature = 0;
@@ -278,8 +274,9 @@ class Core {
     Protection protection_{};
     BusinessState state_ = BusinessState::Unconfigured;
     Error fault_ = Error::None;
-    uint64_t boot_ = 0, session_ = 0, exchange_at_ = 0;
-    uint64_t exchange_session_ = 0;
+    uint32_t boot_ = 0, session_ = 0;
+    uint64_t exchange_at_ = 0;
+    uint32_t exchange_session_ = 0;
     uint32_t source_mask_ = 0, exchange_ = 0, exchange_digest_ = 0;
     bool have_exchange_ = false;
     std::array<Source, 2> sources_{};

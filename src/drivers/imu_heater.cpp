@@ -7,6 +7,14 @@
 #include <zephyr/sys/atomic.h>
 
 #include "drivers/heater_pid.hpp"
+#include "drivers/board_pwm.h"
+#include <zephyr/sys/util.h>
+
+#if defined(CONFIG_DUST_BUZZER) && defined(CONFIG_BOARD_DUST_HPM5E31)
+BUILD_ASSERT(DT_PWMS_PERIOD(DT_ALIAS(onboard_imu_heater)) ==
+             DT_PWMS_PERIOD(DT_ALIAS(pwm_buzzer)),
+             "PWM0 buzzer and heater must use the same period");
+#endif
 
 namespace {
 const pwm_dt_spec heater = PWM_DT_SPEC_GET(DT_ALIAS(onboard_imu_heater));
@@ -40,9 +48,9 @@ void UpdateHeater(k_work*) {
 #if !defined(CONFIG_DUST_IMU_HEATER_ENABLE)
     duty = 0;
 #endif
-    if (pwm_set_dt(&heater, heater.period, uint32_t(heater.period * duty))) {
+    if (dust_board_pwm_set(&heater, uint32_t(heater.period * duty))) {
         controller.Fault();
-        (void)pwm_set_dt(&heater, heater.period, 0);
+        (void)dust_board_pwm_set(&heater, 0);
     }
     atomic_set(&heater_fault, controller.Faulted());
     k_work_reschedule(&heater_work, K_MSEC(20));
@@ -56,7 +64,7 @@ int InitializeImuHeater() {
     if (!pwm_is_ready_dt(&heater)) {
         return -ENODEV;
     }
-    int rc = pwm_set_dt(&heater, heater.period, 0);
+    int rc = dust_board_pwm_set(&heater, 0);
     if (rc) {
         return rc;
     }

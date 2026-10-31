@@ -10,6 +10,10 @@ flags=(-std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undef
 "${CXX:-c++}" "${flags[@]}" "$root/src/ethercat/pdo_dictionary.cpp" \
   "$root/tests/ethercat_mapping_contracts.cpp" -o "$build/mapping_contracts"
 "$build/mapping_contracts"
+"${CXX:-c++}" "${flags[@]}" "$root/src/ethercat/layout.cpp" \
+  "$root/tests/ethercat_compact_layout.cpp" -o "$build/compact_layout"
+"$build/compact_layout"
+echo 'Compact PDO fixture / previous ABI startup rejection PASS'
 if [[ -n "${DUST_HOST_ROOT:-}" ]]; then
   # 直接调用主机现有生成器，不能用从站实现自己生成“期望值”。
   "${CXX:-c++}" -std=c++20 -Wall -Wextra -Werror -fsanitize=address,undefined \

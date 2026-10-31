@@ -1,0 +1,6 @@
+/* SPI3 TX/RX use XDMA 7/6 in the standalone probe and gateway. */
+&spi3 {
+    status = "okay";
+    dmas = <&xdma 7 7>, <&xdma 6 6>;
+    dma-names = "tx", "rx";
+};
