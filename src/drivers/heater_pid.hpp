@@ -22,8 +22,7 @@ class HeaterPid {
         initialized_ = true;
         // 仅在未饱和或积分有助于退出饱和时积分，避免长时间冷启动积分累积。
         const float candidate = integral_ + ki * error * dt;
-        const float output =
-            feedforward + kp * error + candidate + kd * derivative;
+        const float output = kp * error + candidate + kd * derivative;
         if ((output >= 0 && output <= max_duty) ||
             (output > max_duty && error < 0) || (output < 0 && error > 0)) {
             integral_ = candidate;
@@ -40,9 +39,6 @@ class HeaterPid {
     float kp = 0.1f;
     float ki = 0.005f;
     float kd = 0.0f;
-    /* Static operating-point duty (e.g. the duty that holds the target at
-     * room temperature); the PID only trims around it. */
-    float feedforward = 0.0f;
     float max_duty = 1.0f;
 
    private:
