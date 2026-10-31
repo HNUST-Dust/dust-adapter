@@ -217,11 +217,6 @@ int main(void) {
     if (buzzer_rc) printk("Buzzer init failed: %d\n", buzzer_rc);
     #endif
 
-    #if defined(CONFIG_DUST_BOARD_OUTPUTS)
-    int heater_rc = dust_imu_heater_init();
-    if (heater_rc) printk("IMU heater init failed: %d\n", heater_rc);
-    #endif
-
     if (MainInit() != 0U) {
         printk("SSC MainInit failed\n");
         return 0;
@@ -230,6 +225,12 @@ int main(void) {
         printk("DTC1 gateway initialization failed; IRQs remain disabled\n");
         return 0;
     }
+    #if defined(CONFIG_DUST_BOARD_OUTPUTS)
+    /* Start the PID only after the IMU is sampling, so a slow first sample
+     * cannot latch the heater fault. */
+    int heater_rc = dust_imu_heater_init();
+    if (heater_rc) printk("IMU heater init failed: %d\n", heater_rc);
+    #endif
     atomic_set(&stack_ready, 1);
     hpm_esc_start(esc);
     /* FreeRun leaves the ESC synchronization interrupts disabled. */

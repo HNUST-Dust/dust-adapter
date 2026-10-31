@@ -448,6 +448,7 @@ int InitializeIo(uint64_t& boot) {
         }
 #if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
         imu_ready = onboard_imu.Init() == 0;
+        printk("Onboard IMU: ready=%d\n", imu_ready);
 #endif
         initialized = true;
     }
@@ -817,18 +818,24 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
         }
     }
 #if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
-    if (imu_ready && configuration.imu) {
+    /* The IMU is a local sensor: sample it even before the master configures
+     * the PDO so the local heater PID always has a temperature. Publication
+     * into the process image still depends on the configured layout. */
+    if (imu_ready) {
         modules::ImuSensor::Burst burst{};
         if (onboard_imu.TryTakeCompleted(burst)) {
-            feedback.imu_valid = true;
-            feedback.imu_sequence = ++imu_sequence;
-            feedback.imu_capture_us = k_cyc_to_us_floor32(burst.data_ready_cycle);
-            feedback.temperature = burst.temperature_c;
 #if defined(CONFIG_DUST_BOARD_OUTPUTS)
             dust_imu_heater_observe(burst.temperature_c);
 #endif
-            std::copy(burst.rx, burst.rx + sizeof(burst.rx),
-                      feedback.imu_raw.begin());
+            if (configuration.imu) {
+                feedback.imu_valid = true;
+                feedback.imu_sequence = ++imu_sequence;
+                feedback.imu_capture_us =
+                    k_cyc_to_us_floor32(burst.data_ready_cycle);
+                feedback.temperature = burst.temperature_c;
+                std::copy(burst.rx, burst.rx + sizeof(burst.rx),
+                          feedback.imu_raw.begin());
+            }
         }
         (void)onboard_imu.TryStartAsync();
     }
