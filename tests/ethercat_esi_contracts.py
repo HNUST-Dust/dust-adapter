@@ -16,7 +16,8 @@ config, header, xml, image = generator.generate(spec)
 assert xml == (ROOT / "config/esi/DUST_HPM5E31_Gateway.xml").read_text()
 assert len(image) == 2048 and image[14] == 0x30
 assert struct.unpack_from("<III", image, 16) == (spec["vendor_id"], spec["product_code"], spec["revision"])
-assert spec["vendor_id"] == 0 and spec["product_code"] != 0x57425231
+# Fixed lab identity: nonzero vendor (host rejects 0) and the DTC1 product.
+assert spec["vendor_id"] == 0x0D57 and spec["product_code"] == 0x44544331
 assert spec["rx_address"] + 3 * spec["rx_max"] <= spec["tx_address"]
 assert spec["tx_address"] + 3 * spec["tx_max"] <= spec["ram_end"]
 assert "#define MAX_PD_OUTPUT_SIZE 0x400U" in config
