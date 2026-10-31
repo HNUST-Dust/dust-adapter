@@ -55,6 +55,15 @@ config DUST_IMU_HEATER_MAX_PERMILLE
     default 1000
     range 0 1000
 
+config DUST_IMU_HEATER_DEBUG
+    bool "Print heater temperature, error and duty over RTT"
+    depends on DUST_IMU_HEATER_ENABLE
+    default n
+    help
+      Once per second, print the measured temperature, the PID error and the
+      applied duty so the gains can be tuned on the bench. Integer units only,
+      so no floating point printf support is required.
+
 config DUST_ECAT_ESC_DMA
     bool "Synchronous ESC PDO DMA experiment"
     depends on BOARD_DUST_HPM5E31 && DMA && !SPI_HPM_SPI_DMA

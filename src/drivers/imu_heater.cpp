@@ -5,6 +5,7 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/sys/printk.h>
 
 #include "drivers/heater_pid.hpp"
 #include "drivers/board_pwm.h"
@@ -41,6 +42,17 @@ void UpdateHeater(k_work*) {
     previous_ms = now;
 #if !defined(CONFIG_DUST_IMU_HEATER_ENABLE)
     duty = 0;
+#endif
+#if defined(CONFIG_DUST_IMU_HEATER_DEBUG)
+    /* ~1 s of 20 ms loops; integer units avoid float printf support. */
+    static unsigned debug_divider;
+    if (++debug_divider >= 50U) {
+        debug_divider = 0U;
+        printk("heater: T=%d mC target=%d C err=%d mC duty=%d/1000 fault=%d\n",
+               (int)(measured * 1000.0f), CONFIG_DUST_IMU_TARGET_C,
+               (int)((CONFIG_DUST_IMU_TARGET_C - measured) * 1000.0f),
+               (int)(duty * 1000.0f), controller.Faulted() ? 1 : 0);
+    }
 #endif
     if (dust_board_pwm_set(&heater, uint32_t(heater.period * duty))) {
         controller.Fault();
