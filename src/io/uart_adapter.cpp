@@ -2,7 +2,7 @@
 
 /* UART 后端：中断/DMA 接收队列、异步发送、窗口状态与跨周期快照。 */
 
-#include "ecat/io_internal.hpp"
+#include "io/io_internal.hpp"
 
 #include "drivers/uart_driver.hpp"
 

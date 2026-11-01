@@ -78,7 +78,7 @@ SSC 后端桩分别验证缺少保护拒绝 Arm、保护就绪允许 Arm/派发�
 
 ## CAN/UART 后端与配置
 
-`src/ecat/io_backend.cpp` 在 FreeRun 线程中串行处理协议动作和队列；ISR 只投递接收块、
+`src/io/io_backend.cpp` 在 FreeRun 线程中串行处理协议动作和队列；ISR 只投递接收块、
 完成状态及故障标记。OP 每个新 Rx 影像只发布一次 Tx，避免主循环空转导致 UART 上行窗口轮转。
 
 - DTS aliases `dust_can_0..3` 和 `dust_uart_1..6` 绑定物理接口。

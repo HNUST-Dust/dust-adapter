@@ -226,12 +226,10 @@ target_sources(app PRIVATE
 
     # EtherCAT slave implementation
     "${DUST_ADAPTER_ROOT}/src/ecat/gateway.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/gateway_objects.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/gateway_ssc.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/io_backend.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/can_io.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/uart_io.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/boot_identity.cpp"
+    "${DUST_ADAPTER_ROOT}/src/io/io_backend.cpp"
+    "${DUST_ADAPTER_ROOT}/src/io/can_adapter.cpp"
+    "${DUST_ADAPTER_ROOT}/src/io/uart_adapter.cpp"
 
     # Hardware drivers
     "${DUST_ADAPTER_ROOT}/src/drivers/uart_receive.cpp"
@@ -240,9 +238,9 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/drivers/uart_driver.cpp"
 
     # EtherCAT ESC and PHY
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc_regs.c"
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc_boot.c"
-    "${DUST_ADAPTER_ROOT}/src/ecat/sii.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc/esc_regs.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc/esc_boot.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc/sii.c"
     "${DUST_ADAPTER_ROOT}/src/ecat/runtime.c"
     "${HPM_PHY_DIR}/hpm5e31_phy.c"
 

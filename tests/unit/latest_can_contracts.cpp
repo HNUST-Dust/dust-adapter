@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include <cassert>
 #include <cstdint>
-#include "ecat/latest_can.hpp"
+#include "io/latest_can.hpp"
 int main() {
     using namespace dust::ecat;
     LatestCanSlots slots;

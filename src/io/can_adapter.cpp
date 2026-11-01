@@ -2,10 +2,10 @@
 
 /* CAN 总线后端：中断接收队列、批次发送、保护帧、反馈快照与状态查询。 */
 
-#include "ecat/io_internal.hpp"
+#include "io/io_internal.hpp"
 
 #include "drivers/can_driver.hpp"
-#include "ecat/can_profile.hpp"
+#include "io/can_profile.hpp"
 
 #include <algorithm>
 #include <cerrno>

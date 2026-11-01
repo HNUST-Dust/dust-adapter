@@ -199,8 +199,8 @@ dust_add_test(buzzer_contracts buzzer_contracts)
 # IO 后端 / 启动计数
 # ---------------------------------------------------------------------------
 add_executable(io_contracts
-    "${UNIT_DIR}/ethercat_io_contracts.cpp" "${SRC_DIR}/ecat/io_backend.cpp"
-    "${SRC_DIR}/ecat/can_io.cpp" "${SRC_DIR}/ecat/uart_io.cpp"
+    "${UNIT_DIR}/ethercat_io_contracts.cpp" "${SRC_DIR}/io/io_backend.cpp"
+    "${SRC_DIR}/io/can_adapter.cpp" "${SRC_DIR}/io/uart_adapter.cpp"
     "${SRC_DIR}/drivers/can_driver.cpp"
     "${SRC_DIR}/drivers/uart_driver.cpp"
     "${SRC_DIR}/drivers/uart_receive.cpp" "${SRC_DIR}/protocol/core.cpp"
@@ -252,8 +252,7 @@ foreach(mode baseline late_refresh)
         list(APPEND mode_defines CONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1)
     endif()
     add_executable(ssc_contracts_${mode}
-        "${SRC_DIR}/ecat/gateway.cpp" "${SRC_DIR}/ecat/gateway_objects.cpp"
-        "${SRC_DIR}/ecat/gateway_ssc.cpp" "${SRC_DIR}/protocol/layout.cpp"
+        "${SRC_DIR}/ecat/gateway.cpp" "${SRC_DIR}/protocol/layout.cpp"
         "${SRC_DIR}/protocol/core.cpp" "${SRC_DIR}/protocol/pdo_dictionary.cpp"
         "${FAKES_DIR}/ssc_native/io_stub.cpp"
         "${UNIT_DIR}/ethercat_ssc_contracts.cpp"

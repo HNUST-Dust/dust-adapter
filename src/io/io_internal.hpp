@@ -13,7 +13,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
 
-#include "ecat/latest_can.hpp"
+#include "io/latest_can.hpp"
 #include "protocol/io_policy.hpp"
 #include "protocol/protocol.hpp"
 

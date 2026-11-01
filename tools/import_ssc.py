@@ -26,7 +26,7 @@ shutil.copytree(source, args.destination)
 # 项目适配：本仓库把 HPM5E 绑定头/临界区钩子统一命名为 ecat/esc_hw.*，
 # 导入后自动同步授权导出文件中的引用，避免手工改 generated 目录。
 adaptations = {
-    'ecatslv.h': (('#include "hpm5e_esc_hw.h"', '#include "ecat/esc_hw.h"'),),
+    'ecatslv.h': (('#include "hpm5e_esc_hw.h"', '#include "ecat/esc/esc_hw.h"'),),
     'ecat_def.h': (('hpm5e_ssc_enter_critical()', 'dust_esc_enter_critical()'),
                    ('hpm5e_ssc_leave_critical()', 'dust_esc_leave_critical()')),
 }

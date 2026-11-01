@@ -63,18 +63,19 @@ dust-adapter/
 ├── src/
 │   ├── main.c            # 板级初始化与主循环调度
 │   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
-│   ├── ecat/             # SSC 网关、CAN/UART 后端、接口与授权 SSC 源码
-│   │   ├── sampleappl.h         # 自定义 SSC 应用接口头
-│   │   ├── esc_regs.c/h         # ESC 寄存器/IRQ/临界区原语
-│   │   ├── sii.c/h              # SII 镜像与 EEPROM 模拟
-│   │   ├── esc_boot.c           # ESC/PHY/SII 启动与 FreeRun 启停
+│   ├── io/               # CAN/UART 协议适配与 IO facade（依赖 protocol + drivers）
+│   │   ├── io_backend.cpp/hpp   # IO facade
+│   │   ├── can_adapter.cpp      # CAN 适配层
+│   │   ├── uart_adapter.cpp     # UART 适配层
+│   │   ├── io_internal.hpp      # 适配层内部共享定义
+│   │   ├── can_profile.hpp      # CAN 白名单/保护帧策略
+│   │   └── latest_can.hpp       # 每总线最新反馈槽
+│   ├── ecat/             # SSC 网关、ESC 硬件适配与授权 SSC 源码
+│   │   ├── gateway.cpp/h        # 对象字典 + SSC 回调 + 生命周期
 │   │   ├── runtime.c/h          # SSC/网关生命周期
-│   │   ├── gateway.cpp          # 网关生命周期
-│   │   ├── gateway_objects.cpp  # CoE 对象字典
-│   │   ├── gateway_ssc.cpp      # SSC 应用回调
-│   │   ├── io_backend.cpp       # IO 后端 facade
-│   │   ├── can_io.cpp           # CAN 总线后端
-│   │   ├── uart_io.cpp          # UART 端口后端
+│   │   ├── boot_identity.cpp    # 启动身份
+│   │   ├── sampleappl.h         # 自定义 SSC 应用接口头
+│   │   ├── esc/                 # ESC 寄存器/SII/启动与 PHY 适配
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
 │   └── drivers/          # 板级与硬件驱动
 │       ├── can_driver.*  # CAN 硬件驱动（无协议依赖）

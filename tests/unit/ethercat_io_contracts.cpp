@@ -7,7 +7,7 @@
 #include <string>
 
 #include "protocol/io_policy.hpp"
-#include "ecat/io_backend.hpp"
+#include "io/io_backend.hpp"
 #include "platform.hpp"
 using namespace dust::ecat;
 uint64_t native_now = 1000;

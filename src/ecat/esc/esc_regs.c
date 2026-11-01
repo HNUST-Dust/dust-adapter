@@ -2,7 +2,7 @@
 
 /* ESC 寄存器原语与 EEPROM 命令循环；不包含 PHY/启动策略。 */
 
-#include "ecat/esc_hw.h"
+#include "ecat/esc/esc_hw.h"
 
 #include <hpm_esc_drv.h>
 #include <zephyr/device.h>
@@ -11,7 +11,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 
-#include "ecat/sii.h"
+#include "ecat/esc/sii.h"
 
 static const struct device *const esc = DEVICE_DT_GET(DT_NODELABEL(esc0));
 static uint32_t timer_origin_ms;

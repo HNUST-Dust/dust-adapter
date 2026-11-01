@@ -11,7 +11,7 @@
 #include <zephyr/sys/printk.h>
 
 #include "applInterface.h"
-#include "ecat/esc_hw.h"
+#include "ecat/esc/esc_hw.h"
 #include "ecat/gateway.h"
 #include "ecatappl.h"
 

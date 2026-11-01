@@ -3,15 +3,15 @@
 /* IO 后端 facade：初始化、保护、配置、动作派发与跨周期采集。
  * CAN 收发在 can_io.cpp，UART 收发在 uart_io.cpp。 */
 
-#include "ecat/io_backend.hpp"
+#include "io/io_backend.hpp"
 
 #include <algorithm>
 #include <cerrno>
 
 #include <zephyr/sys/printk.h>
 
-#include "ecat/io_internal.hpp"
-#include "ecat/can_profile.hpp"
+#include "io/io_internal.hpp"
+#include "io/can_profile.hpp"
 #if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
 #include "drivers/imu_sensor.hpp"
 #endif

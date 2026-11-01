@@ -2,7 +2,7 @@
 
 /* ESC/PHY/SII 启动策略、FreeRun 启停与中断钩子；不含 SSC 生命周期。 */
 
-#include "ecat/esc_hw.h"
+#include "ecat/esc/esc_hw.h"
 
 #include <errno.h>
 
@@ -13,7 +13,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 
-#include "ecat/sii.h"
+#include "ecat/esc/sii.h"
 #include "hpm5e31_phy.h"
 
 extern unsigned char aEepromData[DUST_SII_SIZE];

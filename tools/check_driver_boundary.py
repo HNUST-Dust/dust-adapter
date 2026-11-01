@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DRIVERS = ROOT / "src" / "drivers"
+IO = ROOT / "src" / "io"
 INCLUDE = re.compile(r'#include\s*[<"]([^>"]+)[>"]')
 
 # 驱动层不得依赖 EtherCAT/协议/安全策略层。
@@ -23,9 +24,9 @@ FORBIDDEN_NAMES = {
 }
 
 
-def main() -> int:
+def scan(layer: Path, allowed_prefixes: tuple[str, ...], forbidden_names: set[str]) -> list[str]:
     problems = []
-    for path in sorted(DRIVERS.rglob("*")):
+    for path in sorted(layer.rglob("*")):
         if path.suffix not in (".c", ".cpp", ".h", ".hpp"):
             continue
         for number, line in enumerate(
@@ -35,20 +36,25 @@ def main() -> int:
             if not match:
                 continue
             include = match.group(1)
-            # 同层驱动互相包含是允许的。
-            if include.startswith("drivers/"):
+            if include.startswith(allowed_prefixes):
                 continue
-            if include.startswith(FORBIDDEN_PREFIXES) or (
-                include in FORBIDDEN_NAMES
-            ):
-                problems.append(
-                    f"{path.relative_to(ROOT)}:{number}: {include}"
-                )
+            if include.startswith("ecat/") or include in forbidden_names:
+                problems.append(f"{path.relative_to(ROOT)}:{number}: {include}")
+    return problems
+
+
+def main() -> int:
+    problems = []
+    # drivers 不得依赖协议/适配层。
+    problems += scan(DRIVERS, ("drivers/",), FORBIDDEN_NAMES)
+    # io 适配层可以依赖 protocol/drivers，但不得依赖 ecat。
+    problems += scan(IO, ("io/", "protocol/", "drivers/"), {"gateway.h", "runtime.h"})
     if problems:
         for problem in problems:
             print(f"FORBIDDEN: {problem}")
         return 1
     print("OK: src/drivers has no ecat/protocol dependency")
+    print("OK: src/io has no ecat dependency")
     return 0
 
 

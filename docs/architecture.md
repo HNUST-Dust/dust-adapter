@@ -45,21 +45,20 @@
 | `src/protocol/digest.hpp` | 布局/影像摘要 |
 | `src/protocol/io_policy.hpp` | 无堆的有界队列、命令过期与启动身份推导 |
 | `src/protocol/pdo_schema.hpp` | 由 schema 生成的字段偏移与 Walk（勿手改） |
-| `src/ecat/gateway.cpp` | 网关生命周期：Core 对象、启动/复位重建、周期 poll 与状态查询 |
-| `src/ecat/gateway_objects.cpp` | CoE 对象字典：对象注册、读写回调、映射描述与 RAM/IO limits |
-| `src/ecat/gateway_ssc.cpp` | SSC `APPL_*` 回调：AL 状态切换、PDO 映射/拷贝、周期应用入口 |
-| `src/ecat/gateway_internal.hpp` | 三个 gateway 实现文件共享的内部类型与状态（不对外暴露） |
-| `src/ecat/io_backend.cpp` | IO 后端 facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
-| `src/ecat/can_io.cpp` | CAN 适配层：Core 事件、接收队列、批次 deadline、保护帧、反馈快照与状态 |
-| `src/ecat/uart_io.cpp` | UART 适配层：接收队列、epoch/窗口、超时、状态编码与快照 |
-| `src/ecat/io_internal.hpp` | 三个 IO 实现文件共享的内部类型与状态（不对外暴露） |
-| `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
-| `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
-| `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
-| `src/ecat/esc_regs.c` + `esc_regs.h` | SSC `HW_*` 原语：ESC 寄存器读写、定时器、AL event、临界区、IRQ 使能；不含启动策略 |
-| `src/ecat/sii.c` + `sii.h` | SII 镜像存储与 EEPROM 读/写/reload 响应 |
-| `src/ecat/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
+| `src/io/io_backend.cpp` + `io_backend.hpp` | IO facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
+| `src/io/can_adapter.cpp` | CAN 适配层：Core 事件、接收队列、批次 deadline、保护帧、反馈快照与状态 |
+| `src/io/uart_adapter.cpp` | UART 适配层：接收队列、epoch/窗口、超时、状态编码与快照 |
+| `src/io/io_internal.hpp` | 三个 IO 实现文件共享的内部类型与状态（不对外暴露） |
+| `src/io/can_profile.hpp` | 编译期 CAN 白名单与保护帧策略 |
+| `src/io/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
+| `src/ecat/gateway.cpp` | 网关：CoE 对象字典、SSC `APPL_*` 回调、Core 生命周期与周期 poll |
 | `src/ecat/runtime.c` + `runtime.h` | SSC/网关生命周期（启动、reset、rearm、poll/MainLoop 步进）与 `stack_ready` 状态 |
+| `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
+| `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
+| `src/ecat/esc/esc_hw.h` | SSC `HW_*` 契约头与 ESC 启动/启停 API 声明 |
+| `src/ecat/esc/esc_regs.c` | ESC 寄存器读写、定时器、AL event、临界区、IRQ 与 EEPROM 命令循环 |
+| `src/ecat/esc/sii.c` + `sii.h` | SII 镜像存储与 EEPROM 读/写/reload 响应 |
+| `src/ecat/esc/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
 | `src/drivers/` | 板级驱动：PWM、蜂鸣器、IMU、加热 PID，以及与 EtherCAT 无关的硬件层 |
 | `src/drivers/can_driver.*` | CAN 硬件驱动：设备/位率/过滤器、原始帧收发、abort 与状态 |
 | `src/drivers/uart_driver.*` | UART 硬件驱动：端口配置、接收缓冲/idle、原始块收发与 abort；`uart_receive.*` 为其内部实现 |
@@ -68,7 +67,7 @@
 ## 启动与主循环
 
 `src/main.c` 只负责板级外设初始化、启动/停止调用和主循环调度策略；ESC/PHY/SII
-启动在 `src/ecat/esc_boot.c`，SSC 生命周期在 `src/ecat/runtime.c`。
+启动在 `src/ecat/esc/esc_boot.c`，SSC 生命周期在 `src/ecat/runtime.c`。
 
 1. `dust_ecat_runtime_init()` 注册 ESC PDI/RESET 钩子，`dust_esc_init()` 完成
    SII 镜像装载、EEPROM 模拟配置与装载检查、PHY 复位/配置、信号配置和链路更新。

@@ -12,7 +12,7 @@ Adapter 负责芯片初始化、DMA 采样、时间戳和用于本地温控的�
 
 - 采样：`src/drivers/imu_sensor.cpp` 使用 SPI3 + XDMA 6/7，CS=PC21、DRDY=PC18，
   DRDY 中断记录采样时刻，异步 DMA 完成后再取最新样本。
-- 转发：`src/ecat/io_backend.cpp` 每个发布周期取最新突发，
+- 转发：`src/io/io_backend.cpp` 每个发布周期取最新突发，
   EtherCAT PDO 保留 25 字节原始 SPI 传输和 binary32 温度字段，
   见 [PDO 协议](ethercat-pdo-protocol.md)。
 - 温控：`src/drivers/imu_heater.cpp` 的系统工作队列按
