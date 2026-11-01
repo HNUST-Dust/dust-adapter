@@ -1,32 +1,85 @@
+> 状态：living · 更新：2026-11-02 · 分支：ethercat
+
 # dust-adapter — EtherCAT CAN/UART 网关
 
-`ethercat` 分支在 generic USB 固件基础上替换通讯后端，控制算法仍在主机。
-固件统一由根目录 `CMakeLists.txt`、`prj.conf` 和 `boards/` 构建，全部应用源码位于
-`src/`，不再使用独立 `apps` 工程。旧 USB 模块保留供协议测试和驱动实现参考，不参与当前固件链接；USB 固件请使用原 USB 分支。
+本仓库是运行在 HPM5E31 上的 EtherCAT 从站固件。从站只负责过程数据交换、
+CAN/UART 外设收发与本地保护；控制算法留在主机（dust-control）。
+
+## 当前能力边界
+
+- 片上 ESC + 两颗外置 PHY（RTL8201F/TJA1101B），SSC 5.13，**FreeRun** 模式，
+  单 SSC 主线程拥有全部 ESC 与过程数据访问。
+- 动态 PDO：主站通过 0x2100 配置和 CoE 映射下载决定启用端口与容量，
+  线格式见 [PDO 协议](docs/ethercat-pdo-protocol.md)。
+- CAN 与 UART 后端已接入：CAN 批次收发、UART 原生 idle/DMA 收发、
+  MCU 侧白名单与保护帧、本地停机回调；保护就绪后对外声明 capability bit31 并允许 Arm。
+- 板载 IMU（SPI3 + XDMA）采样、蜂鸣器与 IMU 加热 PID 已启用；
+  板级接线见 [HPM5E31 板级说明](docs/hpm5e31-board.md)。
+- 实验身份 VID=0x0d57、PID=0x44544331、Revision=0x00010000，仅用于台架，
+  不应作为生产身份使用。构建与离线测试通过不代表实板验收。
 
 ## 构建
 
-在已经初始化的 West 工作区中：
+在已初始化的 West 工作区中执行：
 
-```bash
+```sh
 cd dust-adapter
-west build -b dust-hpm5e31 -p always
-# 或使用脚本，默认输出 build/ethercat_slave：
 ./scripts/build.sh ethercat -p always
+# 等价入口，默认输出目录 build/ethercat_slave：
+west build -b dust-hpm5e31 -p always
+```
+
+`scripts/build.sh` 只构建、不刷写；输出目录可用 `BUILD_DIR` 指定。
+CAN 白名单与保护帧由 `config/can_devices.yaml` 编译进固件，
+可选台架 profile 位于 `config/labs/`，通过
+`-DDUST_ADAPTER_CAN_CONFIG=/绝对路径/config.yaml` 指定。
+目录与线程职责见 [源码架构](docs/architecture.md)，
+SSC 配置与许可见 [EtherCAT 从站](docs/ethercat.md)。
+
+## 测试
+
+```sh
 ./scripts/test_protocol.sh
 ```
 
-从旧应用目录迁移时必须使用 `-p always` 或新的构建目录，不能复用旧 CMake 应用路径。
-可用 `BUILD_DIR` 指定脚本输出目录、`WEST` 指定 west 可执行文件。
-CAN YAML 使用 `-DDUST_ADAPTER_CAN_CONFIG=/绝对路径/config.yaml` 指定。
-动态 PDO 的容量与端口仍由主机 YAML 配置；本次整理不改变协议。
+该入口通过 `tests/CMakeLists.txt` + CTest 运行原生协议/布局/IO/SSC 合约测试与
+配置生成一致性检查，再运行锁定的 `hpm_support` 外部原生测试（不可用时明确 SKIP）。
+硬件探针固件位于 `tests/`，不在此入口内，需单独 `west build` 并烧录；
+联机前须确认 EtherCAT 主站不活动。
 
-当前使用 HPM5E31 片上 ESC、两颗外置 PHY、SSC 5.13、动态 PDO、CAN/UART 后端和本地保护。
-SPI IMU 与加热暂时关闭。实验 VID=0 限制保留，编译通过不代表实板验收。
-SSC 按原许可保留，见 [SSC 许可说明](external/ssc/README.md)。
+## 目录结构
 
-源码职责和线程分析见 [源码组织](docs/SOURCE_LAYOUT.md)。
-板级接线见 [HPM5E31 板级说明](docs/HPM5E31_BOARD.md)，
-协议接入见 [SSC 网关](docs/ETHERCAT_SSC_GATEWAY.md)，
-CAN 白名单与保护配置见 [CAN YAML 配置](config/README.md)，
-性能记录见 [RTT 时间戳](docs/ETHERCAT_RTT_TRACE.md)。
+```text
+dust-adapter/
+├── CMakeLists.txt        # 唯一固件构建入口
+├── Kconfig               # 可选功能开关
+├── prj.conf              # 默认 EtherCAT 应用配置
+├── boards/               # 板级 overlay
+├── cmake/                # 工作区与依赖路径准备
+├── config/               # 编译期配置：CAN 设备、PDO schema、网关身份、ESI
+│   └── labs/             # 台架 CAN profile
+├── docs/                 # living 文档
+├── external/ssc/         # 已授权的 SSC 5.13 源码与许可
+├── scripts/              # 构建与测试入口
+├── src/
+│   ├── app/              # 初始化与 FreeRun 主循环
+│   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
+│   ├── ecat/             # SSC 网关、CAN/UART 后端、ESC 硬件适配
+│   └── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
+├── tests/                # 原生合约测试与硬件探针固件
+├── tools/                # 配置/ESI/schema 生成与文档检查
+└── west.yml              # West manifest
+```
+
+## 文档
+
+文档导航入口：[docs/index.md](docs/index.md)。
+文档一律使用小写 kebab-case 命名，过期文档直接删除而不设 archive；
+文中引用的仓库路径由 `tools/check_doc_links.py` 校验，CI 见
+`.github/workflows/ethercat.yml`。
+
+## 许可
+
+除第三方组件外，本仓库采用 Apache-2.0（见 `LICENSE`、`NOTICE`）。
+`external/ssc` 为已获授权的 Beckhoff SSC 5.13，**不适用** Apache-2.0，
+许可与导入说明见 [SSC 许可](external/ssc/README.md)。

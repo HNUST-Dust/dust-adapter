@@ -7,7 +7,10 @@ case "$transport" in
   *) echo "Usage: $0 [ethercat]" >&2; exit 2 ;;
 esac
 cd "$root/.."
-west init -l "$root"
+# CI 可能已在测试步骤前初始化工作区；仅在缺少 .west 时初始化。
+if [[ ! -d .west ]]; then
+  west init -l "$root"
+fi
 west update
 west zephyr-export
 python3 -m pip install -r zephyr/scripts/requirements-base.txt PyYAML
@@ -20,11 +23,11 @@ west manifest --freeze > "$root/dist/west-frozen.yml"
 git -C "$root" rev-parse HEAD > "$root/dist/COMMIT"
 cp "$root/LICENSE" "$root/NOTICE" "$root/config/can_devices.yaml" "$root/dist/"
 if [[ "$transport" == ethercat ]]; then
-  cp "$root/config/esi/DUST_HPM5E_FreeRun.xml" "$root/dist/"
+  cp "$root/config/esi/DUST_HPM5E31_Gateway.xml" "$root/dist/"
   cp "$root/external/ssc/README.md" "$root/dist/SSC_README.md"
 fi
 (cd "$root/dist" && sha256sum dust-adapter-"$transport".bin dust-adapter-"$transport".elf \
   build.config west-frozen.yml COMMIT LICENSE NOTICE can_devices.yaml > SHA256SUMS)
 if [[ "$transport" == ethercat ]]; then
-  (cd "$root/dist" && sha256sum DUST_HPM5E_FreeRun.xml SSC_README.md >> SHA256SUMS)
+  (cd "$root/dist" && sha256sum DUST_HPM5E31_Gateway.xml SSC_README.md >> SHA256SUMS)
 fi

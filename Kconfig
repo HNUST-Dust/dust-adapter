@@ -102,3 +102,12 @@ config DUST_ECAT_INPUT_LATE_REFRESH
 config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
     bool "Skip clearing bytes fully overwritten by PDO publication"
     default n
+
+config DUST_ECAT_GATEWAY_DIAG
+    bool "Print gateway AL state transitions and rejected publications"
+    default n
+    help
+      Print the result of the PREOP->SAFEOP->OP handlers and the reason for
+      rejected RxPDO/input publications over RTT. State changes only, with a
+      small per-initialization rate limit, so it does not flood the console
+      during normal cyclic operation.

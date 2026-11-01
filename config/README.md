@@ -76,3 +76,16 @@ prevent delivery. Repeating protection indefinitely is not implemented: one set 
 submitted on each trigger (and on startup when enabled).
 
 空闲总线可声明 `devices: []`：初始化总线，但不添加发送白名单、接收转发过滤器或保护帧。
+
+## 台架配置（config/labs/）
+
+`config/labs/` 存放仅用于实验室台架的可复现 CAN 白名单 profile，不参与默认构建。
+使用 `-DDUST_ADAPTER_CAN_CONFIG=<绝对路径>` 指定任意 profile：
+
+| 文件 | 用途 |
+|---|---|
+| `labs/can_bench_can3_peripheral.yaml` | CAN3 三地址失能/零力矩台架，排除 CAN2 |
+| `labs/can_bench_dm_rtt.yaml` | 仅 CAN3 DM ID3 的 RTT 测量台架 |
+| `labs/can_bench_rx_only.yaml` | 只接收不发送的台架首轮验证 |
+
+默认构建仍使用 `config/can_devices.yaml`；台架 profile 不得合并进默认拓扑。

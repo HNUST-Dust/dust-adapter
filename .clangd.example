@@ -1,0 +1,16 @@
+# 本地 clangd 配置模板：复制为 .clangd（已被 .gitignore 忽略）后按本机调整。
+# 本仓库的 .clangd 含本机 Zephyr SDK 绝对路径，不纳入版本管理。
+CompileFlags:
+  # 使用固件构建目录中的 compile_commands.json。
+  CompilationDatabase: build
+  Add:
+    - --target=riscv32-unknown-elf
+    # 若 clangd 找不到 C++ 标准库头，追加本机 SDK 的 include 目录，例如：
+    # - -isystem<ZEPHYR_SDK>/riscv64-zephyr-elf/riscv64-zephyr-elf/include/c++/<ver>
+    # - -isystem<ZEPHYR_SDK>/riscv64-zephyr-elf/riscv64-zephyr-elf/include/c++/<ver>/riscv64-zephyr-elf/rv32imafd_zicsr_zifencei/ilp32d
+  Remove:
+    - -fcheck-new
+    - -fno-reorder-functions
+    - -fno-defer-pop
+    - --param=*
+    - --specs=*

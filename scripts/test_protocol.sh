@@ -1,66 +1,64 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# 统一测试入口：先构建/运行本仓库 CTest 原生测试，再运行 hpm_support 外部原生测试。
 set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-build="$(mktemp -d)"
-trap 'rm -rf "$build"' EXIT
-python3 "$root/tests/test_can_profile_generator.py"
-python3 "$root/tests/phy_link_contracts.py"
-bash "$root/scripts/test_buzzer.sh"
-bash "$root/scripts/test_latest_can.sh"
-bash "$root/scripts/test_ethercat_software_optimizations.sh"
-python3 "$root/tools/generate_can_profile.py" --input "$root/config/can_devices.yaml" --output "$build/can_profile_generated.hpp"
-"${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I "$root/src" -I "$build" "$root/tests/can_profile_contracts.cpp" -o "$build/profile_contracts"
-"$build/profile_contracts"
-
-"${CXX:-c++}" -std=c++17 -fno-exceptions -Wall -Wextra -Werror -fsanitize=address,undefined \
-  -I "$root/src" "$root/tests/heater_contracts.cpp" -o "$build/heater_contracts"
-"$build/heater_contracts"
-
-"$root/scripts/test_ethercat_protocol.sh"
-
-"$root/scripts/test_ethercat_ssc.sh"
-
-"$root/scripts/test_ethercat_io.sh"
-
-
-
-# MCAN 批次状态模块属于锁定的板级支持，参与工作区回归。
 support="${DUST_HPM_SUPPORT_DIR:-$root/../hpm_support}"
-if [[ -x "$support/tests/native/test_mcan_tx.sh" ]]; then
-  "$support/tests/native/test_mcan_tx.sh"
+build="${DUST_NATIVE_TEST_BUILD_DIR:-$root/build/native_tests}"
+
+# ---------------------------------------------------------------------------
+# 本仓库原生测试（tests/CMakeLists.txt + CTest）
+# ---------------------------------------------------------------------------
+cmake_args=()
+if [[ ! -f "$build/CMakeCache.txt" ]] && command -v ninja >/dev/null 2>&1; then
+  cmake_args+=(-G Ninja)
+fi
+# 可选接线随环境变量透传；未设置时使用 CMake 默认值。
+if [[ -n "${DUST_HPM_SUPPORT_DIR:-}" ]]; then
+  cmake_args+=(-DDUST_HPM_SUPPORT_DIR="$support")
+fi
+if [[ -n "${DUST_HOST_ROOT:-}" ]]; then
+  cmake_args+=(-DDUST_HOST_ROOT="$DUST_HOST_ROOT")
+fi
+echo "== native tests: configure ($build) =="
+cmake -S "$root/tests" -B "$build" ${cmake_args[@]+"${cmake_args[@]}"}
+echo "== native tests: build =="
+cmake --build "$build" -j
+echo "== native tests: ctest =="
+ctest --test-dir "$build" --output-on-failure
+
+# ---------------------------------------------------------------------------
+# 外部 hpm_support 原生测试（锁定的板级支持，属于工作区回归）
+# 脚本不存在时明确 SKIP；真实失败仍会因 set -e 让总入口返回非 0。
+# ---------------------------------------------------------------------------
+run_optional() {
+  local script="$1" label="$2" rel
+  rel="${script#"$root/../"}"
+  if [[ ! -f "$script" ]]; then
+    echo "SKIP: $label (script unavailable: $rel)"
+    return 0
+  fi
+  echo "== $label ($rel) =="
+  if [[ -x "$script" ]]; then
+    "$script"
+  else
+    bash "$script"
+  fi
+}
+
+if [[ "$(uname -s)" == Darwin ]]; then
+  # 第二阶段用 __attribute__((section(".isr"))) 模拟中断向量，Mach-O 不支持。
+  echo "SKIP (macOS/Mach-O unsupported): $support/tests/native/test_uart_idle.sh (section(\".isr\") 仅支持 ELF)"
+elif [[ -f "$support/tests/native/test_uart_idle.sh" ]]; then
+  run_optional "$support/tests/native/test_uart_idle.sh" "UART idle contracts"
 else
-  echo 'MCAN contracts not run: hpm_support native test script unavailable.'
+  echo 'SKIP: UART idle contracts (hpm_support native test script unavailable).'
 fi
 
-if [[ -x "$support/tests/native/test_uart_idle.sh" ]]; then
-  "$support/tests/native/test_uart_idle.sh"
-else
-  echo 'UART idle contracts not run: hpm_support native test script unavailable.'
-fi
+run_optional "$support/tests/native/test_mcan_tx.sh" "MCAN contracts"
+run_optional "$support/tests/native/test_hpm5e_clock.sh" "HPM5E clock contracts"
+run_optional "$support/tests/native/test_esc_access.sh" "ESC transfer contracts"
+run_optional "$support/tests/native/test_mcan_timing.sh" "MCAN RX timing contracts"
+run_optional "$support/tests/native/test_mcan_rx.sh" "MCAN RX FIFO contracts"
 
-if [[ -x "$support/tests/native/test_hpm5e_clock.sh" ]]; then
-  "$support/tests/native/test_hpm5e_clock.sh"
-else
-  echo 'HPM5E clock contracts not run: hpm_support native test script unavailable.'
-fi
-
-if [[ -f "$support/tests/native/test_esc_access.sh" ]]; then
-  bash "$support/tests/native/test_esc_access.sh"
-else
-  echo "ESC transfer contracts not run: hpm_support native test script unavailable."
-fi
-
-bash "$root/scripts/test_ethercat_esc_dma.sh"
-
-if [[ -f "$support/tests/native/test_mcan_timing.sh" ]]; then
-  bash "$support/tests/native/test_mcan_timing.sh"
-else
-  echo 'MCAN RX timing contracts not run: hpm_support script unavailable.'
-fi
-
-if [[ -f "$support/tests/native/test_mcan_rx.sh" ]]; then
-  bash "$support/tests/native/test_mcan_rx.sh"
-else
-  echo 'MCAN RX FIFO contracts not run: hpm_support script unavailable.'
-fi
+echo 'All native and external tests PASS (see SKIP lines for skipped suites).'
