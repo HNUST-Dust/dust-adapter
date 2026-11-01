@@ -84,7 +84,7 @@ SSC 后端桩分别验证缺少保护拒绝 Arm、保护就绪允许 Arm/派发�
 - DTS aliases `dust_can_0..3` 和 `dust_uart_1..6` 绑定物理接口。
   主机 YAML 决定 PDO 的启用端口和容量，仍经 0x2100/动态映射下载。
 - MCU `config/can_devices.yaml` 决定波特率、收发白名单、保护帧及更严格的命令期限，
-  构建参数 `-DDUST_ADAPTER_CAN_CONFIG=/absolute/profile.yaml` 可选择其他配置，
+  构建参数 `-DADAPTER_CAN_CONFIG=/absolute/profile.yaml` 可选择其他配置，
   台架 profile 放在 `config/labs/`。主机不能通过 PDO 放宽白名单或覆盖本地保护；
   更改 MCU 配置需要重新编译固件。字段说明见 [CAN 配置](../config/README.md)。
 - MCAN 每路发送队列 32 帧，每批最多 16 帧；整批装载后一次 TXBAR 提交。

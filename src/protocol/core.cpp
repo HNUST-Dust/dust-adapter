@@ -12,7 +12,7 @@ namespace dust::ecat {
 namespace pdo = dust::pdo;
 namespace {
 uint32_t Digest(Bytes bytes) {
-#if defined(DUST_TEST_REFERENCE_DIGEST)
+#if defined(TEST_REFERENCE_DIGEST)
     uint32_t crc = 0xffffffffU;
     for (size_t n = 0; n < bytes.size; ++n) {
         crc ^= bytes.data[n];

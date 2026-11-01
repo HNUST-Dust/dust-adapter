@@ -68,7 +68,7 @@ extern "C" void esc_write(const volatile void* data, uint16_t address,
 }
 static void WriteMappedInputs() {
     APPL_InputMapping(native_mapped_inputs.data());
-    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), ECAT_TX_ADDRESS, nPdInputSize);
 }
 extern "C" void PDO_InputMapping(void) {
     ++native_input_refreshes;
@@ -174,11 +174,11 @@ static void Configure() {
         }
     }
     auto* sm = esc.data() + 0x810;
-    Put16(sm, DUST_RX_ADDRESS);
+    Put16(sm, ECAT_RX_ADDRESS);
     Put16(sm + 2, output);
     sm[4] = 0x64;
     sm[6] = 1;
-    Put16(sm + 8, DUST_TX_ADDRESS);
+    Put16(sm + 8, ECAT_TX_ADDRESS);
     Put16(sm + 10, input);
     sm[12] = 0x20;
     sm[14] = 1;
@@ -351,12 +351,12 @@ int main() {
     writes = native_pdram_writes;
     WriteMappedInputs(); WriteMappedInputs();
     assert(native_pdram_writes == writes + 2);
-    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Active));
+    assert(esc[ECAT_TX_ADDRESS + 20] == uint32_t(BusinessState::Active));
     assert(APPL_StopInputHandler() == 0);
     APPL_InputMapping(native_mapped_inputs.data());
     writes = native_pdram_writes;
-    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
-    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), ECAT_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), ECAT_TX_ADDRESS, nPdInputSize);
     assert(native_pdram_writes == writes + 2);
     auto ArmFreshGateway = [&] {
         native_can_dirty = native_can_frame_enabled = native_can_invalid = native_offer_uart = false;
@@ -401,7 +401,7 @@ int main() {
     native_can_frame_enabled = native_can_dirty = true;
     writes = native_pdram_writes;
     WriteMappedInputs();
-    const auto* committed = esc.data() + DUST_TX_ADDRESS;
+    const auto* committed = esc.data() + ECAT_TX_ADDRESS;
     assert(U32(committed + 8) == before_late_publication + 1);
     assert(committed[expected.feedback[3] + 8] == 1);
     assert(U32(committed + expected.feedback[3] + 11) == 77);
@@ -412,7 +412,7 @@ int main() {
 
     WriteMappedInputs();
 
-    assert(U32(esc.data() + DUST_TX_ADDRESS + 8) == before_late_publication + 1);
+    assert(U32(esc.data() + ECAT_TX_ADDRESS + 8) == before_late_publication + 1);
     for (unsigned mode = 0; mode < 5; ++mode) {
         bEscIntEnabled = mode == 0;
         bDcSyncActive = mode == 1;
@@ -444,7 +444,7 @@ int main() {
     assert(native_io_stops == stops_before_watchdog + 1);
     APPL_Application();
     WriteMappedInputs();
-    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
+    assert(esc[ECAT_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
 #if defined(CONFIG_ECAT_INPUT_LATE_REFRESH)
     ArmFreshGateway();
     WriteMappedInputs();
@@ -455,9 +455,9 @@ int main() {
     assert(!gateway_active());
     assert(native_io_stops == stops_before_invalid_snapshot + 1);
     assert(native_pdram_writes == writes + 1);
-    assert(U32(esc.data() + DUST_TX_ADDRESS) != 0);
-    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
-    assert(esc.data()[DUST_TX_ADDRESS + expected.feedback[3] + 8] == 0);
+    assert(U32(esc.data() + ECAT_TX_ADDRESS) != 0);
+    assert(esc[ECAT_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
+    assert(esc.data()[ECAT_TX_ADDRESS + expected.feedback[3] + 8] == 0);
 
     native_can_frame_enabled = native_can_invalid = native_can_dirty = false;
 #endif

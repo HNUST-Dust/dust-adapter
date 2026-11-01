@@ -62,7 +62,7 @@ The default robot profile contains:
 Custom profile selection:
 
 ```bash
-./dust-adapter/scripts/build.sh ethercat -- -DDUST_ADAPTER_CAN_CONFIG=/absolute/path/can_devices.yaml
+./dust-adapter/scripts/build.sh ethercat -- -DADAPTER_CAN_CONFIG=/absolute/path/can_devices.yaml
 ```
 
 The firmware owns the CAN protection baseline and maximum command lease. The
@@ -80,7 +80,7 @@ submitted on each trigger (and on startup when enabled).
 ## 台架配置（config/labs/）
 
 `config/labs/` 存放仅用于实验室台架的可复现 CAN 白名单 profile，不参与默认构建。
-使用 `-DDUST_ADAPTER_CAN_CONFIG=<绝对路径>` 指定任意 profile：
+使用 `-DADAPTER_CAN_CONFIG=<绝对路径>` 指定任意 profile：
 
 | 文件 | 用途 |
 |---|---|

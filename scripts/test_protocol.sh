@@ -3,8 +3,8 @@
 # 统一测试入口：先构建/运行本仓库 CTest 原生测试，再运行 hpm_support 外部原生测试。
 set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-support="${DUST_HPM_SUPPORT_DIR:-$root/../hpm_support}"
-build="${DUST_NATIVE_TEST_BUILD_DIR:-$root/build/native_tests}"
+support="${HPM_SUPPORT_DIR:-$root/../hpm_support}"
+build="${NATIVE_TEST_BUILD_DIR:-$root/build/native_tests}"
 
 echo "== driver boundary =="
 python3 "$root/tools/check_driver_boundary.py"
@@ -17,11 +17,11 @@ if [[ ! -f "$build/CMakeCache.txt" ]] && command -v ninja >/dev/null 2>&1; then
   cmake_args+=(-G Ninja)
 fi
 # 可选接线随环境变量透传；未设置时使用 CMake 默认值。
-if [[ -n "${DUST_HPM_SUPPORT_DIR:-}" ]]; then
-  cmake_args+=(-DDUST_HPM_SUPPORT_DIR="$support")
+if [[ -n "${HPM_SUPPORT_DIR:-}" ]]; then
+  cmake_args+=(-DHPM_SUPPORT_DIR="$support")
 fi
-if [[ -n "${DUST_HOST_ROOT:-}" ]]; then
-  cmake_args+=(-DDUST_HOST_ROOT="$DUST_HOST_ROOT")
+if [[ -n "${HOST_ROOT:-}" ]]; then
+  cmake_args+=(-DHOST_ROOT="$HOST_ROOT")
 fi
 echo "== native tests: configure ($build) =="
 cmake -S "$root/tests" -B "$build" ${cmake_args[@]+"${cmake_args[@]}"}

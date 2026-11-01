@@ -47,11 +47,11 @@ int main(void) {
 
     for (;;) {
         const ecat_step_t step = ecat_runtime_step();
-        if (step == DUST_ECAT_STEP_FATAL) {
+        if (step == ECAT_STEP_FATAL) {
             return 0;
         }
         /* Active 时避免 100 us 系统 tick 取整形成额外周期延迟；ISR 仍可抢占。 */
-        if (step == DUST_ECAT_STEP_ACTIVE) {
+        if (step == ECAT_STEP_ACTIVE) {
             k_busy_wait(10);
         } else {
             k_usleep(100);

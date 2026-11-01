@@ -59,7 +59,7 @@ def generate(spec):
         "MAX_PD_INPUT_SIZE": spec["tx_max"], "MIN_PD_WRITE_ADDRESS": rx,
         "MAX_PD_WRITE_ADDRESS": spec["ram_end"] - 1, "MIN_PD_READ_ADDRESS": tx,
         "MAX_PD_READ_ADDRESS": spec["ram_end"] - 1,
-        "DUST_RX_ADDRESS": rx, "DUST_TX_ADDRESS": tx, "DUST_RAM_END": spec["ram_end"],
+        "ECAT_RX_ADDRESS": rx, "ECAT_TX_ADDRESS": tx, "ECAT_RAM_END": spec["ram_end"],
         "MIN_PD_CYCLE_TIME": 1000000,
     }
     config += "".join(f"#define {name} 0x{value:x}U\n" for name, value in defines.items())

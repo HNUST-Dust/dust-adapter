@@ -32,7 +32,7 @@ west build -b dust-hpm5e31 -p always
 `scripts/build.sh` 只构建、不刷写；输出目录可用 `BUILD_DIR` 指定。
 CAN 白名单与保护帧由 `config/can_devices.yaml` 编译进固件，
 可选台架 profile 位于 `config/labs/`，通过
-`-DDUST_ADAPTER_CAN_CONFIG=/绝对路径/config.yaml` 指定。
+`-DADAPTER_CAN_CONFIG=/绝对路径/config.yaml` 指定。
 目录与线程职责见 [源码架构](docs/architecture.md)，
 SSC 配置与许可见 [EtherCAT 从站](docs/ethercat.md)。
 

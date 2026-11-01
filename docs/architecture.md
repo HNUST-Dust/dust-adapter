@@ -122,7 +122,7 @@ FreeRun 下不使用 SM/DC 同步中断；SYNC0/SYNC1 中断在启动后关闭�
 该脚本先通过 `tests/CMakeLists.txt` 构建并运行 CTest 原生合约测试
 （协议/布局/PDO 字典/IO/SSC/驱动边界、生成配置一致性），再运行锁定的
 `hpm_support` 外部原生测试；外部脚本不可用时明确 SKIP，真实失败让总入口返回非 0。
-需要与主机布局交叉检查时设置 `DUST_HOST_ROOT`。
+需要与主机布局交叉检查时设置 `HOST_ROOT`。
 硬件探针固件位于 `tests/`，不属于该入口，需单独 `west build` 并烧录；
 联机测试前须确认 EtherCAT 主站不活动。
 固件构建验证：

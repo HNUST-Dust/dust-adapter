@@ -45,7 +45,7 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
 licensed SSC：
 
 ```sh
-./scripts/build.sh ethercat -- -DDUST_ADAPTER_SSC_DIR=/path/to/configured/ssc/src
+./scripts/build.sh ethercat -- -DADAPTER_SSC_DIR=/path/to/configured/ssc/src
 ```
 
 ## 构建
@@ -59,7 +59,7 @@ cd dust-adapter
 ```
 
 可选台架 CAN profile 通过
-`-DDUST_ADAPTER_CAN_CONFIG=/绝对路径/config/labs/can_bench_rx_only.yaml`
+`-DADAPTER_CAN_CONFIG=/绝对路径/config/labs/can_bench_rx_only.yaml`
 指定，默认使用 `config/can_devices.yaml`。
 
 ## 验证

@@ -11,9 +11,9 @@ extern "C" {
 
 /* 每一步主循环的结果，供应用决定空闲等待策略。 */
 typedef enum {
-	DUST_ECAT_STEP_IDLE = 0,
-	DUST_ECAT_STEP_ACTIVE = 1,
-	DUST_ECAT_STEP_FATAL = 2,
+	ECAT_STEP_IDLE = 0,
+	ECAT_STEP_ACTIVE = 1,
+	ECAT_STEP_FATAL = 2,
 } ecat_step_t;
 
 /* ESC/PHY/SII 启动并注册 PDI/RESET 钩子；成功返回 0。 */

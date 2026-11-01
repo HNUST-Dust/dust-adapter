@@ -78,7 +78,7 @@ ecat_step_t ecat_runtime_step(void)
 		stack_stop();
 		if (stack_start() != 0) {
 			printk("Gateway reset failed; IRQs remain disabled\n");
-			return DUST_ECAT_STEP_FATAL;
+			return ECAT_STEP_FATAL;
 		}
 		stack_enable();
 		printk("SSC reset handled\n");
@@ -91,7 +91,7 @@ ecat_step_t ecat_runtime_step(void)
 		stack_stop();
 		if (gateway_rearm() != 0) {
 			printk("Gateway rearm failed; IRQs remain disabled\n");
-			return DUST_ECAT_STEP_FATAL;
+			return ECAT_STEP_FATAL;
 		}
 		stack_enable();
 	}
@@ -106,5 +106,5 @@ ecat_step_t ecat_runtime_step(void)
 		esc_update_link();
 		next_link_poll = now + 100;
 	}
-	return gateway_active() ? DUST_ECAT_STEP_ACTIVE : DUST_ECAT_STEP_IDLE;
+	return gateway_active() ? ECAT_STEP_ACTIVE : ECAT_STEP_IDLE;
 }

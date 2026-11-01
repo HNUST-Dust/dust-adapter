@@ -19,17 +19,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==============================================================================
 
 # Licensed EtherCAT Slave Stack Code (SSC 5.13)
-set(DUST_ADAPTER_SSC_DIR
-    "${DUST_ADAPTER_ROOT}/src/ecat/generated"
+set(ADAPTER_SSC_DIR
+    "${ADAPTER_ROOT}/src/ecat/generated"
     CACHE PATH "Licensed SSC 5.13 generated source directory"
 )
 
 # HPMicro EtherCAT PHY support
 set(HPM_PHY_DIR
-    "${DUST_HPM_SUPPORT_DIR}/samples/ecat/Middleware/ESC"
+    "${HPM_SUPPORT_DIR}/samples/ecat/Middleware/ESC"
 )
 set(HPM_PHY_BOARD_DIR
-    "${DUST_HPM_SUPPORT_DIR}/samples/ecat/EtherCAT/bsp"
+    "${HPM_SUPPORT_DIR}/samples/ecat/EtherCAT/bsp"
 )
 
 # Generated files
@@ -41,8 +41,8 @@ set(SSC_GATEWAY_DIR
 )
 
 # CAN configuration
-set(DUST_ADAPTER_CAN_CONFIG
-    "${DUST_ADAPTER_ROOT}/config/can_devices.yaml"
+set(ADAPTER_CAN_CONFIG
+    "${ADAPTER_ROOT}/config/can_devices.yaml"
     CACHE FILEPATH "MCU CAN device/protection configuration"
 )
 
@@ -62,7 +62,7 @@ set(SSC_REQUIRED_FILES
 )
 
 foreach(required_file IN LISTS SSC_REQUIRED_FILES)
-    if(NOT EXISTS "${DUST_ADAPTER_SSC_DIR}/${required_file}")
+    if(NOT EXISTS "${ADAPTER_SSC_DIR}/${required_file}")
         message(FATAL_ERROR
             "SSC source missing: ${required_file}. "
             "Import your licensed configured sources with "
@@ -73,7 +73,7 @@ endforeach()
 
 # FreeRun mode requires DC_SUPPORTED=0
 file(READ
-    "${DUST_ADAPTER_SSC_DIR}/ecat_def.h"
+    "${ADAPTER_SSC_DIR}/ecat_def.h"
     SSC_CONFIG_CONTENT
 )
 
@@ -106,13 +106,13 @@ add_custom_command(
 
     COMMAND
         ${Python3_EXECUTABLE}
-        "${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py"
-        --input "${DUST_ADAPTER_CAN_CONFIG}"
+        "${ADAPTER_ROOT}/tools/generate_can_profile.py"
+        --input "${ADAPTER_CAN_CONFIG}"
         --output "${CAN_PROFILE_HEADER}"
 
     DEPENDS
-        "${DUST_ADAPTER_ROOT}/tools/generate_can_profile.py"
-        "${DUST_ADAPTER_CAN_CONFIG}"
+        "${ADAPTER_ROOT}/tools/generate_can_profile.py"
+        "${ADAPTER_CAN_CONFIG}"
 
     VERBATIM
 )
@@ -121,8 +121,8 @@ add_custom_command(
 file(MAKE_DIRECTORY "${SSC_GATEWAY_DIR}")
 
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${DUST_ADAPTER_ROOT}/config/ethercat_gateway.json"
-    "${DUST_ADAPTER_ROOT}/tools/generate_gateway_esi.py"
+    "${ADAPTER_ROOT}/config/ethercat_gateway.json"
+    "${ADAPTER_ROOT}/tools/generate_gateway_esi.py"
 )
 
 set(GATEWAY_ESI_OPTIONS)
@@ -130,7 +130,7 @@ set(GATEWAY_ESI_OPTIONS)
 execute_process(
     COMMAND
         ${Python3_EXECUTABLE}
-        "${DUST_ADAPTER_ROOT}/tools/generate_gateway_esi.py"
+        "${ADAPTER_ROOT}/tools/generate_gateway_esi.py"
         --output "${SSC_GATEWAY_DIR}"
         ${GATEWAY_ESI_OPTIONS}
 
@@ -143,28 +143,28 @@ execute_process(
 
 # Keep the protocol layer independent of the licensed SSC.
 # This library can also be reused by native cross-platform tests.
-add_library(dust_ecat_protocol STATIC
-    "${DUST_ADAPTER_ROOT}/src/protocol/pdo_dictionary.cpp"
-    "${DUST_ADAPTER_ROOT}/src/protocol/layout.cpp"
-    "${DUST_ADAPTER_ROOT}/src/protocol/core.cpp"
+add_library(ecat_protocol STATIC
+    "${ADAPTER_ROOT}/src/protocol/pdo_dictionary.cpp"
+    "${ADAPTER_ROOT}/src/protocol/layout.cpp"
+    "${ADAPTER_ROOT}/src/protocol/core.cpp"
 )
 
-target_include_directories(dust_ecat_protocol
+target_include_directories(ecat_protocol
     PUBLIC
-        "${DUST_ADAPTER_ROOT}/src"
+        "${ADAPTER_ROOT}/src"
 )
 
-target_compile_features(dust_ecat_protocol
+target_compile_features(ecat_protocol
     PUBLIC cxx_std_17
 )
 
-target_compile_options(dust_ecat_protocol
+target_compile_options(ecat_protocol
     PRIVATE
         -fno-exceptions
         -fno-rtti
 )
 
-target_link_libraries(dust_ecat_protocol
+target_link_libraries(ecat_protocol
     PRIVATE zephyr_interface
 )
 
@@ -177,8 +177,8 @@ target_link_libraries(dust_ecat_protocol
 # Never modify the imported third-party sources.
 
 file(GLOB SSC_INPUTS CONFIGURE_DEPENDS
-    "${DUST_ADAPTER_SSC_DIR}/*.c"
-    "${DUST_ADAPTER_SSC_DIR}/*.h"
+    "${ADAPTER_SSC_DIR}/*.c"
+    "${ADAPTER_SSC_DIR}/*.h"
 )
 
 set(SSC_SOURCES)
@@ -211,7 +211,7 @@ endforeach()
 
 # Use the project's custom SSC application interface
 configure_file(
-    "${DUST_ADAPTER_ROOT}/src/ecat/sampleappl.h"
+    "${ADAPTER_ROOT}/src/ecat/sampleappl.h"
     "${SSC_GATEWAY_DIR}/sampleappl.h"
     COPYONLY
 )
@@ -222,26 +222,26 @@ configure_file(
 
 target_sources(app PRIVATE
     # Application entry point
-    "${DUST_ADAPTER_ROOT}/src/main.c"
+    "${ADAPTER_ROOT}/src/main.c"
 
     # EtherCAT slave implementation
-    "${DUST_ADAPTER_ROOT}/src/ecat/gateway.cpp"
-    "${DUST_ADAPTER_ROOT}/src/ecat/boot_identity.cpp"
-    "${DUST_ADAPTER_ROOT}/src/io/io_backend.cpp"
-    "${DUST_ADAPTER_ROOT}/src/io/can_adapter.cpp"
-    "${DUST_ADAPTER_ROOT}/src/io/uart_adapter.cpp"
+    "${ADAPTER_ROOT}/src/ecat/gateway.cpp"
+    "${ADAPTER_ROOT}/src/ecat/boot_identity.cpp"
+    "${ADAPTER_ROOT}/src/io/io_backend.cpp"
+    "${ADAPTER_ROOT}/src/io/can_adapter.cpp"
+    "${ADAPTER_ROOT}/src/io/uart_adapter.cpp"
 
     # Hardware drivers
-    "${DUST_ADAPTER_ROOT}/src/drivers/uart_receive.cpp"
-    "${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
-    "${DUST_ADAPTER_ROOT}/src/drivers/can_driver.cpp"
-    "${DUST_ADAPTER_ROOT}/src/drivers/uart_driver.cpp"
+    "${ADAPTER_ROOT}/src/drivers/uart_receive.cpp"
+    "${ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
+    "${ADAPTER_ROOT}/src/drivers/can_driver.cpp"
+    "${ADAPTER_ROOT}/src/drivers/uart_driver.cpp"
 
     # EtherCAT ESC and PHY
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc/esc_regs.c"
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc/esc_boot.c"
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc/sii.c"
-    "${DUST_ADAPTER_ROOT}/src/ecat/runtime.c"
+    "${ADAPTER_ROOT}/src/ecat/esc/esc_regs.c"
+    "${ADAPTER_ROOT}/src/ecat/esc/esc_boot.c"
+    "${ADAPTER_ROOT}/src/ecat/esc/sii.c"
+    "${ADAPTER_ROOT}/src/ecat/runtime.c"
     "${HPM_PHY_DIR}/hpm5e31_phy.c"
 
     # Generated CAN profile
@@ -258,21 +258,21 @@ target_sources(app PRIVATE
 # Shared PWM driver
 if(CONFIG_BUZZER OR CONFIG_BOARD_OUTPUTS)
     target_sources(app PRIVATE
-        "${DUST_ADAPTER_ROOT}/src/drivers/board_pwm.c"
+        "${ADAPTER_ROOT}/src/drivers/board_pwm.c"
     )
 endif()
 
 # Buzzer
 if(CONFIG_BUZZER)
     target_sources(app PRIVATE
-        "${DUST_ADAPTER_ROOT}/src/drivers/buzzer.c"
+        "${ADAPTER_ROOT}/src/drivers/buzzer.c"
     )
 endif()
 
 # IMU heater
 if(CONFIG_BOARD_OUTPUTS)
     target_sources(app PRIVATE
-        "${DUST_ADAPTER_ROOT}/src/drivers/imu_heater.cpp"
+        "${ADAPTER_ROOT}/src/drivers/imu_heater.cpp"
     )
 endif()
 
@@ -281,7 +281,7 @@ endif()
 # ==============================================================================
 
 target_include_directories(app PRIVATE
-    "${DUST_ADAPTER_ROOT}/src"
+    "${ADAPTER_ROOT}/src"
     "${SSC_GATEWAY_DIR}"
     "${GENERATED_DIR}"
     "${HPM_PHY_DIR}"
@@ -289,7 +289,7 @@ target_include_directories(app PRIVATE
 )
 
 target_link_libraries(app
-    PRIVATE dust_ecat_protocol
+    PRIVATE ecat_protocol
 )
 
 # Force-include the generated gateway configuration

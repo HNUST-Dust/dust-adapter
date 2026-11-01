@@ -297,9 +297,9 @@ bool CheckSm() {
     uint8_t sm[16]{};
     esc_read(sm, 0x810, sizeof(sm));
     // 对齐/方向/三缓冲/看门狗须匹配 SII；不允许主站移入邮箱或另一分区。
-    return U16(sm) == DUST_RX_ADDRESS && U16(sm + 2) == prepared.rx.bytes &&
+    return U16(sm) == ECAT_RX_ADDRESS && U16(sm + 2) == prepared.rx.bytes &&
            (sm[4] & 0x47) == 0x44 && (sm[6] & 1) &&
-           U16(sm + 8) == DUST_TX_ADDRESS &&
+           U16(sm + 8) == ECAT_TX_ADDRESS &&
            U16(sm + 10) == prepared.tx.bytes && (sm[12] & 0x07) == 0 &&
            (sm[14] & 1);
 }
@@ -336,21 +336,21 @@ bool ApplyLimits() {
     uint8_t ram_kib = 0;
     esc_read(&ram_kib, 0x0006, 1);
     const uint32_t ram_end = 0x1000U + uint32_t(ram_kib) * 1024U;
-    if (ram_end < DUST_RAM_END) {
+    if (ram_end < ECAT_RAM_END) {
         printk("Gateway: ESC RAM %u KiB cannot fit SII partitions\n", ram_kib);
         return false;
     }
     limits = {MAX_PD_OUTPUT_SIZE,
               MAX_PD_INPUT_SIZE,
-              DUST_RAM_END - DUST_RX_ADDRESS,
+              ECAT_RAM_END - ECAT_RX_ADDRESS,
               15,
               0x2f,
               0x3f,
               false};
     ApplyIoLimits(limits);
     // 固定 SII 分区各自仍有更严格的三缓冲上限。
-    if (DUST_RX_ADDRESS + 3U * limits.rx_bytes > DUST_TX_ADDRESS ||
-        DUST_TX_ADDRESS + 3U * limits.tx_bytes > ram_end) {
+    if (ECAT_RX_ADDRESS + 3U * limits.rx_bytes > ECAT_TX_ADDRESS ||
+        ECAT_TX_ADDRESS + 3U * limits.tx_bytes > ram_end) {
         return false;
     }
     printk(
