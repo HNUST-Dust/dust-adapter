@@ -24,7 +24,7 @@ git -C "$root" rev-parse HEAD > "$root/dist/COMMIT"
 cp "$root/LICENSE" "$root/NOTICE" "$root/config/can_devices.yaml" "$root/dist/"
 if [[ "$transport" == ethercat ]]; then
   cp "$root/config/esi/DUST_HPM5E31_Gateway.xml" "$root/dist/"
-  cp "$root/external/ssc/README.md" "$root/dist/SSC_README.md"
+  cp "$root/src/external/ssc/README.md" "$root/dist/SSC_README.md"
 fi
 (cd "$root/dist" && sha256sum dust-adapter-"$transport".bin dust-adapter-"$transport".elf \
   build.config west-frozen.yml COMMIT LICENSE NOTICE can_devices.yaml > SHA256SUMS)

@@ -9,7 +9,7 @@ import shutil
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('source', type=pathlib.Path, help='Configured ssc_generated/src directory')
 parser.add_argument('--destination', type=pathlib.Path,
-                    default=pathlib.Path(__file__).resolve().parents[1]/'external/ssc')
+                    default=pathlib.Path(__file__).resolve().parents[1]/'src/external/ssc')
 args = parser.parse_args()
 source = args.source.resolve()
 required = ('ecat_def.h', 'ecatslv.c', 'ecatappl.c', 'sampleappl.c', 'sampleappl.h', 'applInterface.h', 'eeprom.h')

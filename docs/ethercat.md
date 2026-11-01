@@ -33,8 +33,8 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
 
 ## SSC 配置与许可
 
-`external/ssc` 保留已获授权纳入的 SSC 5.13 文件及 Beckhoff 原始许可，
-**不适用** 本仓库的 Apache-2.0，见 [SSC 许可](../external/ssc/README.md)。
+`src/external/ssc` 保留已获授权纳入的 SSC 5.13 文件及 Beckhoff 原始许可，
+**不适用** 本仓库的 Apache-2.0，见 [SSC 许可](../src/external/ssc/README.md)。
 
 构建时 CMake 把 SSC 源码复制到构建目录 `ssc_gateway`，用自有
 `src/ecat/ssc/sampleappl.h`、应用回调和生成的 `eeprom.h`/SII 替换计数器应用；

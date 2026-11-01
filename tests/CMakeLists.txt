@@ -77,8 +77,8 @@ add_custom_command(
 add_custom_target(dust_generated_esc_dma DEPENDS "${ESC_DMA_INC}")
 
 # SSC 上游源码必须复制到暂存目录，才能用仓库自己的 sampleappl.h 覆盖示例头。
-file(GLOB SSC_UPSTREAM_C CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/external/ssc/*.c")
-file(GLOB SSC_UPSTREAM_H CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/external/ssc/*.h")
+file(GLOB SSC_UPSTREAM_C CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/external/ssc/*.c")
+file(GLOB SSC_UPSTREAM_H CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/external/ssc/*.h")
 set(SSC_STAGED_C "${SSC_STAGE_DIR}/objdef.c" "${SSC_STAGE_DIR}/coeappl.c")
 set(SSC_STAMP "${SSC_STAGE_DIR}/.stamp")
 add_custom_command(

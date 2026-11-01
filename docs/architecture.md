@@ -12,7 +12,7 @@
 仓库只有一个固件构建入口：根目录 `CMakeLists.txt` + `prj.conf`，板级覆盖在
 `boards/`，工作区/依赖路径由 `cmake/prepare.cmake` 准备。
 `scripts/build.sh ethercat` 只是 `west build -b dust-hpm5e31` 的封装；
-`external/ssc` 的授权源码与自定义 SSC 应用头由 CMake 复制到构建目录
+`src/external/ssc` 的授权源码与自定义 SSC 应用头由 CMake 复制到构建目录
 `build/<dir>/ssc_gateway` 后编译，不改写第三方源文件。
 
 构建期生成的文件都落在构建目录，不提交：
@@ -34,7 +34,7 @@
 
 | 路径 | 职责 |
 |---|---|
-| `src/app/main.c` | ESC/PHY/SII 初始化、FreeRun 主循环、会话结束后的网关重建 |
+| `src/main.c` | ESC/PHY/SII 初始化、FreeRun 主循环、会话结束后的网关重建 |
 | `src/protocol/` | 与 Zephyr、SSC、外设解耦的协议核心与布局，可原生编译测试 |
 | `src/protocol/protocol.hpp` | ABI 常量、配置/布局/Layout/Actions/Core 接口 |
 | `src/protocol/core.cpp` | 配置提交、状态机、会话与过期判据、UART 窗口、PDO 编解码 |
@@ -50,11 +50,11 @@
 | `src/ecat/ssc/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
 | `src/ecat/hw/` | ESC 硬件读写、PDI 延迟处理、可选 ESC DMA 与 PHY 适配 |
 | `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
-| `external/ssc/` | 已授权的 SSC 5.13 源码与许可，不适用 Apache-2.0 |
+| `src/external/ssc/` | 已授权的 SSC 5.13 源码与许可，不适用 Apache-2.0 |
 
 ## 启动与主循环
 
-`src/app/main.c` 的启动顺序：
+`src/main.c` 的启动顺序：
 
 1. 等待 ESC 设备就绪，把 SII 镜像交给应用层 EEPROM 模拟，完成 SII 装载检查。
 2. PHY 复位与配置、ESC 信号配置与链路轮询。

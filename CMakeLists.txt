@@ -20,7 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Licensed EtherCAT Slave Stack Code (SSC 5.13)
 set(DUST_ADAPTER_SSC_DIR
-    "${DUST_ADAPTER_ROOT}/external/ssc"
+    "${DUST_ADAPTER_ROOT}/src/external/ssc"
     CACHE PATH "Licensed SSC 5.13 generated source directory"
 )
 
@@ -222,7 +222,7 @@ configure_file(
 
 target_sources(app PRIVATE
     # Application entry point
-    "${DUST_ADAPTER_ROOT}/src/app/main.c"
+    "${DUST_ADAPTER_ROOT}/src/main.c"
 
     # EtherCAT slave implementation
     "${DUST_ADAPTER_ROOT}/src/ecat/hw/pdi_deferred.c"
