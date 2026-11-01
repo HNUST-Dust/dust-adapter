@@ -17,7 +17,7 @@
 #endif
 
 #if defined(CONFIG_DUST_BOARD_OUTPUTS)
-extern "C" void dust_imu_heater_observe(float temperature_c);
+extern "C" void imu_heater_observe(float temperature_c);
 #endif
 
 namespace dust::ecat {
@@ -45,7 +45,7 @@ void SampleImu() {
     modules::ImuSensor::Burst burst{};
     if (onboard_imu.TryTakeCompleted(burst)) {
 #if defined(CONFIG_DUST_BOARD_OUTPUTS)
-        dust_imu_heater_observe(burst.temperature_c);
+        imu_heater_observe(burst.temperature_c);
 #endif
         latest_imu_burst = burst;
         latest_imu_valid = true;

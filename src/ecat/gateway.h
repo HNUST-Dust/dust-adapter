@@ -5,14 +5,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int dust_gateway_init(void);
+int gateway_init(void);
 // 会话结束后的受控重建：调用方先屏蔽 ESC IRQ 并清除 stack_ready。
-int dust_gateway_rearm(void);
+int gateway_rearm(void);
 // 一次已进入 SAFEOP/OP 的会话结束后置位，主循环据此调用 rearm。
-bool dust_gateway_rearm_pending(void);
-void dust_gateway_poll(void);
-void dust_gateway_sync_fault(void);
-bool dust_gateway_active(void);
+bool gateway_rearm_pending(void);
+void gateway_poll(void);
+void gateway_sync_fault(void);
+bool gateway_active(void);
 #ifdef __cplusplus
 }
 #endif

@@ -49,9 +49,9 @@ void UpdateHeater(k_work*) {
 #if !defined(CONFIG_DUST_IMU_HEATER_ENABLE)
     duty = 0;
 #endif
-    if (dust_board_pwm_set(&heater, uint32_t(heater.period * duty))) {
+    if (board_pwm_set(&heater, uint32_t(heater.period * duty))) {
         controller.Fault();
-        (void)dust_board_pwm_set(&heater, 0);
+        (void)board_pwm_set(&heater, 0);
     }
     atomic_set(&heater_fault, controller.Faulted());
     k_work_reschedule(&heater_work,
@@ -74,7 +74,7 @@ int InitializeImuHeater() {
     HPM_IOC->PAD[IOC_PAD_PD04].PAD_CTL =
         (HPM_IOC->PAD[IOC_PAD_PD04].PAD_CTL & ~0x7U) | 0x7U;
 #endif
-    int rc = dust_board_pwm_set(&heater, 0);
+    int rc = board_pwm_set(&heater, 0);
     if (rc) {
         return rc;
     }
@@ -107,12 +107,12 @@ bool ImuHeaterFaulted() {
 }  // namespace platform
 
 /* C entry points for main.c / io_backend.c callers. */
-extern "C" int dust_imu_heater_init(void) {
+extern "C" int imu_heater_init(void) {
     return platform::InitializeImuHeater();
 }
-extern "C" void dust_imu_heater_observe(float temperature_c) {
+extern "C" void imu_heater_observe(float temperature_c) {
     platform::ObserveImuTemperature(temperature_c);
 }
-extern "C" int dust_imu_heater_faulted(void) {
+extern "C" int imu_heater_faulted(void) {
     return platform::ImuHeaterFaulted() ? 1 : 0;
 }

@@ -834,13 +834,13 @@ OBJ_WORD_ALIGN: Shall be set if the object structures are not Byte aligned and 1
 /** 
 ENTER_MBX_CRITICAL: Macro which is called when a critical mailbox section is entered */
 #ifndef ENTER_MBX_CRITICAL
-#define ENTER_MBX_CRITICAL                        dust_esc_enter_critical()
+#define ENTER_MBX_CRITICAL                        esc_enter_critical()
 #endif
 
 /** 
 LEAVE_MBX_CRITICAL: Macro which is called when a critical mailbox section is left */
 #ifndef LEAVE_MBX_CRITICAL
-#define LEAVE_MBX_CRITICAL                        dust_esc_leave_critical()
+#define LEAVE_MBX_CRITICAL                        esc_leave_critical()
 #endif
 
 /** 

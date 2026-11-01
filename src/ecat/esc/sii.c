@@ -10,7 +10,7 @@
 
 static uint8_t sii_image[DUST_SII_SIZE];
 
-void dust_sii_load(const uint8_t *image, size_t size)
+void sii_load(const uint8_t *image, size_t size)
 {
 	if (size > DUST_SII_SIZE) {
 		size = DUST_SII_SIZE;
@@ -18,7 +18,7 @@ void dust_sii_load(const uint8_t *image, size_t size)
 	memcpy(sii_image, image, size);
 }
 
-int dust_sii_read(uint32_t word_addr, uint16_t *data, size_t word_count)
+int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count)
 {
 	const size_t image_words = DUST_SII_SIZE / sizeof(uint16_t);
 	if (word_addr > image_words || word_count > image_words - word_addr) {
@@ -29,7 +29,7 @@ int dust_sii_read(uint32_t word_addr, uint16_t *data, size_t word_count)
 	return 0;
 }
 
-int dust_sii_write(uint32_t word_addr, uint16_t data)
+int sii_write(uint32_t word_addr, uint16_t data)
 {
 	if (word_addr >= DUST_SII_SIZE / sizeof(uint16_t)) {
 		return -EINVAL;
@@ -39,7 +39,7 @@ int dust_sii_write(uint32_t word_addr, uint16_t data)
 	return 0;
 }
 
-int dust_sii_reload(uint32_t *data)
+int sii_reload(uint32_t *data)
 {
 	/* HPM ESC reload response: alias in bits 15:0, enhanced link
 	 * detection and port enables in bits 20:16 (not raw SII word 0/1). */

@@ -69,14 +69,14 @@
 `src/main.c` 只负责板级外设初始化、启动/停止调用和主循环调度策略；ESC/PHY/SII
 启动在 `src/ecat/esc/esc_boot.c`，SSC 生命周期在 `src/ecat/runtime.c`。
 
-1. `dust_ecat_runtime_init()` 注册 ESC PDI/RESET 钩子，`dust_esc_init()` 完成
+1. `ecat_runtime_init()` 注册 ESC PDI/RESET 钩子，`esc_init()` 完成
    SII 镜像装载、EEPROM 模拟配置与装载检查、PHY 复位/配置、信号配置和链路更新。
-2. 蜂鸣器初始化，`dust_ecat_runtime_start()` 调用 `MainInit()` 与
-   `dust_gateway_init()`（IO 后端、启动身份和协议核心对象字典）。
-3. 板级输出（IMU 加热 PID）初始化，`dust_ecat_runtime_enable()` 置位
+2. 蜂鸣器初始化，`ecat_runtime_start()` 调用 `MainInit()` 与
+   `gateway_init()`（IO 后端、启动身份和协议核心对象字典）。
+3. 板级输出（IMU 加热 PID）初始化，`ecat_runtime_enable()` 置位
    `stack_ready` 并启动 ESC（关闭 FreeRun 不需要的 SYNC0/SYNC1 中断）。
-4. 进入 `for (;;)` 主循环：`dust_ecat_runtime_step()` 处理 reset/rearm、SSC
-   `MainLoop()` 前后各一次 `dust_gateway_poll()`、每 100 ms 更新 PHY 链路，并
+4. 进入 `for (;;)` 主循环：`ecat_runtime_step()` 处理 reset/rearm、SSC
+   `MainLoop()` 前后各一次 `gateway_poll()`、每 100 ms 更新 PHY 链路，并
    返回 Active/Idle/Fatal；主循环据此选择 10 µs 忙等或 `k_usleep(100)`。
 
 会话结束（`APPL_StopInputHandler`）后核心处于 Protected，主循环在屏蔽 ESC IRQ

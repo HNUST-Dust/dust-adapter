@@ -27,8 +27,8 @@ shutil.copytree(source, args.destination)
 # 导入后自动同步授权导出文件中的引用，避免手工改 generated 目录。
 adaptations = {
     'ecatslv.h': (('#include "hpm5e_esc_hw.h"', '#include "ecat/esc/esc_hw.h"'),),
-    'ecat_def.h': (('hpm5e_ssc_enter_critical()', 'dust_esc_enter_critical()'),
-                   ('hpm5e_ssc_leave_critical()', 'dust_esc_leave_critical()')),
+    'ecat_def.h': (('hpm5e_ssc_enter_critical()', 'esc_enter_critical()'),
+                   ('hpm5e_ssc_leave_critical()', 'esc_leave_critical()')),
 }
 for name, pairs in adaptations.items():
     path = args.destination / name

@@ -295,7 +295,7 @@ bool Describe(const ImageLayout& image, bool tx) {
 }
 bool CheckSm() {
     uint8_t sm[16]{};
-    dust_esc_esc_read(sm, 0x810, sizeof(sm));
+    esc_read(sm, 0x810, sizeof(sm));
     // 对齐/方向/三缓冲/看门狗须匹配 SII；不允许主站移入邮箱或另一分区。
     return U16(sm) == DUST_RX_ADDRESS && U16(sm + 2) == prepared.rx.bytes &&
            (sm[4] & 0x47) == 0x44 && (sm[6] & 1) &&
@@ -334,7 +334,7 @@ bool RegisterDictionaryObjects() {
 }
 bool ApplyLimits() {
     uint8_t ram_kib = 0;
-    dust_esc_esc_read(&ram_kib, 0x0006, 1);
+    esc_read(&ram_kib, 0x0006, 1);
     const uint32_t ram_end = 0x1000U + uint32_t(ram_kib) * 1024U;
     if (ram_end < DUST_RAM_END) {
         printk("Gateway: ESC RAM %u KiB cannot fit SII partitions\n", ram_kib);
@@ -378,7 +378,7 @@ void ResetRuntimeState() {
 }
 }  // namespace
 
-extern "C" int dust_gateway_init(void) {
+extern "C" int gateway_init(void) {
     if (core) {
         core->~Core();
     }
@@ -403,17 +403,17 @@ extern "C" int dust_gateway_init(void) {
 }
 // 会话结束后的受控重建：新的 boot_id/会话上下文、清空配置暂存和过程影像。
 // 调用方必须已屏蔽 ESC IRQ 并清除 stack_ready，本函数不做同步。
-extern "C" int dust_gateway_rearm(void) {
-    const int result = dust_gateway_init();
+extern "C" int gateway_rearm(void) {
+    const int result = gateway_init();
     if (result == 0) {
         GW_DIAG("Gateway rearmed for the next session\n");
     }
     return result;
 }
-extern "C" bool dust_gateway_rearm_pending(void) {
+extern "C" bool gateway_rearm_pending(void) {
     return rearm_pending;
 }
-extern "C" void dust_gateway_poll(void) {
+extern "C" void gateway_poll(void) {
     if (!core) {
         return;
     }
@@ -421,7 +421,7 @@ extern "C" void dust_gateway_poll(void) {
     // 因此单字节读取的 bit0 就是该状态位）；1 表示进程数据仍在刷新。SSC 自己
     // 也会在 CheckIfEcatError() 中检查并转入 SAFEOP/0x1B。
     uint8_t watchdog = 0;
-    dust_esc_esc_read(&watchdog, 0x0440, 1);
+    esc_read(&watchdog, 0x0440, 1);
     const auto now = Now();
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
     ServiceIo(*core, now);
@@ -566,7 +566,7 @@ extern "C" void APPL_InputMapping(UINT16* data) {
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);
     }
 }
-extern "C" bool dust_gateway_active(void) {
+extern "C" bool gateway_active(void) {
     return core && core->state() == BusinessState::Active;
 }
 extern "C" void APPL_Application(void) {
@@ -625,6 +625,6 @@ extern "C" void APPL_Application(void) {
     }
 }
 
-extern "C" void dust_gateway_sync_fault(void) {
+extern "C" void gateway_sync_fault(void) {
     if (core) core->Protect(Error::Transport);
 }

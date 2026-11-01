@@ -20,40 +20,40 @@ static void buzzer_timeout(struct k_work *work)
     if (ready && remaining > 0) {
         (void)k_work_reschedule(&buzzer_work, K_MSEC(remaining));
     } else if (ready) {
-        (void)dust_board_pwm_set(&buzzer, 0);
+        (void)board_pwm_set(&buzzer, 0);
     }
     k_mutex_unlock(&buzzer_lock);
 }
-int dust_buzzer_init(void)
+int buzzer_init(void)
 {
     if (!pwm_is_ready_dt(&buzzer)) return -ENODEV;
     k_mutex_lock(&buzzer_lock, K_FOREVER);
-    int rc = dust_board_pwm_set(&buzzer, 0);
+    int rc = board_pwm_set(&buzzer, 0);
     ready = rc == 0;
     k_mutex_unlock(&buzzer_lock);
     return rc;
 }
-int dust_buzzer_beep(uint32_t duration_ms)
+int buzzer_beep(uint32_t duration_ms)
 {
     if (!duration_ms || duration_ms > 2000U) return -EINVAL;
     k_mutex_lock(&buzzer_lock, K_FOREVER);
     if (!ready) { k_mutex_unlock(&buzzer_lock); return -ENODEV; }
-    int rc = dust_board_pwm_set(&buzzer, buzzer.period / 2U);
+    int rc = board_pwm_set(&buzzer, buzzer.period / 2U);
     if (!rc) {
         deadline = k_uptime_get() + duration_ms;
         rc = k_work_reschedule(&buzzer_work, K_MSEC(duration_ms));
         if (rc >= 0) rc = 0;
-        else (void)dust_board_pwm_set(&buzzer, 0);
+        else (void)board_pwm_set(&buzzer, 0);
     }
     k_mutex_unlock(&buzzer_lock);
     return rc;
 }
-int dust_buzzer_stop(void)
+int buzzer_stop(void)
 {
     k_mutex_lock(&buzzer_lock, K_FOREVER);
     if (!ready) { k_mutex_unlock(&buzzer_lock); return -ENODEV; }
     deadline = 0;
-    int rc = dust_board_pwm_set(&buzzer, 0);
+    int rc = board_pwm_set(&buzzer, 0);
     k_mutex_unlock(&buzzer_lock);
     return rc;
 }

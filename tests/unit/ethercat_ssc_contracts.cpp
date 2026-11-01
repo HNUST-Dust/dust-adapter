@@ -33,8 +33,8 @@ BOOL bDcSyncActive;
 BOOL bEcatFirstOutputsReceived;
 static bool native_in_isr;
 bool k_is_in_isr(void) { return native_in_isr; }
-void dust_esc_enter_critical(void) {}
-void dust_esc_leave_critical(void) {}
+void esc_enter_critical(void) {}
+void esc_leave_critical(void) {}
 int printk(const char*, ...) {
     return 0;
 }
@@ -52,7 +52,7 @@ extern bool native_io_protected;
 extern unsigned native_io_dispatches;
 using namespace dust::ecat;
 static std::array<uint8_t, 0x3000> esc;
-extern "C" void dust_esc_esc_read(volatile void* out, uint16_t address,
+extern "C" void esc_read(volatile void* out, uint16_t address,
                                    uint16_t count) {
     assert(unsigned(address) + count <= esc.size());
     std::memcpy(const_cast<void*>(out), esc.data() + address, count);
@@ -60,7 +60,7 @@ extern "C" void dust_esc_esc_read(volatile void* out, uint16_t address,
 static unsigned native_input_refreshes, native_pdram_writes;
 extern unsigned native_io_stops;
 static std::array<UINT16, MAX_PD_INPUT_SIZE / 2> native_mapped_inputs;
-extern "C" void dust_esc_esc_write(const volatile void* data, uint16_t address,
+extern "C" void esc_write(const volatile void* data, uint16_t address,
                                     uint16_t count) {
     ++native_pdram_writes;
     assert(unsigned(address) + count <= esc.size());
@@ -68,7 +68,7 @@ extern "C" void dust_esc_esc_write(const volatile void* data, uint16_t address,
 }
 static void WriteMappedInputs() {
     APPL_InputMapping(native_mapped_inputs.data());
-    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
 }
 extern "C" void PDO_InputMapping(void) {
     ++native_input_refreshes;
@@ -197,10 +197,10 @@ static void Configure() {
 int main() {
     assert(COE_ObjDictionaryInit() == 0);
     esc[6] = 4;
-    assert(dust_gateway_init() != 0);
+    assert(gateway_init() != 0);
     assert(COE_ObjDictionaryInit() == 0);
     esc[6] = 8;
-    assert(dust_gateway_init() == 0);
+    assert(gateway_init() == 0);
     // Mirror the standard CoE initialization which this dictionary-only harness
     // otherwise omits. CheckSyncTypeValue also needs configured PDO sizes.
     sSyncManOutPar.subindex0 = sSyncManInPar.subindex0 = 32;
@@ -269,7 +269,7 @@ int main() {
     assert(Write(0x2100, 2, 1000, 4) != 0);  // AL 错误确认不清除业务保护。
     assert(APPL_StopInputHandler() == 0);
     assert(COE_ObjDictionaryInit() == 0);
-    assert(dust_gateway_init() == 0);
+    assert(gateway_init() == 0);
     Configure();
     APPL_Application();
     APPL_InputMapping(tx.data());
@@ -277,7 +277,7 @@ int main() {
     // 后端声明保护就绪时，真实 SSC 周期允许 Arm 并调用动作派发入口。
     native_io_protected = true;
     assert(COE_ObjDictionaryInit() == 0);
-    assert(dust_gateway_init() == 0);
+    assert(gateway_init() == 0);
     Configure();
     APPL_Application();
     APPL_InputMapping(tx.data());
@@ -291,7 +291,7 @@ int main() {
     APPL_OutputMapping(rx.data());
     APPL_Application();
     APPL_InputMapping(tx.data());
-    assert(dust_gateway_active());
+    assert(gateway_active());
     assert(bytes[20] == uint32_t(BusinessState::Active));
     assert(native_io_dispatches == dispatched + 1);
     APPL_Application();
@@ -328,24 +328,24 @@ int main() {
     assert(esc == committed_esc);
     // Account for the extra publication made above in the existing sequence checks.
     dust::ecat::native_can_dirty = true;
-    dust_gateway_poll();
+    gateway_poll();
     APPL_InputMapping(tx.data());
     assert(U32(bytes + 8) == previous_publication + 3);
     assert(native_input_refreshes == 1);
     assert(native_io_dispatches == dispatched + 1);
-    dust_gateway_poll();
+    gateway_poll();
     assert(native_input_refreshes == 1);
     // Synchronized mode / stopped inputs must not get an out-of-cycle write.
     bEscIntEnabled = true;
     dust::ecat::native_can_dirty = true;
-    dust_gateway_poll();
+    gateway_poll();
     assert(native_input_refreshes == 1);
     bEscIntEnabled = false;
     bEcatInputUpdateRunning = false;
-    dust_gateway_poll();
+    gateway_poll();
     assert(native_input_refreshes == 1);
     bEcatInputUpdateRunning = true;
-    dust_gateway_poll();
+    gateway_poll();
     assert(native_input_refreshes == 2);
     APPL_Application();
     writes = native_pdram_writes;
@@ -355,15 +355,15 @@ int main() {
     assert(APPL_StopInputHandler() == 0);
     APPL_InputMapping(native_mapped_inputs.data());
     writes = native_pdram_writes;
-    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
-    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
     assert(native_pdram_writes == writes + 2);
     auto ArmFreshGateway = [&] {
         native_can_dirty = native_can_frame_enabled = native_can_invalid = native_offer_uart = false;
         bEcatOutputUpdateRunning = bEcatInputUpdateRunning = false;
         nAlStatus = STATE_PREOP;
         assert(COE_ObjDictionaryInit() == 0);
-        assert(dust_gateway_init() == 0);
+        assert(gateway_init() == 0);
         Configure();
         APPL_Application();
         APPL_InputMapping(tx.data());
@@ -376,7 +376,7 @@ int main() {
         esc[0x440] = 1;
         APPL_OutputMapping(rx.data());
         APPL_Application();
-        assert(dust_gateway_active());
+        assert(gateway_active());
     };
     ArmFreshGateway();
     WriteMappedInputs(); WriteMappedInputs();
@@ -439,8 +439,8 @@ int main() {
     // A late checkpoint must not replace the independent watchdog poll.
     const auto stops_before_watchdog = native_io_stops;
     esc[0x440] = 0;
-    dust_gateway_poll();
-    assert(!dust_gateway_active());
+    gateway_poll();
+    assert(!gateway_active());
     assert(native_io_stops == stops_before_watchdog + 1);
     APPL_Application();
     WriteMappedInputs();
@@ -452,7 +452,7 @@ int main() {
     const auto stops_before_invalid_snapshot = native_io_stops;
     writes = native_pdram_writes;
     WriteMappedInputs();
-    assert(!dust_gateway_active());
+    assert(!gateway_active());
     assert(native_io_stops == stops_before_invalid_snapshot + 1);
     assert(native_pdram_writes == writes + 1);
     assert(U32(esc.data() + DUST_TX_ADDRESS) != 0);
@@ -465,10 +465,10 @@ int main() {
     // 并让下一次 PREOP 配置能够重新提交 0x2100。
     nAlStatus = STATE_PREOP;
     assert(APPL_StopInputHandler() == 0);
-    assert(dust_gateway_rearm_pending());
+    assert(gateway_rearm_pending());
     assert(OBJ_GetObjectHandle(0x2100));
-    assert(dust_gateway_rearm() == 0);
-    assert(!dust_gateway_rearm_pending());
+    assert(gateway_rearm() == 0);
+    assert(!gateway_rearm_pending());
     assert(OBJ_GetObjectHandle(0x2100));
     assert(ReadScalar(0x2100, 0) == 22);
     // Configure() 会重新提交 0x2100 与映射；rearm 后仍能完成说明配置未被锁死。

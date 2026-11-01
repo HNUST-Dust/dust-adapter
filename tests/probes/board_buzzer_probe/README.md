@@ -9,6 +9,6 @@ west build -p always -s dust-adapter/tests/probes/board_buzzer_probe -b dust-hpm
 west flash --skip-rebuild -d dust-adapter/build/board_buzzer_probe
 ```
 
-网关启动时仅初始化为静音，`dust_buzzer_beep()` 可异步触发 1–2000 ms 的单次短鸣；目前没有绑定自动报警条件。`dust_buzzer_stop()` 可提前停止，API 在普通线程调用。失败不改变网关保护状态。
+网关启动时仅初始化为静音，`buzzer_beep()` 可异步触发 1–2000 ms 的单次短鸣；目前没有绑定自动报警条件。`buzzer_stop()` 可提前停止，API 在普通线程调用。失败不改变网关保护状态。
 
 PWM0 的周期计数器由各通道共用。板载蜂鸣器和加热器统一配置为 2 kHz，分别控制占空比，访问 PWM0 的寄存器更新由共用互斥锁串行化；硬件端的波形和加热效果尚未验证。该离线构建未证明实际频率、音量或硬件连接。

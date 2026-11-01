@@ -26,7 +26,7 @@ static void esc_pdi_callback(const struct device *dev, void *user_data)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(user_data);
-	(void)dust_esc_process_eeprom();
+	(void)esc_process_eeprom();
 	if (pdi_hook) {
 		pdi_hook();
 	}
@@ -41,28 +41,28 @@ static void esc_reset_callback(const struct device *dev, void *user_data)
 	}
 }
 
-void dust_esc_set_pdi_hook(void (*hook)(void))
+void esc_set_pdi_hook(void (*hook)(void))
 {
 	pdi_hook = hook;
 }
 
-void dust_esc_set_reset_hook(void (*hook)(void))
+void esc_set_reset_hook(void (*hook)(void))
 {
 	reset_hook = hook;
 }
 
-int dust_esc_init(void)
+int esc_init(void)
 {
 	if (!device_is_ready(esc)) {
 		printk("EtherCAT ESC device is not ready\n");
 		return -ENODEV;
 	}
-	dust_sii_load(aEepromData, DUST_SII_SIZE);
+	sii_load(aEepromData, DUST_SII_SIZE);
 	hpm_esc_irq_enable(esc, false);
 	hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, esc_pdi_callback, NULL);
 	hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, esc_reset_callback, NULL);
 	hpm_esc_configure_eeprom(esc, true, false);
-	if (dust_esc_process_eeprom() != 0) {
+	if (esc_process_eeprom() != 0) {
 		printk("SII startup response failed\n");
 		return -EIO;
 	}
@@ -86,12 +86,12 @@ int dust_esc_init(void)
 	return 0;
 }
 
-void dust_esc_stop(void)
+void esc_stop(void)
 {
 	hpm_esc_irq_enable(esc, false);
 }
 
-void dust_esc_start(void)
+void esc_start(void)
 {
 	hpm_esc_start(esc);
 	/* FreeRun leaves the ESC synchronization interrupts disabled. */
@@ -99,7 +99,7 @@ void dust_esc_start(void)
 	irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 2));
 }
 
-void dust_esc_update_link(void)
+void esc_update_link(void)
 {
 	ecat_phy_update_link(esc);
 }

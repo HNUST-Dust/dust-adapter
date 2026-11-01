@@ -18,18 +18,18 @@ static uint32_t timer_origin_ms;
 static unsigned int critical_key;
 static unsigned int critical_depth;
 
-uint16_t dust_esc_hw_init(void)
+uint16_t esc_hw_init(void)
 {
 	return device_is_ready(esc) ? 0U : 1U;
 }
 
-void dust_esc_hw_release(void)
+void esc_hw_release(void)
 {
 	hpm_esc_irq_enable(esc, false);
 }
 
 /* ESC 复位/启动后由主循环或 PDI ISR 调用，响应 ESC 的 EEPROM 模拟命令。 */
-int dust_esc_process_eeprom(void)
+int esc_process_eeprom(void)
 {
 	ESC_Type *base = (ESC_Type *)hpm_esc_base(esc);
 	if ((base->EEPROM_CTRL_STAT & ESC_EEPROM_CTRL_STAT_BUSY_MASK) == 0U) {
@@ -42,7 +42,7 @@ int dust_esc_process_eeprom(void)
 	switch (command) {
 	case esc_eeprom_read_cmd: {
 		uint16_t words[2] = {0U};
-		ret = dust_sii_read(address, words, ARRAY_SIZE(words));
+		ret = sii_read(address, words, ARRAY_SIZE(words));
 		if (ret == 0) {
 			esc_write_eeprom_data(
 			    base, (uint64_t)words[0] | ((uint64_t)words[1] << 16));
@@ -50,11 +50,11 @@ int dust_esc_process_eeprom(void)
 		break;
 	}
 	case esc_eeprom_write_cmd:
-		ret = dust_sii_write(address, (uint16_t)esc_read_eeprom_data(base));
+		ret = sii_write(address, (uint16_t)esc_read_eeprom_data(base));
 		break;
 	case esc_eeprom_reload_cmd: {
 		uint32_t value;
-		ret = dust_sii_reload(&value);
+		ret = sii_reload(&value);
 		if (ret == 0) {
 			esc_write_eeprom_data(base, value);
 		}
@@ -67,49 +67,49 @@ int dust_esc_process_eeprom(void)
 	return ret;
 }
 
-void dust_esc_esc_read(volatile void *data, uint16_t address, uint16_t length)
+void esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
 	hpm_esc_read(esc, address, (void *)data, length);
 }
 
-void dust_esc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
+void esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
 	hpm_esc_write(esc, address, (const void *)data, length);
 }
 
-uint16_t dust_esc_al_event(void)
+uint16_t esc_al_event(void)
 {
 	uint16_t event;
 	hpm_esc_read(esc, 0x0220U, &event, sizeof(event));
 	return event;
 }
 
-uint32_t dust_esc_timer_get(void)
+uint32_t esc_timer_get(void)
 {
 	return k_uptime_get_32() - timer_origin_ms;
 }
 
-void dust_esc_timer_clear(void)
+void esc_timer_clear(void)
 {
 	timer_origin_ms = k_uptime_get_32();
 }
 
-uint16_t dust_esc_eeprom_reload(void)
+uint16_t esc_eeprom_reload(void)
 {
-	return dust_esc_process_eeprom() == 0 ? 0U : 1U;
+	return esc_process_eeprom() == 0 ? 0U : 1U;
 }
 
-void dust_esc_irq_enable(void)
+void esc_irq_enable(void)
 {
 	irq_enable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
 }
 
-void dust_esc_irq_disable(void)
+void esc_irq_disable(void)
 {
 	irq_disable(DT_IRQN_BY_IDX(DT_NODELABEL(esc0), 0));
 }
 
-void dust_esc_enter_critical(void)
+void esc_enter_critical(void)
 {
 	const unsigned int key = irq_lock();
 
@@ -118,7 +118,7 @@ void dust_esc_enter_critical(void)
 	}
 }
 
-void dust_esc_leave_critical(void)
+void esc_leave_critical(void)
 {
 	if (critical_depth == 0U) {
 		return;
