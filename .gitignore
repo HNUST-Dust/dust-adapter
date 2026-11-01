@@ -5,5 +5,5 @@ __pycache__/
 
 /dist/
 
-/src/external/ssc_dc/
+/src/ssc_dc/
 /.clangd

@@ -1,2 +1,2 @@
 # Preserve imported vendor formatting and original licence headers.
-src/external/ssc/* -text -whitespace
+src/ssc/* -text -whitespace

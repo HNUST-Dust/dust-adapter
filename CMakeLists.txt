@@ -20,7 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Licensed EtherCAT Slave Stack Code (SSC 5.13)
 set(DUST_ADAPTER_SSC_DIR
-    "${DUST_ADAPTER_ROOT}/src/external/ssc"
+    "${DUST_ADAPTER_ROOT}/src/ssc"
     CACHE PATH "Licensed SSC 5.13 generated source directory"
 )
 

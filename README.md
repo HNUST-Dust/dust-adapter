@@ -65,7 +65,7 @@ dust-adapter/
 │   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
 │   ├── ecat/             # SSC 网关、CAN/UART 后端、ESC 硬件适配
 │   ├── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
-│   └── external/ssc/     # 已授权的 SSC 5.13 源码与许可（非 Apache-2.0）
+│   └── ssc/              # 已授权的 SSC 5.13 源码与许可（非 Apache-2.0）
 ├── tests/                # 原生合约测试与硬件探针固件
 ├── tools/                # 配置/ESI/schema 生成与文档检查
 └── west.yml              # West manifest
@@ -81,5 +81,5 @@ dust-adapter/
 ## 许可
 
 除第三方组件外，本仓库采用 Apache-2.0（见 `LICENSE`、`NOTICE`）。
-`src/external/ssc` 为已获授权的 Beckhoff SSC 5.13，**不适用** Apache-2.0，
-许可与导入说明见 [SSC 许可](src/external/ssc/README.md)。
+`src/ssc` 为已获授权的 Beckhoff SSC 5.13，**不适用** Apache-2.0，
+许可与导入说明见 [SSC 许可](src/ssc/README.md)。
