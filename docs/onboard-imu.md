@@ -20,7 +20,7 @@ Adapter 负责芯片初始化、DMA 采样、时间戳和用于本地温控的�
   目标温度 `CONFIG_IMU_TARGET_C`（默认 45 ℃）。
   超过 200 ms 没有新温度样本即判故障并停止加热；
   `CONFIG_IMU_HEATER_ENABLE=n` 时只保留观测、占空比固定为 0。
-- 编译开关：`CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW=y` 启用采样。
+- 编译开关：`CONFIG_ONBOARD_IMU_RAW=y` 启用采样。
   原始数据与温度是否出现仍由主机 PDO 配置的 `imu` 字段决定。
 
 ## 诊断固件

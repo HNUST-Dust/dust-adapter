@@ -12,7 +12,7 @@
 
 #include "io/io_internal.hpp"
 #include "io/can_profile.hpp"
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
 #include "drivers/imu_sensor.hpp"
 #endif
 
@@ -28,7 +28,7 @@ bool initialized = false, ready = false, capturing = false;
 uint32_t protection_errors = 0;
 Configuration configuration;
 
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
 modules::ImuSensor onboard_imu;
 bool imu_ready = false;
 uint32_t imu_sequence = 0;
@@ -128,7 +128,7 @@ int InitializeIo(uint64_t& boot) {
         if (result) {
             return fail(result);
         }
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
         imu_ready = onboard_imu.Init() == 0;
         printk("Onboard IMU: ready=%d\n", imu_ready);
 #endif
@@ -159,7 +159,7 @@ void ApplyIoLimits(Limits& limits) {
     limits.can_mask = limits.uart_tx_mask = limits.uart_rx_mask = 0;
     CanApplyLimits(limits);
     UartApplyLimits(limits);
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
     limits.imu = imu_ready;
 #endif
 }
@@ -224,7 +224,7 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
 }
 
 void ServiceIo(Core& core, uint64_t now) {
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
     SampleImu();
 #endif
 
@@ -268,7 +268,7 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
     (void)ServiceCanReceive();
     CaptureCanFeedback(feedback);
     UartCapture(core, feedback, now);
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
     /* SampleImu() already feeds the heater; publish the newest burst here. */
     if (latest_imu_valid && configuration.imu) {
         feedback.imu_valid = true;

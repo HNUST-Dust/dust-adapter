@@ -15,7 +15,7 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/timing/timing.h>
 
-#if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
+#if defined(CONFIG_ONBOARD_IMU_RAW)
 
 #define ONBOARD_IMU_SPI_NODE DT_CHOSEN(wbr_control_onboard_imu_spi)
 #define ONBOARD_IMU_CS_NODE DT_ALIAS(onboard_imu_cs)
@@ -91,7 +91,7 @@ const struct spi_buf_set g_onboard_imu_rx_set = {
     .count = 1U,
 };
 const struct spi_config g_onboard_imu_spi_config = {
-    .frequency = CONFIG_WBR_CONTROL_ONBOARD_IMU_SPI_FREQUENCY_HZ,
+    .frequency = CONFIG_ONBOARD_IMU_SPI_FREQUENCY_HZ,
     .operation = SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB,
     .slave = 0U,
     .cs =
