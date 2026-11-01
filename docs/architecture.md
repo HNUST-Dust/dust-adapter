@@ -45,7 +45,10 @@
 | `src/protocol/digest.hpp` | 布局/影像摘要 |
 | `src/protocol/io_policy.hpp` | 无堆的有界队列、命令过期与启动身份推导 |
 | `src/protocol/pdo_schema.hpp` | 由 schema 生成的字段偏移与 Walk（勿手改） |
-| `src/ecat/gateway.cpp` | SSC 对象字典、PDO/AL 回调、核心生命周期与重新接入 |
+| `src/ecat/gateway.cpp` | 网关生命周期：Core 对象、启动/复位重建、周期 poll 与状态查询 |
+| `src/ecat/gateway_objects.cpp` | CoE 对象字典：对象注册、读写回调、映射描述与 RAM/IO limits |
+| `src/ecat/gateway_ssc.cpp` | SSC `APPL_*` 回调：AL 状态切换、PDO 映射/拷贝、周期应用入口 |
+| `src/ecat/gateway_internal.hpp` | 三个 gateway 实现文件共享的内部类型与状态（不对外暴露） |
 | `src/ecat/io_backend.cpp` | IO 后端 facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
 | `src/ecat/can_io.cpp` | CAN 总线：中断接收队列、批次发送、保护帧、反馈快照与状态 |
 | `src/ecat/uart_io.cpp` | UART 端口：中断/DMA 接收队列、异步发送、窗口状态与快照 |

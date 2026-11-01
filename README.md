@@ -69,6 +69,9 @@ dust-adapter/
 │   │   ├── sii.c/h              # SII 镜像与 EEPROM 模拟
 │   │   ├── esc_boot.c           # ESC/PHY/SII 启动与 FreeRun 启停
 │   │   ├── runtime.c/h          # SSC/网关生命周期
+│   │   ├── gateway.cpp          # 网关生命周期
+│   │   ├── gateway_objects.cpp  # CoE 对象字典
+│   │   ├── gateway_ssc.cpp      # SSC 应用回调
 │   │   ├── io_backend.cpp       # IO 后端 facade
 │   │   ├── can_io.cpp           # CAN 总线后端
 │   │   ├── uart_io.cpp          # UART 端口后端

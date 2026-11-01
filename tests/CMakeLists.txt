@@ -250,7 +250,8 @@ foreach(mode baseline late_refresh)
         list(APPEND mode_defines CONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1)
     endif()
     add_executable(ssc_contracts_${mode}
-        "${SRC_DIR}/ecat/gateway.cpp" "${SRC_DIR}/protocol/layout.cpp"
+        "${SRC_DIR}/ecat/gateway.cpp" "${SRC_DIR}/ecat/gateway_objects.cpp"
+        "${SRC_DIR}/ecat/gateway_ssc.cpp" "${SRC_DIR}/protocol/layout.cpp"
         "${SRC_DIR}/protocol/core.cpp" "${SRC_DIR}/protocol/pdo_dictionary.cpp"
         "${FAKES_DIR}/ssc_native/io_stub.cpp"
         "${UNIT_DIR}/ethercat_ssc_contracts.cpp"
