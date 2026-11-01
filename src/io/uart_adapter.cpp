@@ -10,7 +10,7 @@
 #include <cerrno>
 #include <cstring>
 
-namespace dust::ecat {
+namespace ecat {
 
 UartPort ports[] = {{DEVICE_DT_GET(DT_ALIAS(dust_uart_1)), 0},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_2)), 1},
@@ -249,4 +249,4 @@ bool UartDispatch(Core& core, const Actions& actions, uint64_t now) {
     return true;
 }
 
-}  // namespace dust::ecat
+}  // namespace ecat

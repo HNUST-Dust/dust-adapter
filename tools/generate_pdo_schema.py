@@ -214,7 +214,7 @@ def generate(schema_path, output_path):
     lines.append("#include <cstdint>")
     lines.append("#include <cstdio>")
     lines.append("")
-    lines.append("namespace dust::pdo {")
+    lines.append("namespace pdo {")
     lines.append(f"inline constexpr uint16_t kAbiMajor = {major};")
     lines.append(f"inline constexpr uint16_t kAbiMinor = {minor};")
     lines.append("")
@@ -237,7 +237,7 @@ def generate(schema_path, output_path):
     lines.append("// ---- ordered field walks (layout + CRC + CoE mapping) ----")
     emit_walk(lines, "rx", rx)
     emit_walk(lines, "tx", tx)
-    lines.append("}  // namespace dust::pdo")
+    lines.append("}  // namespace pdo")
     lines.append("")
     output_path.write_text("\n".join(lines) + "\n")
 

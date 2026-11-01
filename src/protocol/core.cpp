@@ -8,8 +8,8 @@
 #include "pdo_schema.hpp"
 
 
-namespace dust::ecat {
-namespace pdo = dust::pdo;
+namespace ecat {
+namespace pdo = pdo;
 namespace {
 uint32_t Digest(Bytes bytes) {
 #if defined(TEST_REFERENCE_DIGEST)
@@ -554,4 +554,4 @@ Error Core::Publish(MutableBytes image, uint64_t now,
     }
     return Error::None;
 }
-}  // namespace dust::ecat
+}  // namespace ecat

@@ -4,11 +4,11 @@
 #include "protocol/protocol.hpp"
 #include "protocol/pdo_schema.hpp"
 int main() {
-    using namespace dust::ecat;
+    using namespace ecat;
     // Build the fixed production wiring from the single schema source.
-    const auto production = dust::pdo::ProductionConfig();
+    const auto production = pdo::ProductionConfig();
     Configuration config;
-    config.cycle_us = dust::pdo::kProductionCycleUs;
+    config.cycle_us = pdo::kProductionCycleUs;
     config.can_tx = production.can_tx;
     config.can_rx = production.can_rx;
     for (unsigned i = 0; i < 6; ++i) {

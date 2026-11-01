@@ -11,7 +11,7 @@
 
 #include "drivers/uart_receive.hpp"
 
-namespace dust::drivers {
+namespace drivers {
 namespace {
 
 constexpr size_t kRxBlockSize = 128;
@@ -154,4 +154,4 @@ int UartAbort(uint8_t port) {
     return uart_tx_abort(state->dev);
 }
 
-}  // namespace dust::drivers
+}  // namespace drivers

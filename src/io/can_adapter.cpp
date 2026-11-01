@@ -11,7 +11,7 @@
 #include <cerrno>
 #include <cstring>
 
-namespace dust::ecat {
+namespace ecat {
 
 CanPort buses[] = {{DEVICE_DT_GET(DT_ALIAS(dust_can_0)), 0},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_1)), 1},
@@ -66,10 +66,10 @@ int CanInitialize() {
     drivers::CanBusConfig configs[4]{};
     drivers::CanFilterConfig filters[64]{};
     size_t bus_count = 0, filter_count = 0;
-    for (const auto& configured : dust::can_profile::kBuses) {
+    for (const auto& configured : can_profile::kBuses) {
         auto& bus = buses[configured.channel];
         configs[bus_count++] = {bus.dev, bus.index, configured.bitrate};
-        for (const auto& address : dust::can_profile::kReceiveFilters) {
+        for (const auto& address : can_profile::kReceiveFilters) {
             if (address.channel != bus.index) {
                 continue;
             }
@@ -109,7 +109,7 @@ void CanStop() {
         atomic_clear(&bus.busy);
         bus.deadline = 0;
     }
-    for (const auto& stop : dust::can_profile::kProtectionFrames) {
+    for (const auto& stop : can_profile::kProtectionFrames) {
         if (!buses[stop.channel].ready) {
             ++protection_errors;
             continue;
@@ -206,11 +206,11 @@ bool CanValidate(void*, unsigned, const CanFrame& frame) {
         frame.length > 8) {
         return false;
     }
-    dust::can_profile::CanFrame record{};
+    can_profile::CanFrame record{};
     record.channel = frame.bus;
     record.id = frame.id;
     record.length = frame.length;
-    return dust::can_profile::AllowsTransmit(record);
+    return can_profile::AllowsTransmit(record);
 }
 
 void CanApplyLimits(Limits& limits) {
@@ -224,7 +224,7 @@ void CanApplyLimits(Limits& limits) {
 bool CanCapacityValid(const Configuration& value) {
     for (unsigned bus = 0; bus < 4; ++bus) {
         unsigned count = 0;
-        for (const auto& filter : dust::can_profile::kReceiveFilters)
+        for (const auto& filter : can_profile::kReceiveFilters)
             if (filter.channel == bus) ++count;
         if (value.can_rx[bus] && value.can_rx[bus] < count) return false;
     }
@@ -236,7 +236,7 @@ void CanConfigure(const Configuration& value) {
         uint32_t ids[LatestCanSlots::kMaxSlots]{};
         size_t count = 0;
         if (value.can_rx[bus.index]) {
-            for (const auto& filter : dust::can_profile::kReceiveFilters) {
+            for (const auto& filter : can_profile::kReceiveFilters) {
                 if (filter.channel == bus.index &&
                     count < LatestCanSlots::kMaxSlots) {
                     ids[count++] = filter.id;
@@ -359,7 +359,7 @@ bool CanDispatch(Core& core, const Actions& actions, uint64_t now) {
             continue;
         }
         const uint64_t deadline = std::min(
-            batch.deadline_us, now + dust::can_profile::kCommandTimeoutUs);
+            batch.deadline_us, now + can_profile::kCommandTimeoutUs);
         source_deadlines[source] = deadline;
         for (unsigned i = 0; i < batch.count; ++i) {
             if (!buses[batch.frames[i].bus].transmit.Push(
@@ -372,4 +372,4 @@ bool CanDispatch(Core& core, const Actions& actions, uint64_t now) {
     return true;
 }
 
-}  // namespace dust::ecat
+}  // namespace ecat

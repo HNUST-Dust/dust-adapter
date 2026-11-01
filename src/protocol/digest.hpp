@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-namespace dust::ecat::detail {
+namespace ecat::detail {
 constexpr std::array<uint32_t, 256> DigestTable() {
     std::array<uint32_t, 256> table{};
     for (unsigned n = 0; n < table.size(); ++n) {
@@ -21,4 +21,4 @@ inline uint32_t FastDigest(const uint8_t* data, size_t size) {
         crc = (crc >> 8) ^ kDigestTable[(crc ^ data[i]) & 0xff];
     return crc ^ 0xffffffffU;
 }
-} // namespace dust::ecat::detail
+} // namespace ecat::detail

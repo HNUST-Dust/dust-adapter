@@ -5,7 +5,7 @@
 #include <cstdint>
 #include "protocol/protocol.hpp"
 
-namespace dust::ecat {
+namespace ecat {
 // Single-owner cache. A slot is identified by its configured standard CAN ID;
 // overwriting one slot does not displace other IDs or count as a transport drop.
 class LatestCanSlots {
@@ -47,4 +47,4 @@ class LatestCanSlots {
     std::array<Core::CanEvent, kMaxSlots> frames_{};
     std::array<bool, kMaxSlots> valid_{};
 };
-}  // namespace dust::ecat
+}  // namespace ecat

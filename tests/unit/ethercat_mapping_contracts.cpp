@@ -3,7 +3,7 @@
 #include <cstdio>
 
 #include "protocol/pdo_dictionary.hpp"
-using namespace dust::ecat;
+using namespace ecat;
 int main() {
     PdoDictionary dictionary;
     ImageLayout rx, tx;

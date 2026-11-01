@@ -6,8 +6,8 @@
 #include "protocol.hpp"
 #include "pdo_schema.hpp"
 
-namespace dust::ecat {
-namespace pdo = dust::pdo;
+namespace ecat {
+namespace pdo = pdo;
 uint16_t U16(const uint8_t* p) {
     return uint16_t(p[0]) | uint16_t(p[1]) << 8;
 }
@@ -153,7 +153,7 @@ void NoteRegion(Layout& l, uint16_t object, uint16_t offset) {
 }
 bool Image(const Configuration& c, Layout& l, bool tx, Signature* signature) {
     Builder b(tx ? l.tx : l.rx, tx ? 0x1a00 : 0x1600, signature);
-    dust::pdo::Config cfg;
+    pdo::Config cfg;
     cfg.can_tx = c.can_tx;
     cfg.can_rx = c.can_rx;
     for (unsigned i = 0; i < 6; ++i) {
@@ -170,9 +170,9 @@ bool Image(const Configuration& c, Layout& l, bool tx, Signature* signature) {
         b.Emit(object, name, bits);
     };
     if (tx) {
-        dust::pdo::WalkTx(cfg, emit);
+        pdo::WalkTx(cfg, emit);
     } else {
-        dust::pdo::WalkRx(cfg, emit);
+        pdo::WalkRx(cfg, emit);
     }
     return !b.failed();
 }
@@ -324,4 +324,4 @@ Error DecodeHeader(Bytes image, RxHeader& out) {
     }
     return Error::None;
 }
-}  // namespace dust::ecat
+}  // namespace ecat

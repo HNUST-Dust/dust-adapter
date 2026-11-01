@@ -12,7 +12,7 @@ static uint32_t reference(const uint8_t* p, size_t size) {
     return crc^~0U;
 }
 int main() {
-    using dust::ecat::detail::FastDigest;
+    using ecat::detail::FastDigest;
     const uint8_t known[]="123456789";
     assert(FastDigest(known,9)==0xcbf43926U);
     assert(FastDigest(nullptr,0)==0);

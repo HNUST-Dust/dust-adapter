@@ -2,7 +2,7 @@
 #include <cassert>
 #include "io/can_profile.hpp"
 int main() {
-    namespace p = dust::can_profile;
+    namespace p = can_profile;
     assert(p::kProtectionFrames.size() == 6);
     assert(p::kReceiveFilters.size() == 6);
     assert(p::kProtectOnBoot);

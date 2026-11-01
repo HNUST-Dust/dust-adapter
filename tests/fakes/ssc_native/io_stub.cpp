@@ -3,7 +3,7 @@
 bool native_io_protected = false;
 unsigned native_io_dispatches = 0;
 unsigned native_io_stops = 0;
-namespace dust::ecat {
+namespace ecat {
 bool native_can_frame_enabled = false, native_can_invalid = false;
 bool native_offer_uart = false;
 unsigned native_can_checks = 0;
@@ -53,4 +53,4 @@ void CaptureIo(Core& core, Core::Feedback&, uint64_t now) {
         native_offer_uart = false;
     }
 }
-}  // namespace dust::ecat
+}  // namespace ecat

@@ -7,8 +7,8 @@
 
 #include "protocol/io_policy.hpp"
 #include "platform.hpp"
-using namespace dust::ecat;
-namespace dust::ecat {
+using namespace ecat;
+namespace ecat {
 int AllocateBootIdentity(uint64_t&);
 }
 static device flash{};

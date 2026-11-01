@@ -2,7 +2,7 @@
 #pragma once
 #include "protocol/protocol.hpp"
 
-namespace dust::ecat {
+namespace ecat {
 // 对应 CoE expedited SDO；完整访问由 SSC 适配层显式拒绝。
 // SSC 适配层必须确保只在 PREOP 调用 Write。Freeze 后直到回到 PREOP
 // 并 Clear 才能重配；本模块不读取 AL 状态。
@@ -45,4 +45,4 @@ struct ProcessMemory {
 // 所有地址按 4 字节对齐。失败时不改写 out。
 Error AllocateProcessMemory(uint32_t begin, uint32_t end, uint16_t rx_bytes,
                             uint16_t tx_bytes, ProcessMemory& out);
-}  // namespace dust::ecat
+}  // namespace ecat

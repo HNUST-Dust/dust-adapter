@@ -7,7 +7,7 @@
 #pragma once
 #include <can_profile_generated.hpp>
 
-namespace dust::can_profile {
+namespace can_profile {
 
 /**
  * @brief 判断通道、标识符和标志是否匹配编译期发送白名单。
@@ -21,4 +21,4 @@ inline bool AllowsTransmit(const CanFrame& record) {
     }
     return false;
 }
-}  // namespace dust::can_profile
+}  // namespace can_profile

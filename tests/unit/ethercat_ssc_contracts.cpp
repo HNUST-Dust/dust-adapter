@@ -8,7 +8,7 @@
 
 #include "protocol/protocol.hpp"
 #include "ecat/gateway.h"
-namespace dust::ecat {
+namespace ecat {
 extern bool native_can_dirty, native_can_frame_enabled, native_can_invalid, native_offer_uart;
 extern unsigned native_can_checks;
 extern Core::CanEvent native_can_frame;
@@ -50,7 +50,7 @@ uint64_t k_ticks_to_us_floor64(uint64_t value) {
 }
 extern bool native_io_protected;
 extern unsigned native_io_dispatches;
-using namespace dust::ecat;
+using namespace ecat;
 static std::array<uint8_t, 0x3000> esc;
 extern "C" void esc_read(volatile void* out, uint16_t address,
                                    uint16_t count) {
@@ -298,7 +298,7 @@ int main() {
     assert(native_io_dispatches == dispatched + 1);
     // A new CAN snapshot publishes without a new output PDO or IO dispatch.
     const auto previous_publication = U32(bytes + 8);
-    dust::ecat::native_can_dirty = true;
+    ecat::native_can_dirty = true;
     APPL_Application();
     APPL_InputMapping(tx.data());
     assert(U32(bytes + 8) == previous_publication + 1);
@@ -318,7 +318,7 @@ int main() {
     assert(native_pdram_writes == writes + 2);
     // New CAN publication must reach ESC, then idle passes leave bytes/version unchanged.
     writes = native_pdram_writes;
-    dust::ecat::native_can_dirty = true;
+    ecat::native_can_dirty = true;
     APPL_Application();
     WriteMappedInputs();
     assert(native_pdram_writes == writes + 1);
@@ -327,7 +327,7 @@ int main() {
     assert(native_pdram_writes == writes + 2);
     assert(esc == committed_esc);
     // Account for the extra publication made above in the existing sequence checks.
-    dust::ecat::native_can_dirty = true;
+    ecat::native_can_dirty = true;
     gateway_poll();
     APPL_InputMapping(tx.data());
     assert(U32(bytes + 8) == previous_publication + 3);
@@ -337,7 +337,7 @@ int main() {
     assert(native_input_refreshes == 1);
     // Synchronized mode / stopped inputs must not get an out-of-cycle write.
     bEscIntEnabled = true;
-    dust::ecat::native_can_dirty = true;
+    ecat::native_can_dirty = true;
     gateway_poll();
     assert(native_input_refreshes == 1);
     bEscIntEnabled = false;

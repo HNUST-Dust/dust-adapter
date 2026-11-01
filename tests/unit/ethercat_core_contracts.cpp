@@ -8,7 +8,7 @@
 
 #include "protocol/protocol.hpp"
 
-using namespace dust::ecat;
+using namespace ecat;
 #define CHECK(x)                                                              \
     do {                                                                      \
         if (!(x)) {                                                           \

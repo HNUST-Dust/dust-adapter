@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #pragma once
 #include "protocol/protocol.hpp"
-namespace dust::ecat {
+namespace ecat {
 // 周期线程独占；ISR 接收队列由平台提供，不得调用本容器。
 template <typename T, size_t Depth>
 class IoQueue {
@@ -62,4 +62,4 @@ inline bool NextBootIdentity(uint64_t identity, uint64_t previous,
     }
     return true;
 }
-}  // namespace dust::ecat
+}  // namespace ecat

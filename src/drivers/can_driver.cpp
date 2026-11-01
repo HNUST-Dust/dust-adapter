@@ -8,7 +8,7 @@
 
 #include <drivers/can/hpmicro_mcan_batch.h>
 
-namespace dust::drivers {
+namespace drivers {
 namespace {
 
 struct BusContext {
@@ -162,4 +162,4 @@ bool CanGetState(uint8_t bus, can_state& state_out, can_bus_err_cnt& errors) {
     return can_get_state(state->dev, &state_out, &errors) == 0;
 }
 
-}  // namespace dust::drivers
+}  // namespace drivers

@@ -144,7 +144,7 @@ def header(profile):
 #pragma once
 #include <array>
 #include <cstdint>
-namespace dust::can_profile {
+namespace can_profile {
 struct CanFrame { uint8_t channel; uint8_t length; uint8_t flags; uint32_t id; uint8_t data[8]; };
 struct Bus { uint8_t channel; uint32_t bitrate; };
 struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
@@ -158,7 +158,7 @@ struct Address { uint8_t channel; uint32_t id; uint8_t flags; };
     result += array('kProtectionFrames', 'CanFrame', [
         f'{{{ch}, {length}, {flags}, 0x{can_id:x}U, {{{", ".join(hex(v) for v in data)}}}}}'
         for ch, length, flags, can_id, data in profile['stops']])
-    return result + '} // namespace dust::can_profile\n'
+    return result + '} // namespace can_profile\n'
 
 
 def main():

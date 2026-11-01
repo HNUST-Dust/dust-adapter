@@ -13,7 +13,7 @@ extern "C" {
 #include <hpm_otp_drv.h>
 #include <hpm_soc.h>
 }
-namespace dust::ecat {
+namespace ecat {
 int AllocateBootIdentity(uint64_t& boot) {
     boot = 0;
     static nvs_fs storage{};
@@ -93,4 +93,4 @@ int AllocateBootIdentity(uint64_t& boot) {
     boot = candidate;
     return 0;
 }
-}  // namespace dust::ecat
+}  // namespace ecat

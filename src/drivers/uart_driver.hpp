@@ -11,7 +11,7 @@
 
 #include <zephyr/device.h>
 
-namespace dust::drivers {
+namespace drivers {
 
 enum class UartEventType {
     RxBlock,
@@ -40,6 +40,6 @@ int UartTransmit(uint8_t port, const uint8_t* data, size_t length,
                  uint32_t timeout_us);
 int UartAbort(uint8_t port);
 
-}  // namespace dust::drivers
+}  // namespace drivers
 
 #endif /* DRIVERS_UART_DRIVER_HPP_ */

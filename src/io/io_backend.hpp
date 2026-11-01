@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #pragma once
 #include "protocol/protocol.hpp"
-namespace dust::ecat {
+namespace ecat {
 // 仅由 FreeRun 周期线程调用。初始化含启动保护及 NVS 启动计数提交，不在 ISR
 // 调用。
 int InitializeIo(uint64_t& boot);
@@ -20,4 +20,4 @@ void CaptureCanFeedback(Core::Feedback& feedback);
 // service 高频检查截止时间/故障；capture 在常规发布时采样 UART 窗口。
 void ServiceIo(Core& core, uint64_t now);
 void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now);
-}  // namespace dust::ecat
+}  // namespace ecat

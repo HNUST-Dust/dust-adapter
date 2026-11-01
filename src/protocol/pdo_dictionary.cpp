@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "protocol/pdo_dictionary.hpp"
 
-namespace dust::ecat {
+namespace ecat {
 PdoDictionary::Object* PdoDictionary::Find(uint16_t index) {
     if (index >= 0x1600 && index < 0x1605) {
         return &mappings_[index - 0x1600];
@@ -158,4 +158,4 @@ Error AllocateProcessMemory(uint32_t begin, uint32_t end, uint16_t rx_bytes,
            used_end};
     return Error::None;
 }
-}  // namespace dust::ecat
+}  // namespace ecat

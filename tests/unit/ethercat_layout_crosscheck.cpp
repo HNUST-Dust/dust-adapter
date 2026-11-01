@@ -9,7 +9,7 @@
 #include "hardware/ethercat/pdo_config.hpp"
 #include "hardware/ethercat/wire.hpp"
 
-namespace slave = dust::ecat;
+namespace slave = ecat;
 namespace host = dust_control::ethercat;
 static void Compare(const slave::ImageLayout& a,
                     const host::ProcessImageLayout& b) {

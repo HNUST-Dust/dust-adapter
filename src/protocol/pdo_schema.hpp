@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <cstdio>
 
-namespace dust::pdo {
+namespace pdo {
 inline constexpr uint16_t kAbiMajor = 5;
 inline constexpr uint16_t kAbiMinor = 0;
 
@@ -389,5 +389,5 @@ void WalkTx(const Config& c, F&& emit) {
         emit(0x3040, "diagnostics.status_value2", 32);
 }
 
-}  // namespace dust::pdo
+}  // namespace pdo
 

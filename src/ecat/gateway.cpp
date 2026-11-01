@@ -22,7 +22,7 @@ extern "C" {
 }
 
 namespace {
-using namespace dust::ecat;
+using namespace ecat;
 #if defined(CONFIG_ECAT_GATEWAY_DIAG)
 // 仅在 AL 状态切换/配置被拒时打印，频率很低，适合台架定位启动问题。
 #define GW_DIAG(...) printk(__VA_ARGS__)

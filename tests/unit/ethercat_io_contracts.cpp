@@ -9,7 +9,7 @@
 #include "protocol/io_policy.hpp"
 #include "io/io_backend.hpp"
 #include "platform.hpp"
-using namespace dust::ecat;
+using namespace ecat;
 uint64_t native_now = 1000;
 static void FlushCan() {
 }
@@ -144,14 +144,14 @@ int uart_tx_abort(const device* d) {
 int uart_irq_tx_complete(const device* d) {
     return !uarts[d->index - 4].busy;
 }
-namespace dust::ecat {
+namespace ecat {
 int AllocateBootIdentity(uint64_t& boot) {
     assert(cans[0].batches && cans[3].batches);
     static uint64_t counter = 100;
     boot = ++counter;
     return 0;
 }
-}  // namespace dust::ecat
+}  // namespace ecat
 static void Stage(ConfigurationTransaction& t, const Configuration& c) {
     const uint32_t v[] = {
         c.signature,        c.cycle_us,         c.watchdog_us,

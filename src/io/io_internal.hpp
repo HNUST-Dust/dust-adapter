@@ -17,7 +17,7 @@
 #include "protocol/io_policy.hpp"
 #include "protocol/protocol.hpp"
 
-namespace dust::ecat {
+namespace ecat {
 
 inline uint64_t Now() {
     return k_ticks_to_us_floor64(k_uptime_ticks());
@@ -107,6 +107,6 @@ void UartService(Core& core, uint64_t now);
 void UartCapture(Core& core, Core::Feedback& feedback, uint64_t now);
 bool UartDispatch(Core& core, const Actions& actions, uint64_t now);
 
-}  // namespace dust::ecat
+}  // namespace ecat
 
 #endif /* ECAT_IO_INTERNAL_HPP_ */

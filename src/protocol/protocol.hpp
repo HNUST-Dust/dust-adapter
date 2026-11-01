@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace dust::ecat {
+namespace ecat {
 constexpr uint16_t kAbiMajor = 5;
 constexpr uint16_t kAbiMinor = 0;
 constexpr uint32_t kCycleUs = 1000;  // 默认交换周期；控制器可以独立保持 1 kHz。
@@ -288,4 +288,4 @@ class Core {
     int32_t status_result_ = 0;
     std::array<uint32_t, 3> status_values_{};
 };
-}  // namespace dust::ecat
+}  // namespace ecat

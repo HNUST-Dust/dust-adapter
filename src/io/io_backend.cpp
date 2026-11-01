@@ -20,7 +20,7 @@
 extern "C" void imu_heater_observe(float temperature_c);
 #endif
 
-namespace dust::ecat {
+namespace ecat {
 
 int AllocateBootIdentity(uint64_t& boot);
 
@@ -79,7 +79,7 @@ void EnterActive(Core& core, uint64_t now) {
     for (unsigned source = 0; source < 2; ++source) {
         source_deadlines[source] =
             core.active_sources() & (1U << source)
-                ? now + dust::can_profile::kCommandTimeoutUs
+                ? now + can_profile::kCommandTimeoutUs
                 : 0;
     }
     capturing = true;
@@ -101,9 +101,9 @@ int InitializeIo(uint64_t& boot) {
             CanPump(nullptr, Now());
             return error;
         };
-        for (const auto& address : dust::can_profile::kTransmitAddresses) {
+        for (const auto& address : can_profile::kTransmitAddresses) {
             bool protected_address = false;
-            for (const auto& stop : dust::can_profile::kProtectionFrames) {
+            for (const auto& stop : can_profile::kProtectionFrames) {
                 protected_address |= stop.channel == address.channel &&
                                      stop.id == address.id &&
                                      stop.flags == address.flags;
@@ -112,14 +112,14 @@ int InitializeIo(uint64_t& boot) {
                 return fail(-EACCES);
             }
         }
-        if (dust::can_profile::kCommandTimeoutUs > kTimeoutUs) {
+        if (can_profile::kCommandTimeoutUs > kTimeoutUs) {
             return fail(-EINVAL);
         }
         int result = CanInitialize();
         if (result) {
             return fail(result);
         }
-        if (dust::can_profile::kProtectOnBoot) {
+        if (can_profile::kProtectOnBoot) {
             Stop(nullptr, Error::State);
             // 先把启动保护交给硬件，再初始化 UART / 持久计数。
             CanPump(nullptr, Now());
@@ -183,8 +183,8 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
         if (target == 0 && !channel) {
             if (!page) {
                 values = {uint32_t(core.state()),
-                          dust::can_profile::kProtectionSignature,
-                          dust::can_profile::kCommandTimeoutUs};
+                          can_profile::kProtectionSignature,
+                          can_profile::kCommandTimeoutUs};
             } else if (page == 1) {
                 values = {protection_errors, uint32_t(ready),
                           uint32_t(initialized)};
@@ -284,4 +284,4 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
 #endif
 }
 
-}  // namespace dust::ecat
+}  // namespace ecat

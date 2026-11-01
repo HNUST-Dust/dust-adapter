@@ -12,7 +12,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/can.h>
 
-namespace dust::drivers {
+namespace drivers {
 
 struct CanFrame {
     uint32_t id = 0;
@@ -54,6 +54,6 @@ void CanStopController(uint8_t bus);
 
 bool CanGetState(uint8_t bus, can_state& state, can_bus_err_cnt& errors);
 
-}  // namespace dust::drivers
+}  // namespace drivers
 
 #endif /* DRIVERS_CAN_DRIVER_HPP_ */

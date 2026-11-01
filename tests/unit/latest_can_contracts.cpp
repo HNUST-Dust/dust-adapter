@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "io/latest_can.hpp"
 int main() {
-    using namespace dust::ecat;
+    using namespace ecat;
     LatestCanSlots slots;
     uint32_t ids[] = {0x201, 0x10, 0x13};
     assert(slots.Configure(ids, 3));
