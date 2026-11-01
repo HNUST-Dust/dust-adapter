@@ -236,8 +236,8 @@ target_sources(app PRIVATE
     # Hardware drivers
     "${DUST_ADAPTER_ROOT}/src/drivers/uart_receive.cpp"
     "${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
-    "${DUST_ADAPTER_ROOT}/src/drivers/can/can_driver.cpp"
-    "${DUST_ADAPTER_ROOT}/src/drivers/uart/uart_driver.cpp"
+    "${DUST_ADAPTER_ROOT}/src/drivers/can_driver.cpp"
+    "${DUST_ADAPTER_ROOT}/src/drivers/uart_driver.cpp"
 
     # EtherCAT ESC and PHY
     "${DUST_ADAPTER_ROOT}/src/ecat/esc_regs.c"

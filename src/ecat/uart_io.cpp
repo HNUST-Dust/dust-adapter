@@ -4,7 +4,7 @@
 
 #include "ecat/io_internal.hpp"
 
-#include "drivers/uart/uart_driver.hpp"
+#include "drivers/uart_driver.hpp"
 
 #include <algorithm>
 #include <cerrno>

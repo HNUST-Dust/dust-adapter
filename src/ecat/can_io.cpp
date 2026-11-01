@@ -4,7 +4,7 @@
 
 #include "ecat/io_internal.hpp"
 
-#include "drivers/can/can_driver.hpp"
+#include "drivers/can_driver.hpp"
 #include "ecat/can_profile.hpp"
 
 #include <algorithm>

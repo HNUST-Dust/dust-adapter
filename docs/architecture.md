@@ -61,8 +61,8 @@
 | `src/ecat/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
 | `src/ecat/runtime.c` + `runtime.h` | SSC/网关生命周期（启动、reset、rearm、poll/MainLoop 步进）与 `stack_ready` 状态 |
 | `src/drivers/` | 板级驱动：PWM、蜂鸣器、IMU、加热 PID，以及与 EtherCAT 无关的硬件层 |
-| `src/drivers/can/` | CAN 硬件驱动：设备/位率/过滤器、原始帧收发、abort 与状态 |
-| `src/drivers/uart/` | UART 硬件驱动：端口配置、接收缓冲/idle、原始块收发与 abort；`uart_receive.*` 为其内部实现 |
+| `src/drivers/can_driver.*` | CAN 硬件驱动：设备/位率/过滤器、原始帧收发、abort 与状态 |
+| `src/drivers/uart_driver.*` | UART 硬件驱动：端口配置、接收缓冲/idle、原始块收发与 abort；`uart_receive.*` 为其内部实现 |
 | `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/sampleappl.h` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 
 ## 启动与主循环

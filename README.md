@@ -77,8 +77,8 @@ dust-adapter/
 │   │   ├── uart_io.cpp          # UART 端口后端
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
 │   └── drivers/          # 板级与硬件驱动
-│       ├── can/          # CAN 硬件驱动（无协议依赖）
-│       ├── uart/         # UART 硬件驱动（无协议依赖）
+│       ├── can_driver.*  # CAN 硬件驱动（无协议依赖）
+│       ├── uart_driver.* # UART 硬件驱动（无协议依赖）
 │       └── ...           # PWM、蜂鸣器、IMU、加热等
 ├── tests/                # 原生合约测试与硬件探针固件
 ├── tools/                # 配置/ESI/schema 生成与文档检查

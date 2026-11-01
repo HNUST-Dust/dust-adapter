@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include "drivers/can/can_driver.hpp"
+#include "drivers/can_driver.hpp"
 
 #include <array>
 #include <cerrno>
