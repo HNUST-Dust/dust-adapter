@@ -227,6 +227,8 @@ target_sources(app PRIVATE
     # EtherCAT slave implementation
     "${DUST_ADAPTER_ROOT}/src/ecat/gateway.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/io_backend.cpp"
+    "${DUST_ADAPTER_ROOT}/src/ecat/can_io.cpp"
+    "${DUST_ADAPTER_ROOT}/src/ecat/uart_io.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/boot_identity.cpp"
 
     # Hardware drivers

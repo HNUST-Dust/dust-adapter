@@ -69,6 +69,9 @@ dust-adapter/
 │   │   ├── sii.c/h              # SII 镜像与 EEPROM 模拟
 │   │   ├── esc_boot.c           # ESC/PHY/SII 启动与 FreeRun 启停
 │   │   ├── runtime.c/h          # SSC/网关生命周期
+│   │   ├── io_backend.cpp       # IO 后端 facade
+│   │   ├── can_io.cpp           # CAN 总线后端
+│   │   ├── uart_io.cpp          # UART 端口后端
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
 │   └── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
 ├── tests/                # 原生合约测试与硬件探针固件

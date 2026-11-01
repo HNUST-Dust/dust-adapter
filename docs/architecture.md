@@ -46,7 +46,10 @@
 | `src/protocol/io_policy.hpp` | 无堆的有界队列、命令过期与启动身份推导 |
 | `src/protocol/pdo_schema.hpp` | 由 schema 生成的字段偏移与 Walk（勿手改） |
 | `src/ecat/gateway.cpp` | SSC 对象字典、PDO/AL 回调、核心生命周期与重新接入 |
-| `src/ecat/io_backend.cpp` | CAN/UART 队列与批次收发、白名单、本地保护、状态查询 |
+| `src/ecat/io_backend.cpp` | IO 后端 facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
+| `src/ecat/can_io.cpp` | CAN 总线：中断接收队列、批次发送、保护帧、反馈快照与状态 |
+| `src/ecat/uart_io.cpp` | UART 端口：中断/DMA 接收队列、异步发送、窗口状态与快照 |
+| `src/ecat/io_internal.hpp` | 三个 IO 实现文件共享的内部类型与状态（不对外暴露） |
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
 | `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
