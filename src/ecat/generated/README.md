@@ -10,3 +10,19 @@ https://www.beckhoff.com/media/downloads/slave-stack-code/ethercat_ssc_license.p
 
 `import_hashes.json` records the imported files before this README was added.
 No change to the SSC configuration or application behavior is made by adding CI.
+
+## 来源与更新方式
+
+本目录是 Beckhoff SSC 5.13 工具（ET9300 Project Handler）针对本从站工程导出的
+配置后源码集合，随仓库提交；构建期不再调用 SSC 工具重新生成。
+
+- `ecat_def.h`、`objdef.c/h`、`eeprom.h` 包含本工程的 SSC 配置、对象字典与 SII
+  导出结果（`eeprom.h` 由 ESI XML 生成，`ecat_def.h` 的定义已由 ET9300 Project
+  Handler 求值）。
+- `ecatslv.c/h`、`ecatappl.c/h`、`ecatcoe.c/h`、`coeappl.c/h`、`mailbox.c/h`、
+  `sdoserv.c/h`、`esc.h` 是 SSC 5.13 栈实现文件，随工具工程一起导出，不要手改。
+- `sampleappl.c/h` 是 SSC 示例应用；构建时由
+  `src/ecat/appl_interfaces/sampleappl.h` 与仓库自有回调替换，不参与编译。
+
+升级或重新配置 SSC 工程时，必须通过 `tools/import_ssc.py` 受控导入，并更新
+`import_hashes.json`；不要直接编辑本目录中的文件。

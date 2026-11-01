@@ -26,6 +26,8 @@
 
 - `src/protocol/pdo_schema.hpp`：由 `tools/generate_pdo_schema.py` 从
   `config/pdo_schema.yaml` 生成，固件与主机共用同一份字段定义，不手改。
+- `src/ecat/generated/`：SSC 5.13 工具导出的配置后工程源码与授权栈实现，
+  构建期不重新生成，只能通过 `tools/import_ssc.py` 受控更新（详见其 README）。
 - `config/esi/DUST_HPM5E31_Gateway.xml`：由
   `tools/generate_gateway_esi.py` 从 `config/ethercat_gateway.json` 生成并归档，
   与构建期 SII 同源。
