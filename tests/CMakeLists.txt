@@ -201,6 +201,8 @@ dust_add_test(buzzer_contracts buzzer_contracts)
 add_executable(io_contracts
     "${UNIT_DIR}/ethercat_io_contracts.cpp" "${SRC_DIR}/ecat/io_backend.cpp"
     "${SRC_DIR}/ecat/can_io.cpp" "${SRC_DIR}/ecat/uart_io.cpp"
+    "${SRC_DIR}/drivers/can/can_driver.cpp"
+    "${SRC_DIR}/drivers/uart/uart_driver.cpp"
     "${SRC_DIR}/drivers/uart_receive.cpp" "${SRC_DIR}/protocol/core.cpp"
     "${SRC_DIR}/protocol/layout.cpp")
 target_include_directories(io_contracts PRIVATE

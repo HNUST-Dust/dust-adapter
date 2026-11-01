@@ -4,6 +4,8 @@
 
 #include "ecat/io_internal.hpp"
 
+#include "drivers/uart/uart_driver.hpp"
+
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
@@ -17,43 +19,49 @@ UartPort ports[] = {{DEVICE_DT_GET(DT_ALIAS(dust_uart_1)), 0},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_5)), 4},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_6)), 5}};
 
-__nocache __aligned(4) uint8_t rx_buffers[6][2][128];
-__nocache __aligned(4) uint8_t tx_buffers[6][512];
 atomic_t capture_epoch{};
 uint32_t epoch = 0;
 
 namespace {
-void UartEvent(const device* dev, uart_event* event, void* user) {
-    auto& port = *static_cast<UartPort*>(user);
-    switch (event->type) {
-        case UART_TX_DONE:
-        case UART_TX_ABORTED:
-            if (event->type == UART_TX_DONE) {
-                atomic_inc(&port.completed);
-                atomic_clear(&port.cancelling);
-            } else if (!atomic_cas(&port.cancelling, 1, 0)) {
+void UartEvent(void*, uint8_t port_index, drivers::UartEventType type,
+               const uint8_t* data, size_t length) {
+    auto& port = ports[port_index];
+    switch (type) {
+        case drivers::UartEventType::TxDone:
+            atomic_inc(&port.completed);
+            atomic_clear(&port.cancelling);
+            atomic_clear(&port.busy);
+            break;
+        case drivers::UartEventType::TxAborted:
+            if (!atomic_cas(&port.cancelling, 1, 0)) {
                 atomic_inc(&port.errors);
                 atomic_set(&port.fault, 1);
             }
             atomic_clear(&port.busy);
             break;
-        case UART_RX_RDY: {
+        case drivers::UartEventType::RxGap:
+            atomic_set(&port.gap, 1);
+            atomic_inc(&port.drops);
+            break;
+        case drivers::UartEventType::RxFault:
+            atomic_set(&port.fault, 1);
+            break;
+        case drivers::UartEventType::RxBlock: {
             const uint32_t current = atomic_get(&capture_epoch);
-            if (!current || !event->data.rx.len) {
+            if (!current || !length) {
                 break;
             }
             UartBlock block;
             block.epoch = current;
             block.captured = uint32_t(Now());
-            if (event->data.rx.len > block.data.size()) {
+            if (length > block.data.size()) {
                 atomic_inc(&port.drops);
                 atomic_set(&port.gap, 1);
                 break;
             }
-            block.size = event->data.rx.len;
+            block.size = uint16_t(length);
             block.discontinuity = atomic_get(&port.gap) != 0;
-            std::memcpy(block.data.data(),
-                        event->data.rx.buf + event->data.rx.offset, block.size);
+            std::memcpy(block.data.data(), data, length);
             atomic_inc(&port.received);
             if (k_msgq_put(&port.receive, &block, K_NO_WAIT)) {
                 atomic_inc(&port.drops);
@@ -63,58 +71,21 @@ void UartEvent(const device* dev, uart_event* event, void* user) {
             }
             break;
         }
-        case UART_RX_BUF_REQUEST: {
-            const unsigned next = port.next_buffer;
-            port.next_buffer ^= 1;
-            if (uart_rx_buf_rsp(dev, rx_buffers[port.index][next], 128)) {
-                atomic_set(&port.gap, 1);
-                atomic_inc(&port.drops);
-            }
-            break;
-        }
-        case UART_RX_STOPPED:
-            atomic_set(&port.gap, 1);
-            atomic_inc(&port.drops);
-            break;
-        case UART_RX_DISABLED:
-            port.next_buffer = 1;
-            if (uart_rx_enable(dev, rx_buffers[port.index][0], 128, 200)) {
-                atomic_set(&port.fault, 1);
-            }
-            break;
-        default:
-            break;
     }
 }
 }  // namespace
 
 int UartInitialize() {
-    for (auto& port : ports) {
-        if (!device_is_ready(port.dev)) {
-            return -ENODEV;
-        }
-        if (port.index == 4) {
-            uart_config config{};
-            int result = uart_config_get(port.dev, &config);
-            if (result) {
-                return result;
-            }
-            config.parity = UART_CFG_PARITY_EVEN;
-            config.stop_bits = UART_CFG_STOP_BITS_2;
-            result = uart_configure(port.dev, &config);
-            if (result) {
-                return result;
-            }
-        }
-        // HPM 原生 idle 计数上限 255 bit；921600 baud 下 200 us 为 185 bit。
-        // UART 是字节流，缩短分块间隔不改变上层帧协议。
-        int result = platform::StartUartReceive(port.dev, UartEvent, &port,
-                                                rx_buffers[port.index][0], 128,
-                                                200);
-        if (result) {
-            return result;
-        }
-        port.ready = true;
+    drivers::UartPortConfig configs[6]{};
+    for (size_t i = 0; i < 6; ++i) {
+        configs[i] = {ports[i].dev, ports[i].index, ports[i].index == 4};
+    }
+    const int result = drivers::UartInit(configs, 6, UartEvent, nullptr);
+    if (result) {
+        return result;
+    }
+    for (size_t i = 0; i < 6; ++i) {
+        ports[i].ready = drivers::UartReady(ports[i].index);
     }
     return 0;
 }
@@ -127,7 +98,7 @@ void UartStop() {
         k_msgq_purge(&port.receive);
         if (port.ready && atomic_get(&port.busy)) {
             atomic_set(&port.cancelling, 1);
-            if (uart_tx_abort(port.dev)) {
+            if (drivers::UartAbort(port.index)) {
                 atomic_clear(&port.cancelling);
                 ++protection_errors;
             }
@@ -179,7 +150,8 @@ void UartService(Core& core, uint64_t now) {
             core.Protect(Error::Transport);
             return;
         }
-        if (atomic_get(&port.busy) || !platform::UartTransmitIdle(port.dev)) {
+        if (atomic_get(&port.busy) ||
+            !drivers::UartTransmitIdle(port.index)) {
             if (now - port.started >= kTimeoutUs) {
                 core.Protect(Error::UartTimeout);
                 return;
@@ -194,11 +166,10 @@ void UartService(Core& core, uint64_t now) {
             core.Protect(Error::UartTimeout);
             return;
         }
-        std::memcpy(tx_buffers[port.index], write->data.data(), write->size);
         port.started = now;
         atomic_set(&port.busy, 1);
-        const int result =
-            uart_tx(port.dev, tx_buffers[port.index], write->size, kTimeoutUs);
+        const int result = drivers::UartTransmit(port.index, write->data.data(),
+                                                 write->size, kTimeoutUs);
         if (result) {
             atomic_clear(&port.busy);
             core.Protect(Error::Transport);

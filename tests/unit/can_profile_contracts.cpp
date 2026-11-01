@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include <cassert>
-#include "drivers/firmware_can_profile.hpp"
+#include "ecat/can_profile.hpp"
 int main() {
     namespace p = dust::can_profile;
     assert(p::kProtectionFrames.size() == 6);

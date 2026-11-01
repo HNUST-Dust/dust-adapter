@@ -76,7 +76,10 @@ dust-adapter/
 │   │   ├── can_io.cpp           # CAN 总线后端
 │   │   ├── uart_io.cpp          # UART 端口后端
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
-│   └── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
+│   └── drivers/          # 板级与硬件驱动
+│       ├── can/          # CAN 硬件驱动（无协议依赖）
+│       ├── uart/         # UART 硬件驱动（无协议依赖）
+│       └── ...           # PWM、蜂鸣器、IMU、加热等
 ├── tests/                # 原生合约测试与硬件探针固件
 ├── tools/                # 配置/ESI/schema 生成与文档检查
 └── west.yml              # West manifest

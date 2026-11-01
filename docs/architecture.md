@@ -50,8 +50,8 @@
 | `src/ecat/gateway_ssc.cpp` | SSC `APPL_*` 回调：AL 状态切换、PDO 映射/拷贝、周期应用入口 |
 | `src/ecat/gateway_internal.hpp` | 三个 gateway 实现文件共享的内部类型与状态（不对外暴露） |
 | `src/ecat/io_backend.cpp` | IO 后端 facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
-| `src/ecat/can_io.cpp` | CAN 总线：中断接收队列、批次发送、保护帧、反馈快照与状态 |
-| `src/ecat/uart_io.cpp` | UART 端口：中断/DMA 接收队列、异步发送、窗口状态与快照 |
+| `src/ecat/can_io.cpp` | CAN 适配层：Core 事件、接收队列、批次 deadline、保护帧、反馈快照与状态 |
+| `src/ecat/uart_io.cpp` | UART 适配层：接收队列、epoch/窗口、超时、状态编码与快照 |
 | `src/ecat/io_internal.hpp` | 三个 IO 实现文件共享的内部类型与状态（不对外暴露） |
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
@@ -60,7 +60,9 @@
 | `src/ecat/sii.c` + `sii.h` | SII 镜像存储与 EEPROM 读/写/reload 响应 |
 | `src/ecat/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
 | `src/ecat/runtime.c` + `runtime.h` | SSC/网关生命周期（启动、reset、rearm、poll/MainLoop 步进）与 `stack_ready` 状态 |
-| `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
+| `src/drivers/` | 板级驱动：PWM、蜂鸣器、IMU、加热 PID，以及与 EtherCAT 无关的硬件层 |
+| `src/drivers/can/` | CAN 硬件驱动：设备/位率/过滤器、原始帧收发、abort 与状态 |
+| `src/drivers/uart/` | UART 硬件驱动：端口配置、接收缓冲/idle、原始块收发与 abort；`uart_receive.*` 为其内部实现 |
 | `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/sampleappl.h` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 
 ## 启动与主循环

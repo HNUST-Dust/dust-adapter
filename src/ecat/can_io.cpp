@@ -4,6 +4,9 @@
 
 #include "ecat/io_internal.hpp"
 
+#include "drivers/can/can_driver.hpp"
+#include "ecat/can_profile.hpp"
+
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
@@ -18,11 +21,11 @@ CanPort buses[] = {{DEVICE_DT_GET(DT_ALIAS(dust_can_0)), 0},
 uint64_t source_deadlines[2]{};
 
 namespace {
-std::array<can_frame, 16> hardware_frames;
+std::array<drivers::CanFrame, 16> hardware_frames;
 std::array<PendingCan, 16> admitted;
 
-void CanDone(const device*, int error, void* user) {
-    auto& bus = *static_cast<CanPort*>(user);
+void CanDone(void*, uint8_t bus_index, int error) {
+    auto& bus = buses[bus_index];
     if (error && error != -ECANCELED && error != -ENETDOWN) {
         atomic_inc(&bus.errors);
         atomic_set(&bus.fault, 1);
@@ -32,20 +35,20 @@ void CanDone(const device*, int error, void* user) {
     atomic_clear(&bus.busy);
 }
 
-void CanReceive(const device*, can_frame* frame, void* user) {
-    auto& bus = *static_cast<CanPort*>(user);
+void CanReceive(void*, uint8_t bus_index, const drivers::CanFrame& frame) {
+    auto& bus = buses[bus_index];
     const uint32_t sequence = bus.rx_sequence++;
     atomic_inc(&bus.received);
-    if (frame->dlc > 8 || frame->flags || frame->id > 0x7ff) {
+    if (frame.length > 8 || frame.id > 0x7ff) {
         atomic_inc(&bus.drops);
         return;
     }
     Core::CanEvent value;
-    value.id = frame->id;
+    value.id = frame.id;
     value.sequence = sequence;
     value.capture_us = uint32_t(Now());
-    value.length = frame->dlc;
-    std::memcpy(value.data.data(), frame->data, frame->dlc);
+    value.length = frame.length;
+    std::memcpy(value.data.data(), frame.data, frame.length);
     int queued = k_msgq_put(&bus.receive, &value, K_NO_WAIT);
     if (queued) {
         Core::CanEvent discarded;
@@ -60,18 +63,12 @@ void CanReceive(const device*, can_frame* frame, void* user) {
 }  // namespace
 
 int CanInitialize() {
+    drivers::CanBusConfig configs[4]{};
+    drivers::CanFilterConfig filters[64]{};
+    size_t bus_count = 0, filter_count = 0;
     for (const auto& configured : dust::can_profile::kBuses) {
         auto& bus = buses[configured.channel];
-        if (!device_is_ready(bus.dev)) {
-            return -ENODEV;
-        }
-        int result = can_set_mode(bus.dev, CAN_MODE_NORMAL);
-        if (!result) {
-            result = can_set_bitrate(bus.dev, configured.bitrate);
-        }
-        if (result) {
-            return result;
-        }
+        configs[bus_count++] = {bus.dev, bus.index, configured.bitrate};
         for (const auto& address : dust::can_profile::kReceiveFilters) {
             if (address.channel != bus.index) {
                 continue;
@@ -79,19 +76,17 @@ int CanInitialize() {
             if (address.flags || address.id > 0x7ff) {
                 return -EINVAL;
             }
-            can_filter filter{};
-            filter.id = address.id;
-            filter.mask = 0x7ff;
-            result = can_add_rx_filter(bus.dev, CanReceive, &bus, &filter);
-            if (result < 0) {
-                return result;
-            }
+            filters[filter_count++] = {bus.index, address.id, 0x7ff};
         }
-        result = can_start(bus.dev);
-        if (result && result != -EALREADY) {
-            return result;
-        }
-        bus.ready = true;
+    }
+    const int result = drivers::CanInit(configs, bus_count, filters,
+                                        filter_count, CanReceive, nullptr);
+    if (result) {
+        return result;
+    }
+    for (size_t i = 0; i < bus_count; ++i) {
+        buses[configs[i].index].ready =
+            drivers::CanReady(configs[i].index);
     }
     return 0;
 }
@@ -105,10 +100,10 @@ void CanStop() {
         if (!bus.ready) {
             continue;
         }
-        if (hpm_mcan_abort_tx(bus.dev, 2000)) {
+        if (drivers::CanAbortTx(bus.index)) {
             ++protection_errors;
             // 撤销未确认时直接停止控制器，不能继续提交业务或假定旧请求已消失。
-            (void)can_stop(bus.dev);
+            drivers::CanStopController(bus.index);
             bus.ready = false;
         }
         atomic_clear(&bus.busy);
@@ -172,17 +167,15 @@ void CanPump(Core* core, uint64_t now) {
             auto& target = hardware_frames[i];
             target = {};
             target.id = admitted[i].frame.id;
-            target.dlc = admitted[i].frame.length;
-            std::memcpy(target.data, admitted[i].frame.data.data(), target.dlc);
+            target.length = admitted[i].frame.length;
+            std::memcpy(target.data, admitted[i].frame.data.data(),
+                        target.length);
         }
         bus.deadline = deadline;
         atomic_set(&bus.busy, 1);
-        const int result =
-            deadline ? hpm_mcan_send_batch_until(
-                           bus.dev, hardware_frames.data(), count, K_NO_WAIT,
-                           deadline, CanDone, &bus)
-                     : hpm_mcan_send_batch(bus.dev, hardware_frames.data(),
-                                           count, K_NO_WAIT, CanDone, &bus);
+        const int result = drivers::CanSendBatch(
+            bus.index, hardware_frames.data(), count, deadline, CanDone,
+            nullptr);
         if (!result) {
             for (unsigned i = 0; i < count; ++i) {
                 bus.transmit.Pop();
@@ -198,7 +191,7 @@ void CanPump(Core* core, uint64_t now) {
                                                        : Error::Transport);
                     return;
                 }
-                (void)can_stop(bus.dev);
+                drivers::CanStopController(bus.index);
                 bus.ready = false;
                 bus.transmit.Clear();
                 ++protection_errors;
@@ -291,7 +284,7 @@ void CanCaptureFeedback(Core::Feedback& feedback) {
                                    uint16_t(bus.feedback_count)};
         can_state state;
         can_bus_err_cnt errors{};
-        if (bus.ready && !can_get_state(bus.dev, &state, &errors)) {
+        if (bus.ready && drivers::CanGetState(bus.index, state, errors)) {
             if (state == CAN_STATE_BUS_OFF) {
                 atomic_set(&bus.fault, 1);
             }
@@ -326,7 +319,8 @@ int CanStatus(unsigned channel, unsigned page,
     if (page == 2) {
         can_state state;
         can_bus_err_cnt errors{};
-        const int result = can_get_state(bus.dev, &state, &errors);
+        const int result =
+            drivers::CanGetState(bus.index, state, errors) ? 0 : -EIO;
         if (!result) {
             values = {uint32_t(state), errors.tx_err_cnt, errors.rx_err_cnt};
         }

@@ -9,14 +9,10 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <drivers/can/hpmicro_mcan_batch.h>
-#include <zephyr/drivers/uart.h>
+#include <zephyr/device.h>
 #include <zephyr/kernel.h>
-#include <zephyr/linker/section_tags.h>
 #include <zephyr/sys/atomic.h>
 
-#include "drivers/firmware_can_profile.hpp"
-#include "drivers/uart_receive.hpp"
 #include "ecat/latest_can.hpp"
 #include "protocol/io_policy.hpp"
 #include "protocol/protocol.hpp"
@@ -71,11 +67,9 @@ struct UartPort {
         cancelling{};
 };
 
-/* can_io.cpp owns the CAN buses, UART module owns the UART ports/buffers. */
+/* can_io.cpp owns the CAN buses, uart_io.cpp owns the UART ports. */
 extern CanPort buses[4];
 extern UartPort ports[6];
-extern uint8_t rx_buffers[6][2][128];
-extern uint8_t tx_buffers[6][512];
 
 /* UART capture epoch (owned by uart_io.cpp). */
 extern atomic_t capture_epoch;

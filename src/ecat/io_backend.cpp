@@ -11,6 +11,7 @@
 #include <zephyr/sys/printk.h>
 
 #include "ecat/io_internal.hpp"
+#include "ecat/can_profile.hpp"
 #if defined(CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW)
 #include "drivers/imu_sensor.hpp"
 #endif

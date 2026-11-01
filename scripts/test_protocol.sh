@@ -6,6 +6,9 @@ root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 support="${DUST_HPM_SUPPORT_DIR:-$root/../hpm_support}"
 build="${DUST_NATIVE_TEST_BUILD_DIR:-$root/build/native_tests}"
 
+echo "== driver boundary =="
+python3 "$root/tools/check_driver_boundary.py"
+
 # ---------------------------------------------------------------------------
 # 本仓库原生测试（tests/CMakeLists.txt + CTest）
 # ---------------------------------------------------------------------------
