@@ -12,7 +12,7 @@
 仓库只有一个固件构建入口：根目录 `CMakeLists.txt` + `prj.conf`，板级覆盖在
 `boards/`，工作区/依赖路径由 `cmake/prepare.cmake` 准备。
 `scripts/build.sh ethercat` 只是 `west build -b dust-hpm5e31` 的封装；
-`src/ecat/generated` 的授权源码与 `src/ecat/appl_interfaces/sampleappl.h` 由 CMake 复制到构建目录
+`src/ecat/generated` 的授权源码与 `src/ecat/sampleappl.h` 由 CMake 复制到构建目录
 `build/<dir>/ssc_gateway` 后编译，不改写第三方源文件。
 
 构建期生成的文件都落在构建目录，不提交：
@@ -49,10 +49,10 @@
 | `src/ecat/io_backend.cpp` | CAN/UART 队列与批次收发、白名单、本地保护、状态查询 |
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
-| `src/ecat/appl_interfaces/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
+| `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
 | `src/ecat/esc_hw.*` | ESC 硬件读写适配；PHY 与 ESC 驱动由 `hpm_support` 提供 |
 | `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
-| `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/appl_interfaces/` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
+| `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/sampleappl.h` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 
 ## 启动与主循环
 

@@ -37,7 +37,7 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
 **不适用** 本仓库的 Apache-2.0，见 [SSC 许可](../src/ecat/generated/README.md)。
 
 构建时 CMake 把 SSC 源码复制到构建目录 `ssc_gateway`，用自有
-`src/ecat/appl_interfaces/sampleappl.h`、应用回调和生成的 `eeprom.h`/SII 替换计数器应用；
+`src/ecat/sampleappl.h`、应用回调和生成的 `eeprom.h`/SII 替换计数器应用；
 原目录不改写，也不编译其 `sampleappl.c`。SSC 约束通过生成的
 `gateway_config.h` 覆盖 `ecat_def.h` 默认值，DC 相关配置在构建期被拒绝。
 

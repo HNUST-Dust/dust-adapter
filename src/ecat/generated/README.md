@@ -22,7 +22,7 @@ No change to the SSC configuration or application behavior is made by adding CI.
 - `ecatslv.c/h`、`ecatappl.c/h`、`ecatcoe.c/h`、`coeappl.c/h`、`mailbox.c/h`、
   `sdoserv.c/h`、`esc.h` 是 SSC 5.13 栈实现文件，随工具工程一起导出，不要手改。
 - `sampleappl.c/h` 是 SSC 示例应用；构建时由
-  `src/ecat/appl_interfaces/sampleappl.h` 与仓库自有回调替换，不参与编译。
+  `src/ecat/sampleappl.h` 与仓库自有回调替换，不参与编译。
 
 升级或重新配置 SSC 工程时，必须通过 `tools/import_ssc.py` 受控导入，并更新
 `import_hashes.json`；不要直接编辑本目录中的文件。`import_ssc.py` 会在导入后自动

@@ -78,9 +78,9 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${SSC_UPSTREAM_H} "${SSC_STAGE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${SSC_UPSTREAM_C} "${SSC_STAGE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${SRC_DIR}/ecat/appl_interfaces/sampleappl.h" "${SSC_STAGE_DIR}/sampleappl.h"
+            "${SRC_DIR}/ecat/sampleappl.h" "${SSC_STAGE_DIR}/sampleappl.h"
     COMMAND "${CMAKE_COMMAND}" -E touch "${SSC_STAMP}"
-    DEPENDS ${SSC_UPSTREAM_C} ${SSC_UPSTREAM_H} "${SRC_DIR}/ecat/appl_interfaces/sampleappl.h"
+    DEPENDS ${SSC_UPSTREAM_C} ${SSC_UPSTREAM_H} "${SRC_DIR}/ecat/sampleappl.h"
     COMMENT "Staging external SSC sources with repository sampleappl.h")
 add_custom_target(dust_ssc_stage DEPENDS "${SSC_STAMP}")
 set_source_files_properties(${SSC_STAGED_C} PROPERTIES GENERATED TRUE)

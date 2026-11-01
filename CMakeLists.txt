@@ -211,7 +211,7 @@ endforeach()
 
 # Use the project's custom SSC application interface
 configure_file(
-    "${DUST_ADAPTER_ROOT}/src/ecat/appl_interfaces/sampleappl.h"
+    "${DUST_ADAPTER_ROOT}/src/ecat/sampleappl.h"
     "${SSC_GATEWAY_DIR}/sampleappl.h"
     COPYONLY
 )
