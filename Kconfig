@@ -10,59 +10,59 @@ config WBR_CONTROL_ONBOARD_IMU_SPI_FREQUENCY_HZ
     range 100000 24000000
     depends on WBR_CONTROL_ONBOARD_IMU_RAW
 
-config DUST_DMA_BUFFER_ALIGNMENT
+config DMA_BUFFER_ALIGNMENT
     int "DMA buffer alignment in bytes (power of two)"
     default 4
     range 4 4096
 
-config DUST_BUZZER
+config BUZZER
     bool "Board buzzer on PWM0 channel 1"
     depends on PWM && BOARD_DUST_HPM5E31
     default n
 
-config DUST_BOARD_OUTPUTS
+config BOARD_OUTPUTS
     bool "Board LEDs, buzzer and IMU heater"
     depends on PWM && GPIO
     default n
 
-config DUST_IMU_HEATER_ENABLE
+config IMU_HEATER_ENABLE
     bool "Enable IMU heater output (requires bench tuning)"
-    depends on DUST_BOARD_OUTPUTS
+    depends on BOARD_OUTPUTS
     default n
 
-config DUST_IMU_TARGET_C
+config IMU_TARGET_C
     int "IMU target temperature in Celsius"
     default 45
     range 25 50
 
-config DUST_IMU_HEATER_PERIOD_MS
+config IMU_HEATER_PERIOD_MS
     int "Heater PID control period in milliseconds"
     default 10
     range 1 1000
     help
       Period of the temperature control loop; 10 ms is 100 Hz.
 
-config DUST_IMU_HEATER_KP_MILLI
+config IMU_HEATER_KP_MILLI
     int "Heater proportional gain, multiplied by 1000"
     default 100
     range 0 1000
 
-config DUST_IMU_HEATER_KI_MILLI
+config IMU_HEATER_KI_MILLI
     int "Heater integral gain, multiplied by 1000"
     default 5
     range 0 1000
 
-config DUST_IMU_HEATER_KD_MILLI
+config IMU_HEATER_KD_MILLI
     int "Heater derivative gain, multiplied by 1000"
     default 0
     range 0 1000
 
-config DUST_IMU_HEATER_MAX_PERMILLE
+config IMU_HEATER_MAX_PERMILLE
     int "Maximum heater duty in permille"
     default 1000
     range 0 1000
 
-config DUST_ECAT_INPUT_LATE_REFRESH
+config ECAT_INPUT_LATE_REFRESH
     bool "Refresh pending CAN feedback once immediately before input mapping"
     default n
     help
@@ -71,11 +71,11 @@ config DUST_ECAT_INPUT_LATE_REFRESH
       fields and preserves the last UART image and window cursor. No recursive
       mapping or extra ESC write is performed. Experimental until board validation.
 
-config DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
+config ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR
     bool "Skip clearing bytes fully overwritten by PDO publication"
     default n
 
-config DUST_ECAT_GATEWAY_DIAG
+config ECAT_GATEWAY_DIAG
     bool "Print gateway AL state transitions and rejected publications"
     default n
     help

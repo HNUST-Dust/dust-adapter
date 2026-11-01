@@ -28,7 +28,7 @@ CAN/UART 后端、启动身份与诊断边界；协议语义见
   因此主站下一次启动可直接重新下载 0x2100，不再需要断电或 ESC 复位。
   rearm 失败时保持 IRQ 屏蔽并停止主循环，需人工处理。会话仍不允许热改
   （Ready/Active/Protected 下 `0x2100` 写入会被拒绝），rearm 只发生在会话结束后的安全上下文。
-- `CONFIG_DUST_ECAT_GATEWAY_DIAG`（`prj.conf` 默认开启，台架用）会在
+- `CONFIG_ECAT_GATEWAY_DIAG`（`prj.conf` 默认开启，台架用）会在
   PREOP/SAFEOP/OP 回调与 Publish/Process 被拒时打印原因，每次初始化最多 16 条，
   正常周期运行不刷屏。
 - 板上 UART5 只有 RX，因此逻辑通道 5 的 `tx_bytes` 必须为 0。

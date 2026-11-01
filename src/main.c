@@ -6,7 +6,7 @@
 #include "drivers/buzzer.h"
 #include "ecat/runtime.h"
 
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
 extern int imu_heater_init(void);
 #endif
 
@@ -15,7 +15,7 @@ int main(void) {
         return 0;
     }
 
-#if defined(CONFIG_DUST_BUZZER)
+#if defined(CONFIG_BUZZER)
     const int buzzer_rc = buzzer_init();
     if (buzzer_rc) {
         printk("Buzzer init failed: %d\n", buzzer_rc);
@@ -32,7 +32,7 @@ int main(void) {
         return 0;
     }
 
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
     /* Start the PID only after the IMU is sampling, so a slow first sample
      * cannot latch the heater fault. */
     const int heater_rc = imu_heater_init();

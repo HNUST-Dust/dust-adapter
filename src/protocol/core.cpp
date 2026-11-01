@@ -436,7 +436,7 @@ Error Core::Publish(MutableBytes image, uint64_t now,
         return invalid(Error::State);
     }
     auto clear = [&](unsigned from, unsigned to) {
-#if defined(CONFIG_DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR)
+#if defined(CONFIG_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR)
         // Header bytes0..(size-1) and the entire diagnostics block are
         // overwritten on every successful publication. Keep reserved/payload
         // clearing between them.

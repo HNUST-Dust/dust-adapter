@@ -19,7 +19,7 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
 - 一次已进入 SAFEOP/OP 的会话结束后，主循环在安全上下文重建网关
   （新 boot_id、清空映射/判据/过程影像），主站下一次启动可直接重新配置
   `0x2100`，不需要断电或 ESC 复位。
-- 可选 `CONFIG_DUST_ECAT_GATEWAY_DIAG` 在 PREOP/SAFEOP/OP 回调与发布被拒时打印
+- 可选 `CONFIG_ECAT_GATEWAY_DIAG` 在 PREOP/SAFEOP/OP 回调与发布被拒时打印
   原因，每次初始化限流，正常周期不刷屏。
 
 ## 边界

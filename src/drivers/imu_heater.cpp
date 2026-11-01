@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "drivers/imu_heater.hpp"
 
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
@@ -42,11 +42,11 @@ void UpdateHeater(k_work*) {
     }
     float duty = 0;
     if (fresh) {
-        duty = controller.Update(measured, CONFIG_DUST_IMU_TARGET_C,
+        duty = controller.Update(measured, CONFIG_IMU_TARGET_C,
                                  float(now - previous_ms) / 1000.0f);
     }
     previous_ms = now;
-#if !defined(CONFIG_DUST_IMU_HEATER_ENABLE)
+#if !defined(CONFIG_IMU_HEATER_ENABLE)
     duty = 0;
 #endif
     if (board_pwm_set(&heater, uint32_t(heater.period * duty))) {
@@ -55,14 +55,14 @@ void UpdateHeater(k_work*) {
     }
     atomic_set(&heater_fault, controller.Faulted());
     k_work_reschedule(&heater_work,
-                      K_MSEC(CONFIG_DUST_IMU_HEATER_PERIOD_MS));
+                      K_MSEC(CONFIG_IMU_HEATER_PERIOD_MS));
 }
 }  // namespace
 #endif
 
 namespace platform {
 int InitializeImuHeater() {
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
     if (!pwm_is_ready_dt(&heater)) {
         return -ENODEV;
     }
@@ -78,18 +78,18 @@ int InitializeImuHeater() {
     if (rc) {
         return rc;
     }
-    controller.kp = CONFIG_DUST_IMU_HEATER_KP_MILLI / 1000.0f;
-    controller.ki = CONFIG_DUST_IMU_HEATER_KI_MILLI / 1000.0f;
-    controller.kd = CONFIG_DUST_IMU_HEATER_KD_MILLI / 1000.0f;
-    controller.max_duty = CONFIG_DUST_IMU_HEATER_MAX_PERMILLE / 1000.0f;
+    controller.kp = CONFIG_IMU_HEATER_KP_MILLI / 1000.0f;
+    controller.ki = CONFIG_IMU_HEATER_KI_MILLI / 1000.0f;
+    controller.kd = CONFIG_IMU_HEATER_KD_MILLI / 1000.0f;
+    controller.max_duty = CONFIG_IMU_HEATER_MAX_PERMILLE / 1000.0f;
     boot_ms = previous_ms = k_uptime_get();
     k_work_reschedule(&heater_work,
-                      K_MSEC(CONFIG_DUST_IMU_HEATER_PERIOD_MS));
+                      K_MSEC(CONFIG_IMU_HEATER_PERIOD_MS));
 #endif
     return 0;
 }
 void ObserveImuTemperature(float temperature_c) {
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
     k_mutex_lock(&temperature_mutex, K_FOREVER);
     temperature = temperature_c;
     sample_ms = k_uptime_get();
@@ -98,7 +98,7 @@ void ObserveImuTemperature(float temperature_c) {
 #endif
 }
 bool ImuHeaterFaulted() {
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
     return atomic_get(&heater_fault) != 0;
 #else
     return false;

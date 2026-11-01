@@ -380,7 +380,7 @@ int main() {
     };
     ArmFreshGateway();
     WriteMappedInputs(); WriteMappedInputs();
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+#if defined(CONFIG_ECAT_INPUT_LATE_REFRESH)
     // Publish a real UART block, then deliver CAN after the normal application snapshot.
     native_offer_uart = true;
     Put32(request + 8, 2);
@@ -445,7 +445,7 @@ int main() {
     APPL_Application();
     WriteMappedInputs();
     assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+#if defined(CONFIG_ECAT_INPUT_LATE_REFRESH)
     ArmFreshGateway();
     WriteMappedInputs();
     native_can_frame_enabled = native_can_invalid = native_can_dirty = true;

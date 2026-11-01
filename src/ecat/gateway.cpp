@@ -23,7 +23,7 @@ extern "C" {
 
 namespace {
 using namespace dust::ecat;
-#if defined(CONFIG_DUST_ECAT_GATEWAY_DIAG)
+#if defined(CONFIG_ECAT_GATEWAY_DIAG)
 // 仅在 AL 状态切换/配置被拒时打印，频率很低，适合台架定位启动问题。
 #define GW_DIAG(...) printk(__VA_ARGS__)
 #else
@@ -75,7 +75,7 @@ const UCHAR kObjectName[] = "DTC1 gateway\0\xff";
 uint64_t Now() {
     return k_ticks_to_us_floor64(k_uptime_ticks());
 }
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+#if defined(CONFIG_ECAT_INPUT_LATE_REFRESH)
 void RefreshCanBeforeMapping() {
     // One bounded checkpoint in the SSC owner; never consume a pending command
     // or advance UART windows, and never invoke PDO_InputMapping recursively.
@@ -560,7 +560,7 @@ extern "C" void APPL_OutputMapping(UINT16* data) {
 extern "C" void APPL_InputMapping(UINT16* data) {
 
     if (mapping_ready) {
-#if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
+#if defined(CONFIG_ECAT_INPUT_LATE_REFRESH)
         RefreshCanBeforeMapping();
 #endif
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);

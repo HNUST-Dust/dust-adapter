@@ -16,10 +16,10 @@ Adapter 负责芯片初始化、DMA 采样、时间戳和用于本地温控的�
   EtherCAT PDO 保留 25 字节原始 SPI 传输和 binary32 温度字段，
   见 [PDO 协议](ethercat-pdo-protocol.md)。
 - 温控：`src/drivers/imu_heater.cpp` 的系统工作队列按
-  `CONFIG_DUST_IMU_HEATER_PERIOD_MS`（默认 10 ms）运行单向加热 PID，
-  目标温度 `CONFIG_DUST_IMU_TARGET_C`（默认 45 ℃）。
+  `CONFIG_IMU_HEATER_PERIOD_MS`（默认 10 ms）运行单向加热 PID，
+  目标温度 `CONFIG_IMU_TARGET_C`（默认 45 ℃）。
   超过 200 ms 没有新温度样本即判故障并停止加热；
-  `CONFIG_DUST_IMU_HEATER_ENABLE=n` 时只保留观测、占空比固定为 0。
+  `CONFIG_IMU_HEATER_ENABLE=n` 时只保留观测、占空比固定为 0。
 - 编译开关：`CONFIG_WBR_CONTROL_ONBOARD_IMU_RAW=y` 启用采样。
   原始数据与温度是否出现仍由主机 PDO 配置的 `imu` 字段决定。
 

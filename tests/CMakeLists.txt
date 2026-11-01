@@ -146,7 +146,7 @@ foreach(mode reference optimized)
     if(mode STREQUAL "reference")
         set(mode_define DUST_TEST_REFERENCE_DIGEST=1)
     else()
-        set(mode_define CONFIG_DUST_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR=1)
+        set(mode_define CONFIG_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR=1)
     endif()
     add_executable(publish_${mode}
         "${SRC_DIR}/protocol/core.cpp" "${SRC_DIR}/protocol/layout.cpp"
@@ -249,7 +249,7 @@ endif()
 foreach(mode baseline late_refresh)
     set(mode_defines)
     if(mode STREQUAL "late_refresh")
-        list(APPEND mode_defines CONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1)
+        list(APPEND mode_defines CONFIG_ECAT_INPUT_LATE_REFRESH=1)
     endif()
     add_executable(ssc_contracts_${mode}
         "${SRC_DIR}/ecat/gateway.cpp" "${SRC_DIR}/protocol/layout.cpp"

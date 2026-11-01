@@ -16,7 +16,7 @@
 #include "drivers/imu_sensor.hpp"
 #endif
 
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
 extern "C" void imu_heater_observe(float temperature_c);
 #endif
 
@@ -44,7 +44,7 @@ void SampleImu() {
     }
     modules::ImuSensor::Burst burst{};
     if (onboard_imu.TryTakeCompleted(burst)) {
-#if defined(CONFIG_DUST_BOARD_OUTPUTS)
+#if defined(CONFIG_BOARD_OUTPUTS)
         imu_heater_observe(burst.temperature_c);
 #endif
         latest_imu_burst = burst;

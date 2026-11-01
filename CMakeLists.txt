@@ -256,21 +256,21 @@ target_sources(app PRIVATE
 # ==============================================================================
 
 # Shared PWM driver
-if(CONFIG_DUST_BUZZER OR CONFIG_DUST_BOARD_OUTPUTS)
+if(CONFIG_BUZZER OR CONFIG_BOARD_OUTPUTS)
     target_sources(app PRIVATE
         "${DUST_ADAPTER_ROOT}/src/drivers/board_pwm.c"
     )
 endif()
 
 # Buzzer
-if(CONFIG_DUST_BUZZER)
+if(CONFIG_BUZZER)
     target_sources(app PRIVATE
         "${DUST_ADAPTER_ROOT}/src/drivers/buzzer.c"
     )
 endif()
 
 # IMU heater
-if(CONFIG_DUST_BOARD_OUTPUTS)
+if(CONFIG_BOARD_OUTPUTS)
     target_sources(app PRIVATE
         "${DUST_ADAPTER_ROOT}/src/drivers/imu_heater.cpp"
     )

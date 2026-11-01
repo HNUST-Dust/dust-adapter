@@ -57,13 +57,13 @@ constexpr size_t kBurstPayloadSize = 24U;
 constexpr size_t kBurstTransferSize = kBurstPayloadSize + 1U;
 constexpr uint32_t kTransferTimeoutUs = 1500U;
 
-uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+uint8_t __nocache __aligned(CONFIG_DMA_BUFFER_ALIGNMENT)
     g_onboard_imu_tx[kBurstTransferSize];
-uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+uint8_t __nocache __aligned(CONFIG_DMA_BUFFER_ALIGNMENT)
     g_onboard_imu_rx[kBurstTransferSize];
-uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+uint8_t __nocache __aligned(CONFIG_DMA_BUFFER_ALIGNMENT)
     g_onboard_imu_control_tx[2];
-uint8_t __nocache __aligned(CONFIG_DUST_DMA_BUFFER_ALIGNMENT)
+uint8_t __nocache __aligned(CONFIG_DMA_BUFFER_ALIGNMENT)
     g_onboard_imu_control_rx[2];
 
 /**
