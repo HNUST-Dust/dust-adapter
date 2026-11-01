@@ -5,5 +5,5 @@ __pycache__/
 
 /dist/
 
-/src/ssc_dc/
+/src/ecat/generated_dc/
 /.clangd

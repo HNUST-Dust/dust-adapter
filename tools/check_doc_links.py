@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Validate documentation links and repository-relative paths.
 
-Scans README.md, docs/**/*.md, config/README.md, src/ssc/README.md and
+Scans README.md, docs/**/*.md, config/README.md, src/ecat/generated/README.md and
 tests/probes/**/README.md, then checks:
 
 1. Markdown relative link targets exist (http(s), mailto, anchors and absolute
@@ -43,7 +43,7 @@ def markdown_files() -> list[Path]:
     docs = ROOT / "docs"
     if docs.is_dir():
         files.extend(sorted(docs.rglob("*.md")))
-    for relative in ("config/README.md", "src/ssc/README.md"):
+    for relative in ("config/README.md", "src/ecat/generated/README.md"):
         candidate = ROOT / relative
         if candidate.is_file():
             files.append(candidate)

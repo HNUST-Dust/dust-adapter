@@ -67,8 +67,8 @@ add_custom_target(dust_generated_gateway
             "${GEN_DIR}/DUST_HPM5E31_Gateway.xml")
 
 # SSC 上游源码必须复制到暂存目录，才能用仓库自己的 sampleappl.h 覆盖示例头。
-file(GLOB SSC_UPSTREAM_C CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/ssc/*.c")
-file(GLOB SSC_UPSTREAM_H CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/ssc/*.h")
+file(GLOB SSC_UPSTREAM_C CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/ecat/generated/*.c")
+file(GLOB SSC_UPSTREAM_H CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/ecat/generated/*.h")
 set(SSC_STAGED_C "${SSC_STAGE_DIR}/objdef.c" "${SSC_STAGE_DIR}/coeappl.c")
 set(SSC_STAMP "${SSC_STAGE_DIR}/.stamp")
 add_custom_command(
@@ -78,9 +78,9 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${SSC_UPSTREAM_H} "${SSC_STAGE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${SSC_UPSTREAM_C} "${SSC_STAGE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${SRC_DIR}/ecat/ssc/sampleappl.h" "${SSC_STAGE_DIR}/sampleappl.h"
+            "${SRC_DIR}/ecat/appl_interfaces/sampleappl.h" "${SSC_STAGE_DIR}/sampleappl.h"
     COMMAND "${CMAKE_COMMAND}" -E touch "${SSC_STAMP}"
-    DEPENDS ${SSC_UPSTREAM_C} ${SSC_UPSTREAM_H} "${SRC_DIR}/ecat/ssc/sampleappl.h"
+    DEPENDS ${SSC_UPSTREAM_C} ${SSC_UPSTREAM_H} "${SRC_DIR}/ecat/appl_interfaces/sampleappl.h"
     COMMENT "Staging external SSC sources with repository sampleappl.h")
 add_custom_target(dust_ssc_stage DEPENDS "${SSC_STAMP}")
 set_source_files_properties(${SSC_STAGED_C} PROPERTIES GENERATED TRUE)
@@ -231,7 +231,7 @@ endforeach()
 add_library(ssc_upstream OBJECT ${SSC_STAGED_C})
 add_dependencies(ssc_upstream dust_ssc_stage dust_generated_gateway)
 target_include_directories(ssc_upstream PRIVATE
-    "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hw")
+    "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hardware_interfaces")
 target_compile_options(ssc_upstream PRIVATE
     -ffunction-sections -fdata-sections ${DUST_SANITIZER} -fno-omit-frame-pointer
     "-include${FAKES_DIR}/ssc_native/platform.h"
@@ -256,7 +256,7 @@ foreach(mode baseline late_refresh)
         $<TARGET_OBJECTS:ssc_upstream>)
     add_dependencies(ssc_contracts_${mode} dust_ssc_stage dust_generated_gateway)
     target_include_directories(ssc_contracts_${mode} PRIVATE
-        "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hw")
+        "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hardware_interfaces")
     target_compile_definitions(ssc_contracts_${mode} PRIVATE ${mode_defines})
     target_compile_options(ssc_contracts_${mode} PRIVATE
         -fno-exceptions -ffunction-sections -fdata-sections

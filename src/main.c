@@ -16,9 +16,9 @@
 #include "ecatappl.h"
 #include "ecat/gateway.h"
 #include "drivers/buzzer.h"
-#include "ecat/hw/pdi_deferred.h"
+#include "ecat/hardware_interfaces/pdi_deferred.h"
 #include "hpm5e31_phy.h"
-#include "ecat/hw/hpm5e_esc_hw.h"
+#include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
 
 #if defined(CONFIG_DUST_BOARD_OUTPUTS)
 extern int dust_imu_heater_init(void);

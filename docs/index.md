@@ -26,7 +26,7 @@
 
 | 文档 | 说明 |
 |---|---|
-| [源码架构](architecture.md) | `src/main.c`、`src/protocol`、`src/ecat`、`src/drivers`、`src/ssc` 的职责与数据流 |
+| [源码架构](architecture.md) | `src/main.c`、`src/protocol`、`src/ecat`（含 `generated`/`appl_interfaces`/`hardware_interfaces`）、`src/drivers` 的职责与数据流 |
 | [EtherCAT 协议核心](ethercat-protocol-core.md) | 配置事务、状态机、授权期限、UART/反馈/诊断编码 |
 | [PDO 协议](ethercat-pdo-protocol.md) | ABI 5.0 字段级线格式与布局签名 |
 

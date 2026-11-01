@@ -7,8 +7,8 @@ Apache-2.0 unless a file states otherwise.
 Zephyr, HPM support/SDK, CherryUSB and SEGGER are external dependencies
 with their respective licences. They are not relicensed by this repository.
 
-The EtherCAT Slave Stack Code (SSC 5.13) in src/ssc is a separately
+The EtherCAT Slave Stack Code (SSC 5.13) in src/ecat/generated is a separately
 licensed Beckhoff dependency, included for the HPM5E3Y application following
 the repository maintainer's confirmation of chip-vendor authorization.
 Original licence notices are retained in every source file. The root Apache-2.0
-licence does not apply to src/ssc. Refer to the licence linked in its README.
+licence does not apply to src/ecat/generated. Refer to the licence linked in its README.

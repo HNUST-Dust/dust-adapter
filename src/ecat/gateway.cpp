@@ -9,7 +9,7 @@
 
 #include "protocol/pdo_dictionary.hpp"
 #include "gateway_config.h"
-#include "ecat/hw/hpm5e_esc_hw.h"
+#include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
 #include "ecat/io_backend.hpp"
 extern "C" {
 #include "coeappl.h"

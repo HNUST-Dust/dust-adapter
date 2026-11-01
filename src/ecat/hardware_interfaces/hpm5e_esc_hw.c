@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include "ecat/hw/hpm5e_esc_hw.h"
-#include "ecat/hw/pdi_deferred.h"
+#include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
+#include "ecat/hardware_interfaces/pdi_deferred.h"
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>

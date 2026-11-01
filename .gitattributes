@@ -1,2 +1,2 @@
 # Preserve imported vendor formatting and original licence headers.
-src/ssc/* -text -whitespace
+src/ecat/generated/* -text -whitespace

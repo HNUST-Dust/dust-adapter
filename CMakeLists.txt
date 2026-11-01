@@ -20,7 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Licensed EtherCAT Slave Stack Code (SSC 5.13)
 set(DUST_ADAPTER_SSC_DIR
-    "${DUST_ADAPTER_ROOT}/src/ssc"
+    "${DUST_ADAPTER_ROOT}/src/ecat/generated"
     CACHE PATH "Licensed SSC 5.13 generated source directory"
 )
 
@@ -211,7 +211,7 @@ endforeach()
 
 # Use the project's custom SSC application interface
 configure_file(
-    "${DUST_ADAPTER_ROOT}/src/ecat/ssc/sampleappl.h"
+    "${DUST_ADAPTER_ROOT}/src/ecat/appl_interfaces/sampleappl.h"
     "${SSC_GATEWAY_DIR}/sampleappl.h"
     COPYONLY
 )
@@ -225,7 +225,7 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/main.c"
 
     # EtherCAT slave implementation
-    "${DUST_ADAPTER_ROOT}/src/ecat/hw/pdi_deferred.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces/pdi_deferred.c"
     "${DUST_ADAPTER_ROOT}/src/ecat/gateway.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/io_backend.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/boot_identity.cpp"
@@ -235,7 +235,7 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
 
     # EtherCAT ESC and PHY
-    "${DUST_ADAPTER_ROOT}/src/ecat/hw/hpm5e_esc_hw.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces/hpm5e_esc_hw.c"
     "${HPM_PHY_DIR}/hpm5e31_phy.c"
 
     # Generated CAN profile
@@ -277,7 +277,7 @@ endif()
 target_include_directories(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src"
     # 外部 SSC 的 ecatslv.h 直接包含本项目 ESC 硬件适配头。
-    "${DUST_ADAPTER_ROOT}/src/ecat/hw"
+    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces"
     "${SSC_GATEWAY_DIR}"
     "${GENERATED_DIR}"
     "${HPM_PHY_DIR}"
