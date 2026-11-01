@@ -225,7 +225,6 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/main.c"
 
     # EtherCAT slave implementation
-    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces/pdi_deferred.c"
     "${DUST_ADAPTER_ROOT}/src/ecat/gateway.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/io_backend.cpp"
     "${DUST_ADAPTER_ROOT}/src/ecat/boot_identity.cpp"

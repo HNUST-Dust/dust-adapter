@@ -16,7 +16,6 @@
 #include "ecatappl.h"
 #include "ecat/gateway.h"
 #include "drivers/buzzer.h"
-#include "ecat/hardware_interfaces/pdi_deferred.h"
 #include "hpm5e31_phy.h"
 #include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
 
