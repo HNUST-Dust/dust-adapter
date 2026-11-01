@@ -38,7 +38,7 @@ set(SSC_STAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/ssc")
 file(MAKE_DIRECTORY "${GEN_DIR}")
 
 # ---------------------------------------------------------------------------
-# 生成物：CAN profile / 网关 ESI+SII+gateway_config.h / esc_dma.inc / SSC 源码暂存
+# 生成物：CAN profile / 网关 ESI+SII+gateway_config.h / SSC 源码暂存
 # ---------------------------------------------------------------------------
 set(CAN_PROFILE_HEADER "${GEN_DIR}/can_profile_generated.hpp")
 add_custom_command(
@@ -65,16 +65,6 @@ add_custom_command(
 add_custom_target(dust_generated_gateway
     DEPENDS "${GATEWAY_CONFIG}" "${GEN_DIR}/eeprom.h" "${GEN_DIR}/gateway.sii"
             "${GEN_DIR}/DUST_HPM5E31_Gateway.xml")
-
-set(ESC_DMA_INC "${GEN_DIR}/esc_dma_functions.inc")
-add_custom_command(
-    OUTPUT "${ESC_DMA_INC}"
-    COMMAND "${Python3_EXECUTABLE}" "${FAKES_DIR}/esc_dma_native/extract.py"
-            "${ESC_DMA_INC}"
-    DEPENDS "${FAKES_DIR}/esc_dma_native/extract.py"
-            "${SRC_DIR}/ecat/hw/esc_dma.c"
-    COMMENT "Extracting esc_dma.c function bodies")
-add_custom_target(dust_generated_esc_dma DEPENDS "${ESC_DMA_INC}")
 
 # SSC 上游源码必须复制到暂存目录，才能用仓库自己的 sampleappl.h 覆盖示例头。
 file(GLOB SSC_UPSTREAM_C CONFIGURE_DEPENDS "${DUST_ADAPTER_ROOT}/src/ssc/*.c")
@@ -192,7 +182,7 @@ set_tests_properties(publish_equivalence_compare PROPERTIES
     DEPENDS "publish_equivalence_reference;publish_equivalence_optimized")
 
 # ---------------------------------------------------------------------------
-# latest_can / buzzer / esc_dma
+# latest_can / buzzer
 # ---------------------------------------------------------------------------
 add_executable(latest_can_contracts "${UNIT_DIR}/latest_can_contracts.cpp")
 target_include_directories(latest_can_contracts PRIVATE "${SRC_DIR}")
@@ -204,15 +194,6 @@ target_include_directories(buzzer_contracts PRIVATE "${FAKES_DIR}/buzzer_native"
 target_compile_options(buzzer_contracts PRIVATE -Wall -Wextra -Werror ${DUST_SANITIZER})
 target_link_options(buzzer_contracts PRIVATE ${DUST_SANITIZER})
 dust_add_test(buzzer_contracts buzzer_contracts)
-
-add_executable(esc_dma_contracts "${FAKES_DIR}/esc_dma_native/contracts.c")
-target_include_directories(esc_dma_contracts PRIVATE "${GEN_DIR}")
-target_compile_options(esc_dma_contracts PRIVATE -Wall -Wextra -Werror ${DUST_SANITIZER})
-target_link_options(esc_dma_contracts PRIVATE ${DUST_SANITIZER})
-add_dependencies(esc_dma_contracts dust_generated_esc_dma)
-foreach(scenario 0 1 2 3 4 6 7)
-    dust_add_test(esc_dma_scenario_${scenario} esc_dma_contracts ${scenario})
-endforeach()
 
 # ---------------------------------------------------------------------------
 # IO 后端 / 启动计数
@@ -251,7 +232,6 @@ add_library(ssc_upstream OBJECT ${SSC_STAGED_C})
 add_dependencies(ssc_upstream dust_ssc_stage dust_generated_gateway)
 target_include_directories(ssc_upstream PRIVATE
     "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hw")
-target_compile_definitions(ssc_upstream PRIVATE CONFIG_DUST_ECAT_ESC_DMA=1)
 target_compile_options(ssc_upstream PRIVATE
     -ffunction-sections -fdata-sections ${DUST_SANITIZER} -fno-omit-frame-pointer
     "-include${FAKES_DIR}/ssc_native/platform.h"
@@ -263,11 +243,9 @@ else()
     set(SSC_GC_FLAGS -Wl,--gc-sections)
 endif()
 
-foreach(mode baseline coalesce late_refresh)
-    set(mode_defines CONFIG_DUST_ECAT_ESC_DMA=1)
-    if(mode STREQUAL "coalesce")
-        list(APPEND mode_defines CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE=1)
-    elseif(mode STREQUAL "late_refresh")
+foreach(mode baseline late_refresh)
+    set(mode_defines)
+    if(mode STREQUAL "late_refresh")
         list(APPEND mode_defines CONFIG_DUST_ECAT_INPUT_LATE_REFRESH=1)
     endif()
     add_executable(ssc_contracts_${mode}

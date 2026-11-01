@@ -15,7 +15,7 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
   bit31 并允许 Arm。后端细节见 [SSC 网关接入](ethercat-ssc-gateway.md)。
 - 启动身份：boot_id 由芯片 UID 派生值与预留 Flash 递增计数生成，先持久化并
   读回再对外暴露，跨启动去重。
-- 板载 IMU、蜂鸣器与 IMU 加热 PID 已启用；SPI3 与 ESC DMA 互斥。
+- 板载 IMU、蜂鸣器与 IMU 加热 PID 已启用。
 - 一次已进入 SAFEOP/OP 的会话结束后，主循环在安全上下文重建网关
   （新 boot_id、清空映射/判据/过程影像），主站下一次启动可直接重新配置
   `0x2100`，不需要断电或 ESC 复位。

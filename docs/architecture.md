@@ -48,7 +48,7 @@
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
 | `src/ecat/ssc/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
-| `src/ecat/hw/` | ESC 硬件读写、PDI 延迟处理、可选 ESC DMA 与 PHY 适配 |
+| `src/ecat/hw/` | ESC 硬件读写、PDI 延迟处理与 PHY 适配 |
 | `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
 | `src/ssc/` | 已授权的 SSC 5.13 原样源码与许可，不适用 Apache-2.0；`src/ecat/ssc/` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 
@@ -85,8 +85,7 @@
 
 FreeRun 下不使用 SM/DC 同步中断；SYNC0/SYNC1 中断在启动后关闭。默认打开的若干
 编译期优化开关（跳过多余覆盖清零、输入映射前刷新一次 CAN 反馈、网关 AL 状态诊断等）
-都只在主线程生效，不改变 wire ABI。可选 ESC DMA 实验
-`CONFIG_DUST_ECAT_ESC_DMA` 默认关闭，与 SPI DMA 互斥。
+都只在主线程生效，不改变 wire ABI。
 
 ## 数据流
 

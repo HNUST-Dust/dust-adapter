@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "ecat/gateway.h"
-#include "ecat/hw/esc_dma.h"
 
 #include <zephyr/kernel.h>
 
@@ -71,26 +70,6 @@ unsigned diag_events;
 bool can_dirty;
 uint64_t last_publish = 0;
 BusinessState published_state = BusinessState::Unconfigured;
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-uint64_t input_revision, mapped_revision, written_revision;
-const volatile void* mapped_input_buffer;
-bool input_write_pending, input_write_valid;
-#endif
-void InvalidateInputWrite() {
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    input_write_pending = input_write_valid = false;
-    mapped_input_buffer = nullptr;
-#endif
-}
-void InputPublicationCommitted() {
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    // Independent of the wrapping 32-bit wire publication number.
-    if (++input_revision == 0) {
-        ++input_revision;
-        input_write_valid = false;
-    }
-#endif
-}
 const UCHAR kObjectName[] = "DTC1 gateway\0\xff";
 
 uint64_t Now() {
@@ -103,7 +82,7 @@ void RefreshCanBeforeMapping() {
     if (!core || core->state() != BusinessState::Active || new_output ||
         !bEcatInputUpdateRunning || !bEcatOutputUpdateRunning ||
         bEscIntEnabled || bDcSyncActive || nAlStatus != STATE_OP ||
-        k_is_in_isr() || dust_esc_dma_error()) {
+        k_is_in_isr()) {
         return;
     }
     can_dirty |= ServiceCanReceive();
@@ -119,11 +98,8 @@ void RefreshCanBeforeMapping() {
         published = core->Publish({tx_image.data(), prepared.tx.bytes},
                                    Now(), feedback, true) == Error::None;
         if (!published) tx_image.fill(0);
-        InvalidateInputWrite();
-    } else {
     }
     if (published) {
-        InputPublicationCommitted();
         can_dirty = false;
         last_publish = Now();
         published_state = core->state();
@@ -385,10 +361,6 @@ bool ApplyLimits() {
 }
 void ResetRuntimeState() {
     can_dirty = false;
-    InvalidateInputWrite();
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    input_revision = mapped_revision = written_revision = 0;
-#endif
     last_publish = 0;
     published_state = BusinessState::Unconfigured;
     transaction.Clear();
@@ -411,10 +383,6 @@ extern "C" int dust_gateway_init(void) {
         core->~Core();
     }
     core = nullptr;
-    if (dust_esc_dma_init()) {
-        printk("ESC DMA self-test failed: %d\n", dust_esc_dma_error());
-        return -1;
-    }
     uint64_t boot = 0;
     const int initialized = InitializeIo(boot);
     if (initialized || !boot) {
@@ -455,9 +423,6 @@ extern "C" void dust_gateway_poll(void) {
     uint8_t watchdog = 0;
     hpm5e_ssc_esc_read(&watchdog, 0x0440, 1);
     const auto now = Now();
-    if (dust_esc_dma_error()) {
-        core->Protect(Error::Transport);
-    }
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
     ServiceIo(*core, now);
     if (core->state() == BusinessState::Active) {
@@ -468,7 +433,6 @@ extern "C" void dust_gateway_poll(void) {
             CaptureCanFeedback(feedback);
             if (core->Publish({tx_image.data(), prepared.tx.bytes}, Now(),
                               feedback, false) == Error::None) {
-                InputPublicationCommitted();
                 can_dirty = false;
                 last_publish = Now();
                 published_state = core->state();
@@ -485,7 +449,6 @@ extern "C" UINT16 APPL_StopMailboxHandler(void) {
     return ALSTATUSCODE_NOERROR;
 }
 extern "C" UINT16 APPL_GenerateMapping(UINT16* input, UINT16* output) {
-    InvalidateInputWrite();
     *input = 0;
     *output = 0;
     mapping_ready = false;
@@ -525,7 +488,6 @@ extern "C" UINT16 APPL_GenerateMapping(UINT16* input, UINT16* output) {
     return ALSTATUSCODE_NOERROR;
 }
 extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
-    InvalidateInputWrite();
     const bool freerun = sSyncManOutPar.u16SyncType == SYNCTYPE_FREERUN &&
                          sSyncManInPar.u16SyncType == SYNCTYPE_FREERUN;
     const bool sm2 = false;
@@ -557,7 +519,6 @@ extern "C" UINT16 APPL_StartInputHandler(UINT16*) {
     return ALSTATUSCODE_NOERROR;
 }
 extern "C" UINT16 APPL_StopInputHandler(void) {
-    InvalidateInputWrite();
     if (core && core->state() != BusinessState::Unconfigured) {
         core->Protect(Error::Transport);
         // 会话已结束：Core 处于 Protected，主站下一次配置 0x2100 会被 Write()
@@ -573,7 +534,6 @@ extern "C" UINT16 APPL_StopInputHandler(void) {
     return ALSTATUSCODE_NOERROR;
 }
 extern "C" UINT16 APPL_StartOutputHandler(void) {
-    InvalidateInputWrite();
     const BusinessState state = core ? core->state() : BusinessState::Unconfigured;
     const bool ok = mapping_ready && core && state == BusinessState::Ready;
     if (!ok) {
@@ -583,7 +543,6 @@ extern "C" UINT16 APPL_StartOutputHandler(void) {
     return ok ? ALSTATUSCODE_NOERROR : ALSTATUSCODE_INVALIDOUTPUTMAPPING;
 }
 extern "C" UINT16 APPL_StopOutputHandler(void) {
-    InvalidateInputWrite();
     if (core && core->state() == BusinessState::Active) {
         core->Protect(Error::Transport);
     }
@@ -600,47 +559,12 @@ extern "C" void APPL_OutputMapping(UINT16* data) {
 }
 extern "C" void APPL_InputMapping(UINT16* data) {
 
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    input_write_pending = false;
-#endif
     if (mapping_ready) {
 #if defined(CONFIG_DUST_ECAT_INPUT_LATE_REFRESH)
         RefreshCanBeforeMapping();
 #endif
         std::memcpy(data, tx_image.data(), prepared.tx.bytes);
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-        mapped_input_buffer = data;
-        mapped_revision = input_revision;
-        input_write_pending = true;
-#endif
     }
-}
-extern "C" void dust_gateway_esc_write_isr(const volatile void* data,
-                                            uint16_t address, uint16_t length) {
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    // Only the exact buffer just copied by APPL_InputMapping is eligible.
-    // No partial writes, mailbox accesses, ISR or synchronized cycles coalesce.
-    const bool eligible = input_write_pending && data == mapped_input_buffer &&
-        address == DUST_TX_ADDRESS && length == prepared.tx.bytes &&
-        mapping_ready && core && core->state() == BusinessState::Active &&
-        bEcatInputUpdateRunning && bEcatOutputUpdateRunning &&
-        !bEscIntEnabled && !bDcSyncActive && !k_is_in_isr() &&
-        input_revision && mapped_revision == input_revision && !dust_esc_dma_error();
-    input_write_pending = false;
-    if (eligible && input_write_valid && written_revision == mapped_revision) {
-        return;
-    }
-    // A fault or lifecycle/mode change may not inherit a previous write credit.
-    input_write_valid = false;
-#endif
-
-    hpm5e_ssc_esc_write(data, address, length);
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    if (eligible && !dust_esc_dma_error()) {
-        written_revision = mapped_revision;
-        input_write_valid = true;
-    }
-#endif
 }
 extern "C" bool dust_gateway_active(void) {
     return core && core->state() == BusinessState::Active;
@@ -649,10 +573,6 @@ extern "C" void APPL_Application(void) {
 
     if (!mapping_ready || !core ||
         core->state() == BusinessState::Unconfigured) {
-        return;
-    }
-    if (dust_esc_dma_error()) {
-        core->Protect(Error::Transport);
         return;
     }
     const uint64_t now = Now();
@@ -694,7 +614,6 @@ extern "C" void APPL_Application(void) {
         const Error publish_error = core->Publish(
             {tx_image.data(), prepared.tx.bytes}, Now(), feedback, regular);
         if (publish_error == Error::None) {
-            InputPublicationCommitted();
             can_dirty = false;
         } else if (diag_events < kDiagLimit) {
             ++diag_events;

@@ -19,8 +19,4 @@
     dma-names = "tx", "rx";
 };
 
-/* XDMA 0..5 belong to UART4..6; channels 6/7 serve SPI3 RX/TX; ESC DMA cannot run simultaneously. */
-/ { zephyr,user {
-    dmas = <&xdma 6 0>;
-    dma-names = "esc";
-}; };
+/* XDMA 0..5 belong to UART4..6; channels 6/7 serve SPI3 RX/TX. */

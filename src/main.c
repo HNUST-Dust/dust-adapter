@@ -33,42 +33,6 @@ static uint8_t sii_image[SII_SIZE];
 static atomic_t stack_ready;
 static atomic_t reset_requested;
 
-#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
-static void sip_phy_prepare(void) {
-    /* HPM5E00 SIP PHY guide v1.1: PHY0 MII is connected to PV internally. */
-    const uint16_t mii_pads[] = {
-        IOC_PAD_PV00, IOC_PAD_PV01, IOC_PAD_PV02, IOC_PAD_PV03, IOC_PAD_PV04,
-        IOC_PAD_PV05, IOC_PAD_PV06, IOC_PAD_PV07, IOC_PAD_PV08, IOC_PAD_PV09,
-        IOC_PAD_PV10, IOC_PAD_PV11, IOC_PAD_PV15,
-    };
-    for (size_t i = 0; i < ARRAY_SIZE(mii_pads); i++) {
-        HPM_IOC->PAD[mii_pads[i]].FUNC_CTL =
-            IOC_PAD_FUNC_CTL_ALT_SELECT_SET(11);
-    }
-    HPM_IOC->PAD[IOC_PAD_PW21].FUNC_CTL = IOC_PW21_FUNC_CTL_ESC0_REFCK;
-    HPM_IOC->PAD[IOC_PAD_PV12].FUNC_CTL = IOC_PV12_FUNC_CTL_GPIO_V_12;
-    gpio_set_pin_output_with_initial(HPM_GPIO0, GPIO_DO_GPIOV, 12, 0);
-    /* Unused PHY1 stays in reset; its analog pins are not available for UART.
-     */
-    HPM_IOC->PAD[IOC_PAD_PW12].FUNC_CTL = IOC_PW12_FUNC_CTL_GPIO_W_12;
-    gpio_set_pin_output_with_initial(HPM_GPIO0, GPIO_DO_GPIOW, 12, 0);
-    const uint16_t analog_pads[] = {
-        IOC_PAD_PA16, IOC_PAD_PA17, IOC_PAD_PA18, IOC_PAD_PA19, IOC_PAD_PA20,
-        IOC_PAD_PA21, IOC_PAD_PA22, IOC_PAD_PA23, IOC_PAD_PA24, IOC_PAD_PA25,
-        IOC_PAD_PA26, IOC_PAD_PA27, IOC_PAD_PA29, IOC_PAD_PW16, IOC_PAD_PW17,
-    };
-    for (size_t i = 0; i < ARRAY_SIZE(analog_pads); i++) {
-        HPM_IOC->PAD[analog_pads[i]].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
-    }
-    /* Address straps must be set by board resistors while reset is held.
-     * Defer digital link mux and internal pulls until after reset settling. */
-    HPM_IOC->PAD[IOC_PAD_PA28].FUNC_CTL = IOC_PAD_FUNC_CTL_ANALOG_MASK;
-    HPM_IOC->PAD[IOC_PAD_PA28].PAD_CTL &= ~IOC_PAD_PAD_CTL_PE_MASK;
-    HPM_IOC->PAD[IOC_PAD_PA29].PAD_CTL &= ~IOC_PAD_PAD_CTL_PE_MASK;
-}
-
-#endif
-
 static int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count,
                     void *user_data) {
     uint8_t *image = user_data;
@@ -167,9 +131,6 @@ int main(void) {
     }
 
     memcpy(sii_image, aEepromData, sizeof(sii_image));
-#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
-    sip_phy_prepare();
-#endif
     hpm_esc_irq_enable(esc, false);
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, pdi_callback, NULL);
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, reset_callback, NULL);
@@ -193,23 +154,9 @@ int main(void) {
     }
     hpm_esc_configure_signals(esc);
     ecat_phy_update_link(esc);
-#if defined(CONFIG_BOARD_DUST_HPM5E3Y)
-    /* ESC start enabled the shared 25 MHz reference; release SIP reset now. */
-    k_msleep(100);
-    printk(
-        "SIP strap experiment: PA28/PA29 analog, internal pulls off; release "
-        "PV12\n");
-    gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOV, 12, 1);
-    k_msleep(100);
-    HPM_IOC->PAD[IOC_PAD_PA28].FUNC_CTL = IOC_PA28_FUNC_CTL_ESC0_CTR_1;
-    HPM_IOC->PAD[IOC_PAD_PA28].PAD_CTL =
-        IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
-    printk("SIP PHY0: PV12 released, PW21 REFCK, PA28 CTR1; PHY1 held reset\n");
-#else
     printk(
         "HPM5E31: external RTL8201F/TJA1101B MII; "
         "PHY reset handled by board DTS\n");
-#endif
 
     #if defined(CONFIG_DUST_BUZZER)
     int buzzer_rc = dust_buzzer_init();

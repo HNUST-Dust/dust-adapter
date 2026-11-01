@@ -30,13 +30,9 @@ DTS 别名和覆盖。引脚表与原理图确认项见
   门极 PD04 默认低。两者周期由 PWM 计数器独立配置，寄存器更新由共享互斥锁串行化。
 - 原理图 WS2812 的 `PWM0_P2` 未连到 MCU，暂不启用。
 
-`boards/dust-hpm5e3y.overlay` 保留旧参考板（HPM5E00 SIP PHY）的引脚覆盖，
-默认构建不加载；新板不执行旧 SIP PHY 的模拟焊盘实验初始化。
-
 ## 默认外设状态
 
-`prj.conf` 当前启用 SPI3/XDMA 板载 IMU 原始采样、蜂鸣器与 IMU 加热 PID，
-并关闭加热调试打印。ESC DMA 实验默认关闭，且与 SPI DMA 互斥。
+`prj.conf` 当前启用 SPI3/XDMA 板载 IMU 原始采样、蜂鸣器与 IMU 加热 PID。
 具体开关见 `Kconfig` 与 `prj.conf`。
 
 ## 驱动接口

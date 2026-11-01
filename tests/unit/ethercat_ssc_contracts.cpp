@@ -58,23 +58,17 @@ extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
     std::memcpy(const_cast<void*>(out), esc.data() + address, count);
 }
 static unsigned native_input_refreshes, native_pdram_writes;
-static bool native_fail_next_write;
+extern unsigned native_io_stops;
 static std::array<UINT16, MAX_PD_INPUT_SIZE / 2> native_mapped_inputs;
-extern int native_esc_dma_fault;
 extern "C" void hpm5e_ssc_esc_write(const volatile void* data, uint16_t address,
                                     uint16_t count) {
     ++native_pdram_writes;
-    if (native_fail_next_write) {
-        native_fail_next_write = false;
-        native_esc_dma_fault = -5;
-        return;
-    }
     assert(unsigned(address) + count <= esc.size());
     std::memcpy(esc.data() + address, const_cast<const void*>(data), count);
 }
 static void WriteMappedInputs() {
     APPL_InputMapping(native_mapped_inputs.data());
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
 }
 extern "C" void PDO_InputMapping(void) {
     ++native_input_refreshes;
@@ -316,57 +310,10 @@ int main() {
     esc[0x440] = 1;
     bEcatInputUpdateRunning = true;
     bEscIntEnabled = false;
-    // Complete new publications once; suppress only repeated commits in Active FreeRun.
+    // Every SSC input mapping performs exactly one synchronous PDRAM write.
     unsigned writes = native_pdram_writes;
     WriteMappedInputs();
     assert(native_pdram_writes == writes + 1);
-    WriteMappedInputs();
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    assert(native_pdram_writes == writes + 1);
-
-#else
-    assert(native_pdram_writes == writes + 2);
-#endif
-    // Even a rejected lifecycle transition revokes a previous commit credit.
-    writes = native_pdram_writes;
-    assert(APPL_StartOutputHandler() != 0); // Already Active, not Ready.
-    WriteMappedInputs();
-    assert(native_pdram_writes == writes + 1);
-    // Sync/DC/ISR/stopped-input calls must execute normally, and invalidate credit.
-    for (unsigned mode = 0; mode < 4; ++mode) {
-        bEscIntEnabled = mode == 0;
-        bDcSyncActive = mode == 1;
-        native_in_isr = mode == 2;
-        bEcatInputUpdateRunning = mode != 3;
-        writes = native_pdram_writes;
-        WriteMappedInputs(); WriteMappedInputs();
-        assert(native_pdram_writes == writes + 2);
-        bEscIntEnabled = bDcSyncActive = native_in_isr = false;
-        bEcatInputUpdateRunning = true;
-        WriteMappedInputs();
-        assert(native_pdram_writes == writes + 3);
-    }
-    // An interrupted mapping handshake or partial/non-PDO write is never coalesced.
-    writes = native_pdram_writes;
-    APPL_InputMapping(native_mapped_inputs.data());
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, 4);
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, 4);
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), 0x1000, 4);
-    assert(native_pdram_writes == writes + 3);
-    WriteMappedInputs();
-    // A different source pointer does not match the mapping handoff.
-    writes = native_pdram_writes;
-    APPL_InputMapping(native_mapped_inputs.data());
-    dust_gateway_esc_write_isr(tx.data(), DUST_TX_ADDRESS, nPdInputSize);
-    dust_gateway_esc_write_isr(tx.data(), DUST_TX_ADDRESS, nPdInputSize);
-    assert(native_pdram_writes == writes + 2);
-    // A failed transport write cannot mark a publication as committed.
-    writes = native_pdram_writes;
-    bEscIntEnabled = true; // Force a write even if this revision already committed.
-    native_fail_next_write = true;
-    WriteMappedInputs();
-    bEscIntEnabled = false;
-    native_esc_dma_fault = 0;
     WriteMappedInputs();
     assert(native_pdram_writes == writes + 2);
     // New CAN publication must reach ESC, then idle passes leave bytes/version unchanged.
@@ -377,14 +324,8 @@ int main() {
     assert(native_pdram_writes == writes + 1);
     const auto committed_esc = esc;
     WriteMappedInputs();
-#if defined(CONFIG_DUST_ECAT_INPUT_WRITE_COALESCE)
-    assert(native_pdram_writes == writes + 1);
-    assert(esc == committed_esc);
-
-#else
     assert(native_pdram_writes == writes + 2);
     assert(esc == committed_esc);
-#endif
     // Account for the extra publication made above in the existing sequence checks.
     dust::ecat::native_can_dirty = true;
     dust_gateway_poll();
@@ -406,30 +347,16 @@ int main() {
     bEcatInputUpdateRunning = true;
     dust_gateway_poll();
     assert(native_input_refreshes == 2);
-    // A failed/partial DMA must protect the actual gateway before dispatch.
-    extern int native_esc_dma_fault;
-    extern unsigned native_io_stops;
-    const auto stops_before_dma = native_io_stops;
-    native_esc_dma_fault = -5;
-    Put32(request + 8, 2);
-    APPL_OutputMapping(rx.data());
-    APPL_Application();
-    assert(!dust_gateway_active());
-    assert(native_io_dispatches == dispatched + 1);
-    assert(native_io_stops == stops_before_dma + 1);
-    dust_gateway_poll();
-    assert(native_io_stops == stops_before_dma + 1);
-    native_esc_dma_fault = 0;
     APPL_Application();
     writes = native_pdram_writes;
     WriteMappedInputs(); WriteMappedInputs();
     assert(native_pdram_writes == writes + 2);
-    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Protected));
+    assert(esc[DUST_TX_ADDRESS + 20] == uint32_t(BusinessState::Active));
     assert(APPL_StopInputHandler() == 0);
     APPL_InputMapping(native_mapped_inputs.data());
     writes = native_pdram_writes;
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
-    dust_gateway_esc_write_isr(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
     assert(native_pdram_writes == writes + 2);
     auto ArmFreshGateway = [&] {
         native_can_dirty = native_can_frame_enabled = native_can_invalid = native_offer_uart = false;

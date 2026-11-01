@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 #include "ecat/hw/hpm5e_esc_hw.h"
-#include "ecat/hw/esc_dma.h"
 #include "ecat/hw/pdi_deferred.h"
-#include <string.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -28,19 +26,12 @@ void hpm5e_ssc_hw_release(void)
 
 void hpm5e_ssc_esc_read(volatile void *data, uint16_t address, uint16_t length)
 {
-	int result = dust_esc_dma_read((void *)data, address, length);
-	if (result == 1) {
-		hpm_esc_read(esc, address, (void *)data, length);
-	} else if (result < 0) {
-		memset((void *)data, 0, length);
-	}
+	hpm_esc_read(esc, address, (void *)data, length);
 }
 
 void hpm5e_ssc_esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
-	if (dust_esc_dma_write((const void *)data, address, length) == 1) {
-		hpm_esc_write(esc, address, (const void *)data, length);
-	}
+	hpm_esc_write(esc, address, (const void *)data, length);
 }
 
 uint16_t hpm5e_ssc_al_event(void)

@@ -3,13 +3,6 @@
 bool native_io_protected = false;
 unsigned native_io_dispatches = 0;
 unsigned native_io_stops = 0;
-int native_esc_dma_fault = 0;
-extern "C" int dust_esc_dma_init(void) {
-    return 0;
-}
-extern "C" int dust_esc_dma_error(void) {
-    return native_esc_dma_fault;
-}
 namespace dust::ecat {
 bool native_can_frame_enabled = false, native_can_invalid = false;
 bool native_offer_uart = false;
