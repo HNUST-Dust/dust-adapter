@@ -22,6 +22,14 @@ uint32_t dust_esc_timer_get(void);
 void dust_esc_timer_clear(void);
 uint16_t dust_esc_eeprom_reload(void);
 int dust_esc_process_eeprom(void);
+
+/* ESC/PHY/SII 启动序列与中断钩子（由应用主循环注册）。 */
+int dust_esc_init(void);
+void dust_esc_start(void);
+void dust_esc_stop(void);
+void dust_esc_update_link(void);
+void dust_esc_set_pdi_hook(void (*hook)(void));
+void dust_esc_set_reset_hook(void (*hook)(void));
 void dust_esc_irq_enable(void);
 void dust_esc_irq_disable(void);
 void dust_esc_enter_critical(void);

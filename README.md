@@ -61,7 +61,7 @@ dust-adapter/
 ├── docs/                 # living 文档
 ├── scripts/              # 构建与测试入口
 ├── src/
-│   ├── main.c            # 初始化与 FreeRun 主循环
+│   ├── main.c            # SSC/网关生命周期编排与 FreeRun 主循环
 │   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
 │   ├── ecat/             # SSC 网关、CAN/UART 后端、接口与授权 SSC 源码
 │   │   ├── sampleappl.h         # 自定义 SSC 应用接口头
