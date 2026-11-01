@@ -2,15 +2,50 @@
 
 /* UART 后端：中断/DMA 接收队列、异步发送、窗口状态与跨周期快照。 */
 
-#include "io/io_internal.hpp"
-
-#include "drivers/uart_driver.hpp"
+#include "io/uart_adapter.hpp"
 
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
 
+#include <zephyr/device.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
+
+#include "drivers/uart_driver.hpp"
+#include "io/io_common.hpp"
+#include "protocol/io_policy.hpp"
+
 namespace ecat {
+namespace {
+
+struct UartBlock {
+    uint32_t epoch = 0, captured = 0;
+    uint16_t size = 0;
+    bool discontinuity = false;
+    std::array<uint8_t, 128> data{};
+};
+
+struct UartWrite {
+    uint64_t accepted = 0;
+    uint16_t size = 0;
+    std::array<uint8_t, 512> data{};
+};
+
+struct UartPort {
+    const device* dev;
+    uint8_t index;
+    k_msgq receive;
+    alignas(4) char storage[4 * sizeof(UartBlock)];
+    IoQueue<UartWrite, 4> transmit;
+    UartBlock pending{};
+    uint16_t offset = 0;
+    uint8_t next_buffer = 1;
+    bool ready = false, discontinuity = false;
+    uint64_t started = 0;
+    atomic_t busy{}, fault{}, drops{}, received{}, completed{}, errors{}, gap{},
+        cancelling{};
+};
 
 UartPort ports[] = {{DEVICE_DT_GET(DT_ALIAS(dust_uart_1)), 0},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_2)), 1},
@@ -18,11 +53,11 @@ UartPort ports[] = {{DEVICE_DT_GET(DT_ALIAS(dust_uart_1)), 0},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_4)), 3},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_5)), 4},
                     {DEVICE_DT_GET(DT_ALIAS(dust_uart_6)), 5}};
-
 atomic_t capture_epoch{};
 uint32_t epoch = 0;
+std::array<uint16_t, 6> uart_rx_capacity{};
+uint32_t protection_errors = 0;
 
-namespace {
 void UartEvent(void*, uint8_t port_index, drivers::UartEventType type,
                const uint8_t* data, size_t length) {
     auto& port = ports[port_index];
@@ -75,6 +110,12 @@ void UartEvent(void*, uint8_t port_index, drivers::UartEventType type,
 }
 }  // namespace
 
+void UartInitQueues() {
+    for (auto& port : ports) {
+        k_msgq_init(&port.receive, port.storage, sizeof(UartBlock), 4);
+    }
+}
+
 int UartInitialize() {
     drivers::UartPortConfig configs[6]{};
     for (size_t i = 0; i < 6; ++i) {
@@ -91,6 +132,7 @@ int UartInitialize() {
 }
 
 void UartStop() {
+    atomic_clear(&capture_epoch);
     for (auto& port : ports) {
         port.transmit.Clear();
         port.pending.size = 0;
@@ -103,6 +145,12 @@ void UartStop() {
                 ++protection_errors;
             }
         }
+    }
+}
+
+void UartConfigure(const Configuration& value) {
+    for (size_t i = 0; i < uart_rx_capacity.size(); ++i) {
+        uart_rx_capacity[i] = value.uart[i].rx_bytes;
     }
 }
 
@@ -185,7 +233,7 @@ void UartCapture(Core& core, Core::Feedback& feedback, uint64_t now) {
         if (core.state() != BusinessState::Active) {
             continue;
         }
-        const unsigned capacity = configuration.uart[port.index].rx_bytes;
+        const unsigned capacity = uart_rx_capacity[port.index];
         if (!capacity) {
             k_msgq_purge(&port.receive);
             continue;
@@ -247,6 +295,24 @@ bool UartDispatch(Core& core, const Actions& actions, uint64_t now) {
         }
     }
     return true;
+}
+
+void UartEnterActive() {
+    for (auto& port : ports) {
+        k_msgq_purge(&port.receive);
+        port.pending.size = 0;
+        port.offset = 0;
+        port.discontinuity = false;
+        atomic_clear(&port.gap);
+    }
+    if (++epoch == 0 || epoch > INT32_MAX) {
+        epoch = 1;
+    }
+    atomic_set(&capture_epoch, epoch);
+}
+
+uint32_t UartProtectionErrors() {
+    return protection_errors;
 }
 
 }  // namespace ecat

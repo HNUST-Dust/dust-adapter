@@ -67,7 +67,9 @@ dust-adapter/
 │   │   ├── io_backend.cpp/hpp   # IO facade
 │   │   ├── can_adapter.cpp      # CAN 适配层
 │   │   ├── uart_adapter.cpp     # UART 适配层
-│   │   ├── io_internal.hpp      # 适配层内部共享定义
+│   │   ├── can_adapter.hpp      # CAN 适配接口
+│   │   ├── uart_adapter.hpp     # UART 适配接口
+│   │   ├── io_common.hpp        # 时间辅助
 │   │   ├── can_profile.hpp      # CAN 白名单/保护帧策略
 │   │   └── latest_can.hpp       # 每总线最新反馈槽
 │   ├── ecat/             # SSC 网关、ESC 硬件适配与授权 SSC 源码

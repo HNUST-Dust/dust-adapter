@@ -2,25 +2,49 @@
 
 /* CAN 总线后端：中断接收队列、批次发送、保护帧、反馈快照与状态查询。 */
 
-#include "io/io_internal.hpp"
-
-#include "drivers/can_driver.hpp"
-#include "io/can_profile.hpp"
+#include "io/can_adapter.hpp"
 
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
 
+#include <zephyr/device.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
+
+#include "drivers/can_driver.hpp"
+#include "io/can_profile.hpp"
+#include "io/io_common.hpp"
+#include "io/latest_can.hpp"
+#include "protocol/io_policy.hpp"
+
 namespace ecat {
+namespace {
+
+struct CanPort {
+    const device* dev;
+    uint8_t index;
+    k_msgq receive;
+    alignas(4) char storage[32 * sizeof(Core::CanEvent)];
+    IoQueue<PendingCan, 32> transmit;
+    std::array<Core::CanEvent, 32> feedback{};
+    LatestCanSlots latest;
+    uint32_t batch = 0, rx_sequence = 0;
+    unsigned feedback_count = 0;
+    uint64_t deadline = 0;
+    atomic_t busy{}, fault{}, received{}, submitted{}, completed{}, errors{},
+        drops{};
+    bool ready = false;
+};
 
 CanPort buses[] = {{DEVICE_DT_GET(DT_ALIAS(dust_can_0)), 0},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_1)), 1},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_2)), 2},
                    {DEVICE_DT_GET(DT_ALIAS(dust_can_3)), 3}};
-
 uint64_t source_deadlines[2]{};
+std::array<uint8_t, 4> can_rx_enabled{};
+uint32_t protection_errors = 0;
 
-namespace {
 std::array<drivers::CanFrame, 16> hardware_frames;
 std::array<PendingCan, 16> admitted;
 
@@ -61,6 +85,12 @@ void CanReceive(void*, uint8_t bus_index, const drivers::CanFrame& frame) {
     }
 }
 }  // namespace
+
+void CanInitQueues() {
+    for (auto& bus : buses) {
+        k_msgq_init(&bus.receive, bus.storage, sizeof(Core::CanEvent), 32);
+    }
+}
 
 int CanInitialize() {
     drivers::CanBusConfig configs[4]{};
@@ -232,6 +262,7 @@ bool CanCapacityValid(const Configuration& value) {
 }
 
 void CanConfigure(const Configuration& value) {
+    can_rx_enabled = value.can_rx;
     for (auto& bus : buses) {
         uint32_t ids[LatestCanSlots::kMaxSlots]{};
         size_t count = 0;
@@ -259,7 +290,7 @@ bool CanDrainReceive() {
                 atomic_inc(&bus.drops);
                 continue;
             }
-            if (!configuration.can_rx[bus.index]) continue;
+            if (!can_rx_enabled[bus.index]) continue;
             if (bus.latest.Update(value)) bus_changed = true;
             else atomic_inc(&bus.drops);
         }
@@ -370,6 +401,28 @@ bool CanDispatch(Core& core, const Actions& actions, uint64_t now) {
         }
     }
     return true;
+}
+
+void CanEnterActive(Core& core, uint64_t now) {
+    for (unsigned source = 0; source < 2; ++source) {
+        source_deadlines[source] =
+            core.active_sources() & (1U << source)
+                ? now + can_profile::kCommandTimeoutUs
+                : 0;
+    }
+}
+
+bool CanLeaseExpired(uint64_t now) {
+    for (auto deadline : source_deadlines) {
+        if (deadline && now >= deadline) {
+            return true;
+        }
+    }
+    return false;
+}
+
+uint32_t CanProtectionErrors() {
+    return protection_errors;
 }
 
 }  // namespace ecat

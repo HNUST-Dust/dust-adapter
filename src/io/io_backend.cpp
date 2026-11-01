@@ -10,8 +10,10 @@
 
 #include <zephyr/sys/printk.h>
 
-#include "io/io_internal.hpp"
+#include "io/can_adapter.hpp"
 #include "io/can_profile.hpp"
+#include "io/io_common.hpp"
+#include "io/uart_adapter.hpp"
 #if defined(CONFIG_ONBOARD_IMU_RAW)
 #include "drivers/imu_sensor.hpp"
 #endif
@@ -24,9 +26,12 @@ namespace ecat {
 
 int AllocateBootIdentity(uint64_t& boot);
 
-bool initialized = false, ready = false, capturing = false;
-uint32_t protection_errors = 0;
-Configuration configuration;
+namespace {
+bool initialized = false;
+bool ready = false;
+bool capturing = false;
+bool imu_capture_enabled = false;
+}  // namespace
 
 #if defined(CONFIG_ONBOARD_IMU_RAW)
 modules::ImuSensor onboard_imu;
@@ -56,7 +61,6 @@ void SampleImu() {
 
 namespace {
 void Stop(void*, Error) {
-    atomic_clear(&capture_epoch);
     capturing = false;
     UartStop();
     CanStop();
@@ -66,36 +70,17 @@ void EnterActive(Core& core, uint64_t now) {
     if (capturing) {
         return;
     }
-    for (auto& port : ports) {
-        k_msgq_purge(&port.receive);
-        port.pending.size = 0;
-        port.offset = 0;
-        port.discontinuity = false;
-        atomic_clear(&port.gap);
-    }
-    if (++epoch == 0 || epoch > INT32_MAX) {
-        epoch = 1;
-    }
-    for (unsigned source = 0; source < 2; ++source) {
-        source_deadlines[source] =
-            core.active_sources() & (1U << source)
-                ? now + can_profile::kCommandTimeoutUs
-                : 0;
-    }
+    UartEnterActive();
+    CanEnterActive(core, now);
     capturing = true;
-    atomic_set(&capture_epoch, epoch);
 }
 }  // namespace
 
 int InitializeIo(uint64_t& boot) {
     const bool first = !initialized;
     if (!initialized) {
-        for (auto& bus : buses) {
-            k_msgq_init(&bus.receive, bus.storage, sizeof(Core::CanEvent), 32);
-        }
-        for (auto& port : ports) {
-            k_msgq_init(&port.receive, port.storage, sizeof(UartBlock), 4);
-        }
+        CanInitQueues();
+        UartInitQueues();
         const auto fail = [](int error) {
             Stop(nullptr, Error::Transport);
             CanPump(nullptr, Now());
@@ -139,7 +124,7 @@ int InitializeIo(uint64_t& boot) {
         Stop(nullptr, Error::State);
         CanPump(nullptr, Now());
     }
-    if (protection_errors) {
+    if (CanProtectionErrors() || UartProtectionErrors()) {
         return -EIO;
     }
     const int result = AllocateBootIdentity(boot);
@@ -169,8 +154,9 @@ bool CanFeedbackCapacityValid(const Configuration& value) {
 }
 
 void ConfigureIo(const Configuration& value) {
-    configuration = value;
+    imu_capture_enabled = value.imu;
     CanConfigure(value);
+    UartConfigure(value);
 }
 
 void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
@@ -186,8 +172,8 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
                           can_profile::kProtectionSignature,
                           can_profile::kCommandTimeoutUs};
             } else if (page == 1) {
-                values = {protection_errors, uint32_t(ready),
-                          uint32_t(initialized)};
+                values = {CanProtectionErrors() + UartProtectionErrors(),
+                          uint32_t(ready), uint32_t(initialized)};
             } else {
                 result = -ENOTSUP;
             }
@@ -208,13 +194,9 @@ void DispatchIo(Core& core, const Actions& actions, uint64_t now) {
         core.Protect(Error::Transport);
         return;
     }
-    if (capturing) {
-        for (auto deadline : source_deadlines) {
-            if (deadline && now >= deadline) {
-                core.Protect(Error::Lease);
-                return;
-            }
-        }
+    if (capturing && CanLeaseExpired(now)) {
+        core.Protect(Error::Lease);
+        return;
     }
     EnterActive(core, now);
     if (!CanDispatch(core, actions, now)) {
@@ -230,11 +212,9 @@ void ServiceIo(Core& core, uint64_t now) {
 
     if (core.state() == BusinessState::Active) {
         EnterActive(core, now);
-        for (auto deadline : source_deadlines) {
-            if (deadline && now >= deadline) {
-                core.Protect(Error::Lease);
-                return;
-            }
+        if (CanLeaseExpired(now)) {
+            core.Protect(Error::Lease);
+            return;
         }
     }
     if (core.state() == BusinessState::Ready ||
@@ -270,7 +250,7 @@ void CaptureIo(Core& core, Core::Feedback& feedback, uint64_t now) {
     UartCapture(core, feedback, now);
 #if defined(CONFIG_ONBOARD_IMU_RAW)
     /* SampleImu() already feeds the heater; publish the newest burst here. */
-    if (latest_imu_valid && configuration.imu) {
+    if (latest_imu_valid && imu_capture_enabled) {
         feedback.imu_valid = true;
         feedback.imu_sequence = ++imu_sequence;
         feedback.imu_capture_us =
