@@ -36,7 +36,7 @@
 
 | 路径 | 职责 |
 |---|---|
-| `src/main.c` | 板级外设初始化、SSC/网关生命周期编排（启动、reset、rearm）与 FreeRun 主循环 |
+| `src/main.c` | 板级外设初始化、主循环调度策略；生命周期由 `src/ecat/runtime.c` 承担 |
 | `src/protocol/` | 与 Zephyr、SSC、外设解耦的协议核心与布局，可原生编译测试 |
 | `src/protocol/protocol.hpp` | ABI 常量、配置/布局/Layout/Actions/Core 接口 |
 | `src/protocol/core.cpp` | 配置提交、状态机、会话与过期判据、UART 窗口、PDO 编解码 |
@@ -50,25 +50,27 @@
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
 | `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
-| `src/ecat/esc_hw.*` | ESC 硬件读写、SII/EEPROM 仿真、PHY/信号初始化与 FreeRun 启停；PHY 与 ESC 驱动由 `hpm_support` 提供 |
+| `src/ecat/esc_regs.c` + `esc_regs.h` | SSC `HW_*` 原语：ESC 寄存器读写、定时器、AL event、临界区、IRQ 使能；不含启动策略 |
+| `src/ecat/sii.c` + `sii.h` | SII 镜像存储与 EEPROM 读/写/reload 响应 |
+| `src/ecat/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
+| `src/ecat/runtime.c` + `runtime.h` | SSC/网关生命周期（启动、reset、rearm、poll/MainLoop 步进）与 `stack_ready` 状态 |
 | `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
 | `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/sampleappl.h` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 
 ## 启动与主循环
 
-`src/main.c` 只负责板级外设初始化和 SSC/网关生命周期编排；ESC/PHY/SII 的
-硬件启动在 `dust_esc_init()`（`src/ecat/esc_hw.c`）中完成。
+`src/main.c` 只负责板级外设初始化、启动/停止调用和主循环调度策略；ESC/PHY/SII
+启动在 `src/ecat/esc_boot.c`，SSC 生命周期在 `src/ecat/runtime.c`。
 
-1. 注册 ESC PDI/RESET 钩子，`dust_esc_init()` 完成 SII 镜像装载、EEPROM 模拟
-   配置与装载检查、PHY 复位/配置、信号配置和链路更新。
-2. 蜂鸣器初始化，`MainInit()` 初始化 SSC，`dust_gateway_init()` 初始化
-   IO 后端、启动身份和协议核心对象字典。
-3. 板级输出（IMU 加热 PID）初始化，`stack_enable()` 置位 `stack_ready` 并调用
-   `dust_esc_start()`（启动 ESC、关闭 FreeRun 不需要的 SYNC0/SYNC1 中断）。
-4. 进入 `for (;;)` 主循环：ESC reset 走 `stack_stop()/stack_start()/stack_enable()`，
-   会话结束后的重建走 `dust_gateway_rearm()`；SSC `MainLoop()` 前后各调用一次
-   `dust_gateway_poll()`；每 100 ms 更新 PHY 链路；Active 时用 10 µs 忙等避免
-   tick 取整，空闲时 `k_usleep(100)`。
+1. `dust_ecat_runtime_init()` 注册 ESC PDI/RESET 钩子，`dust_esc_init()` 完成
+   SII 镜像装载、EEPROM 模拟配置与装载检查、PHY 复位/配置、信号配置和链路更新。
+2. 蜂鸣器初始化，`dust_ecat_runtime_start()` 调用 `MainInit()` 与
+   `dust_gateway_init()`（IO 后端、启动身份和协议核心对象字典）。
+3. 板级输出（IMU 加热 PID）初始化，`dust_ecat_runtime_enable()` 置位
+   `stack_ready` 并启动 ESC（关闭 FreeRun 不需要的 SYNC0/SYNC1 中断）。
+4. 进入 `for (;;)` 主循环：`dust_ecat_runtime_step()` 处理 reset/rearm、SSC
+   `MainLoop()` 前后各一次 `dust_gateway_poll()`、每 100 ms 更新 PHY 链路，并
+   返回 Active/Idle/Fatal；主循环据此选择 10 µs 忙等或 `k_usleep(100)`。
 
 会话结束（`APPL_StopInputHandler`）后核心处于 Protected，主循环在屏蔽 ESC IRQ
 的安全上下文中重建网关，产生新的 boot_id 并清空映射/判据/过程影像，使主站下一次

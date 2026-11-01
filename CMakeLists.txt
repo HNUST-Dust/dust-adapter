@@ -234,7 +234,10 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
 
     # EtherCAT ESC and PHY
-    "${DUST_ADAPTER_ROOT}/src/ecat/esc_hw.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc_regs.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc_boot.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/sii.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/runtime.c"
     "${HPM_PHY_DIR}/hpm5e31_phy.c"
 
     # Generated CAN profile

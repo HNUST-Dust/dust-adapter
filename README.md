@@ -61,11 +61,14 @@ dust-adapter/
 ├── docs/                 # living 文档
 ├── scripts/              # 构建与测试入口
 ├── src/
-│   ├── main.c            # SSC/网关生命周期编排与 FreeRun 主循环
+│   ├── main.c            # 板级初始化与主循环调度
 │   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
 │   ├── ecat/             # SSC 网关、CAN/UART 后端、接口与授权 SSC 源码
 │   │   ├── sampleappl.h         # 自定义 SSC 应用接口头
-│   │   ├── esc_hw.c/h           # ESC 硬件读写适配
+│   │   ├── esc_regs.c/h         # ESC 寄存器/IRQ/临界区原语
+│   │   ├── sii.c/h              # SII 镜像与 EEPROM 模拟
+│   │   ├── esc_boot.c           # ESC/PHY/SII 启动与 FreeRun 启停
+│   │   ├── runtime.c/h          # SSC/网关生命周期
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
 │   └── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
 ├── tests/                # 原生合约测试与硬件探针固件
