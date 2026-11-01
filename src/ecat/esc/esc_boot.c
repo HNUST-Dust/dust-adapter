@@ -16,7 +16,7 @@
 #include "ecat/esc/sii.h"
 #include "hpm5e31_phy.h"
 
-extern unsigned char aEepromData[DUST_SII_SIZE];
+extern unsigned char aEepromData[SII_SIZE];
 
 static const struct device *const esc = DEVICE_DT_GET(DT_NODELABEL(esc0));
 static void (*pdi_hook)(void);
@@ -57,7 +57,7 @@ int esc_init(void)
 		printk("EtherCAT ESC device is not ready\n");
 		return -ENODEV;
 	}
-	sii_load(aEepromData, DUST_SII_SIZE);
+	sii_load(aEepromData, SII_SIZE);
 	hpm_esc_irq_enable(esc, false);
 	hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, esc_pdi_callback, NULL);
 	hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, esc_reset_callback, NULL);

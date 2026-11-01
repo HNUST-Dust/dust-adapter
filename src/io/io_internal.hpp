@@ -2,8 +2,8 @@
 
 /* io_backend 内部共享定义：仅限 can_io/uart_io/io_backend 三个实现文件使用。 */
 
-#ifndef DUST_ECAT_IO_INTERNAL_HPP_
-#define DUST_ECAT_IO_INTERNAL_HPP_
+#ifndef ECAT_IO_INTERNAL_HPP_
+#define ECAT_IO_INTERNAL_HPP_
 
 #include <array>
 #include <cstddef>
@@ -109,4 +109,4 @@ bool UartDispatch(Core& core, const Actions& actions, uint64_t now);
 
 }  // namespace dust::ecat
 
-#endif /* DUST_ECAT_IO_INTERNAL_HPP_ */
+#endif /* ECAT_IO_INTERNAL_HPP_ */

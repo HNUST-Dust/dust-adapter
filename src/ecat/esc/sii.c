@@ -8,19 +8,19 @@
 #include <hpm_esc_drv.h>
 #include <zephyr/sys/printk.h>
 
-static uint8_t sii_image[DUST_SII_SIZE];
+static uint8_t sii_image[SII_SIZE];
 
 void sii_load(const uint8_t *image, size_t size)
 {
-	if (size > DUST_SII_SIZE) {
-		size = DUST_SII_SIZE;
+	if (size > SII_SIZE) {
+		size = SII_SIZE;
 	}
 	memcpy(sii_image, image, size);
 }
 
 int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count)
 {
-	const size_t image_words = DUST_SII_SIZE / sizeof(uint16_t);
+	const size_t image_words = SII_SIZE / sizeof(uint16_t);
 	if (word_addr > image_words || word_count > image_words - word_addr) {
 		return -EINVAL;
 	}
@@ -31,7 +31,7 @@ int sii_read(uint32_t word_addr, uint16_t *data, size_t word_count)
 
 int sii_write(uint32_t word_addr, uint16_t data)
 {
-	if (word_addr >= DUST_SII_SIZE / sizeof(uint16_t)) {
+	if (word_addr >= SII_SIZE / sizeof(uint16_t)) {
 		return -EINVAL;
 	}
 	memcpy(sii_image + (size_t)word_addr * sizeof(uint16_t), &data,

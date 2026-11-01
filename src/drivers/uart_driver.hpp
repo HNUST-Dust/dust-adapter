@@ -3,8 +3,8 @@
 /* UART 硬件驱动：端口配置、接收缓冲切换、原始块收发与中止。
  * 本层不包含 EtherCAT/协议语义。 */
 
-#ifndef DUST_DRIVERS_UART_DRIVER_HPP_
-#define DUST_DRIVERS_UART_DRIVER_HPP_
+#ifndef DRIVERS_UART_DRIVER_HPP_
+#define DRIVERS_UART_DRIVER_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -42,4 +42,4 @@ int UartAbort(uint8_t port);
 
 }  // namespace dust::drivers
 
-#endif /* DUST_DRIVERS_UART_DRIVER_HPP_ */
+#endif /* DRIVERS_UART_DRIVER_HPP_ */

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#ifndef DUST_ECAT_ESC_HW_H_
-#define DUST_ECAT_ESC_HW_H_
+#ifndef ECAT_ESC_HW_H_
+#define ECAT_ESC_HW_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -82,4 +82,4 @@ void esc_leave_critical(void);
 }
 #endif
 
-#endif /* DUST_ECAT_ESC_HW_H_ */
+#endif /* ECAT_ESC_HW_H_ */

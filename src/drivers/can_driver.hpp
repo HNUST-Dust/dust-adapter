@@ -3,8 +3,8 @@
 /* CAN 硬件驱动：设备初始化、过滤器、原始帧收发与控制器状态。
  * 本层不包含任何 EtherCAT/协议语义。 */
 
-#ifndef DUST_DRIVERS_CAN_DRIVER_HPP_
-#define DUST_DRIVERS_CAN_DRIVER_HPP_
+#ifndef DRIVERS_CAN_DRIVER_HPP_
+#define DRIVERS_CAN_DRIVER_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -56,4 +56,4 @@ bool CanGetState(uint8_t bus, can_state& state, can_bus_err_cnt& errors);
 
 }  // namespace dust::drivers
 
-#endif /* DUST_DRIVERS_CAN_DRIVER_HPP_ */
+#endif /* DRIVERS_CAN_DRIVER_HPP_ */

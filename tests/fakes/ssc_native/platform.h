@@ -6,7 +6,7 @@
 /* 使用目标机的整数字宽，LP64 测试机的 unsigned long 为 64 位。 */
 #define UINT32 uint32_t
 #define INT32 int32_t
-#define DUST_ECAT_ESC_HW_H_
+#define ECAT_ESC_HW_H_
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* 保持 SSC 的应用接口文件名；实际应用完全由仓库自有代码提供。 */
 #include "ecat_def.h"
-#ifndef DUST_SSC_APPLICATION_H
-#define DUST_SSC_APPLICATION_H
+#ifndef SSC_APPLICATION_H
+#define SSC_APPLICATION_H
 void APPL_Application(void);
 void APPL_AckErrorInd(UINT16 state);
 UINT16 APPL_StartMailboxHandler(void);

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#ifndef DUST_ECAT_RUNTIME_H_
-#define DUST_ECAT_RUNTIME_H_
+#ifndef ECAT_RUNTIME_H_
+#define ECAT_RUNTIME_H_
 
 #include <stdbool.h>
 
@@ -32,4 +32,4 @@ ecat_step_t ecat_runtime_step(void);
 }
 #endif
 
-#endif /* DUST_ECAT_RUNTIME_H_ */
+#endif /* ECAT_RUNTIME_H_ */
