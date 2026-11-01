@@ -234,7 +234,7 @@ target_sources(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src/drivers/imu_sensor.cpp"
 
     # EtherCAT ESC and PHY
-    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces/hpm5e_esc_hw.c"
+    "${DUST_ADAPTER_ROOT}/src/ecat/esc_hw.c"
     "${HPM_PHY_DIR}/hpm5e31_phy.c"
 
     # Generated CAN profile
@@ -275,8 +275,6 @@ endif()
 
 target_include_directories(app PRIVATE
     "${DUST_ADAPTER_ROOT}/src"
-    # 外部 SSC 的 ecatslv.h 直接包含本项目 ESC 硬件适配头。
-    "${DUST_ADAPTER_ROOT}/src/ecat/hardware_interfaces"
     "${SSC_GATEWAY_DIR}"
     "${GENERATED_DIR}"
     "${HPM_PHY_DIR}"

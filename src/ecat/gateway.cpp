@@ -9,7 +9,7 @@
 
 #include "protocol/pdo_dictionary.hpp"
 #include "gateway_config.h"
-#include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
+#include "ecat/esc_hw.h"
 #include "ecat/io_backend.hpp"
 extern "C" {
 #include "coeappl.h"
@@ -295,7 +295,7 @@ bool Describe(const ImageLayout& image, bool tx) {
 }
 bool CheckSm() {
     uint8_t sm[16]{};
-    hpm5e_ssc_esc_read(sm, 0x810, sizeof(sm));
+    dust_esc_esc_read(sm, 0x810, sizeof(sm));
     // 对齐/方向/三缓冲/看门狗须匹配 SII；不允许主站移入邮箱或另一分区。
     return U16(sm) == DUST_RX_ADDRESS && U16(sm + 2) == prepared.rx.bytes &&
            (sm[4] & 0x47) == 0x44 && (sm[6] & 1) &&
@@ -334,7 +334,7 @@ bool RegisterDictionaryObjects() {
 }
 bool ApplyLimits() {
     uint8_t ram_kib = 0;
-    hpm5e_ssc_esc_read(&ram_kib, 0x0006, 1);
+    dust_esc_esc_read(&ram_kib, 0x0006, 1);
     const uint32_t ram_end = 0x1000U + uint32_t(ram_kib) * 1024U;
     if (ram_end < DUST_RAM_END) {
         printk("Gateway: ESC RAM %u KiB cannot fit SII partitions\n", ram_kib);
@@ -421,7 +421,7 @@ extern "C" void dust_gateway_poll(void) {
     // 因此单字节读取的 bit0 就是该状态位）；1 表示进程数据仍在刷新。SSC 自己
     // 也会在 CheckIfEcatError() 中检查并转入 SAFEOP/0x1B。
     uint8_t watchdog = 0;
-    hpm5e_ssc_esc_read(&watchdog, 0x0440, 1);
+    dust_esc_esc_read(&watchdog, 0x0440, 1);
     const auto now = Now();
     core->Tick(now, bEcatOutputUpdateRunning && (watchdog & 1));
     ServiceIo(*core, now);

@@ -50,7 +50,7 @@
 | `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
 | `src/ecat/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
 | `src/ecat/appl_interfaces/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
-| `src/ecat/hardware_interfaces/` | ESC 硬件读写适配（PHY 与 ESC 驱动由 `hpm_support` 提供） |
+| `src/ecat/esc_hw.*` | ESC 硬件读写适配；PHY 与 ESC 驱动由 `hpm_support` 提供 |
 | `src/drivers/` | 板级驱动：PWM 串行化、蜂鸣器、IMU 采样、加热 PID、UART idle、CAN profile |
 | `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/appl_interfaces/` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
 

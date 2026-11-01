@@ -231,7 +231,7 @@ endforeach()
 add_library(ssc_upstream OBJECT ${SSC_STAGED_C})
 add_dependencies(ssc_upstream dust_ssc_stage dust_generated_gateway)
 target_include_directories(ssc_upstream PRIVATE
-    "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hardware_interfaces")
+    "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}")
 target_compile_options(ssc_upstream PRIVATE
     -ffunction-sections -fdata-sections ${DUST_SANITIZER} -fno-omit-frame-pointer
     "-include${FAKES_DIR}/ssc_native/platform.h"
@@ -256,7 +256,7 @@ foreach(mode baseline late_refresh)
         $<TARGET_OBJECTS:ssc_upstream>)
     add_dependencies(ssc_contracts_${mode} dust_ssc_stage dust_generated_gateway)
     target_include_directories(ssc_contracts_${mode} PRIVATE
-        "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}" "${SRC_DIR}/ecat/hardware_interfaces")
+        "${SSC_STAGE_DIR}" "${GEN_DIR}" "${FAKES_DIR}/ssc_native" "${SRC_DIR}")
     target_compile_definitions(ssc_contracts_${mode} PRIVATE ${mode_defines})
     target_compile_options(ssc_contracts_${mode} PRIVATE
         -fno-exceptions -ffunction-sections -fdata-sections

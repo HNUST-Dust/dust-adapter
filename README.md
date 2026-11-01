@@ -65,7 +65,7 @@ dust-adapter/
 │   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
 │   ├── ecat/             # SSC 网关、CAN/UART 后端、接口与授权 SSC 源码
 │   │   ├── appl_interfaces/     # 自定义 SSC 应用接口头
-│   │   ├── hardware_interfaces/ # ESC/PDI 硬件适配
+│   │   ├── esc_hw.c/h           # ESC 硬件读写适配
 │   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
 │   └── drivers/          # 板级驱动：PWM、蜂鸣器、IMU、加热、UART、CAN profile
 ├── tests/                # 原生合约测试与硬件探针固件

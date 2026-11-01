@@ -17,7 +17,7 @@
 #include "ecat/gateway.h"
 #include "drivers/buzzer.h"
 #include "hpm5e31_phy.h"
-#include "ecat/hardware_interfaces/hpm5e_esc_hw.h"
+#include "ecat/esc_hw.h"
 
 #if defined(CONFIG_DUST_BOARD_OUTPUTS)
 extern int dust_imu_heater_init(void);
@@ -71,7 +71,7 @@ static int sii_reload(uint32_t *data, void *user_data) {
 }
 
 /* SII 镜像由应用持有；新驱动仅提供 ESC 寄存器访问。 */
-int hpm5e_ssc_process_eeprom(void) {
+int dust_esc_process_eeprom(void) {
     ESC_Type *base = (ESC_Type *)hpm_esc_base(esc);
     if ((base->EEPROM_CTRL_STAT & ESC_EEPROM_CTRL_STAT_BUSY_MASK) == 0U) {
         return 0;
@@ -112,7 +112,7 @@ int hpm5e_ssc_process_eeprom(void) {
 static void pdi_callback(const struct device *dev, void *user_data) {
     ARG_UNUSED(dev);
     ARG_UNUSED(user_data);
-    (void)hpm5e_ssc_process_eeprom();
+    (void)dust_esc_process_eeprom();
     if (atomic_get(&stack_ready)) PDI_Isr();
 }
 
@@ -134,7 +134,7 @@ int main(void) {
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_PDI, pdi_callback, NULL);
     hpm_esc_set_irq_callback(esc, HPM_ESC_IRQ_RESET, reset_callback, NULL);
     hpm_esc_configure_eeprom(esc, true, false);
-    if (hpm5e_ssc_process_eeprom() != 0) {
+    if (dust_esc_process_eeprom() != 0) {
         printk("SII startup response failed\n");
         return 0;
     }

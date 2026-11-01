@@ -33,8 +33,8 @@ BOOL bDcSyncActive;
 BOOL bEcatFirstOutputsReceived;
 static bool native_in_isr;
 bool k_is_in_isr(void) { return native_in_isr; }
-void hpm5e_ssc_enter_critical(void) {}
-void hpm5e_ssc_leave_critical(void) {}
+void dust_esc_enter_critical(void) {}
+void dust_esc_leave_critical(void) {}
 int printk(const char*, ...) {
     return 0;
 }
@@ -52,7 +52,7 @@ extern bool native_io_protected;
 extern unsigned native_io_dispatches;
 using namespace dust::ecat;
 static std::array<uint8_t, 0x3000> esc;
-extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
+extern "C" void dust_esc_esc_read(volatile void* out, uint16_t address,
                                    uint16_t count) {
     assert(unsigned(address) + count <= esc.size());
     std::memcpy(const_cast<void*>(out), esc.data() + address, count);
@@ -60,7 +60,7 @@ extern "C" void hpm5e_ssc_esc_read(volatile void* out, uint16_t address,
 static unsigned native_input_refreshes, native_pdram_writes;
 extern unsigned native_io_stops;
 static std::array<UINT16, MAX_PD_INPUT_SIZE / 2> native_mapped_inputs;
-extern "C" void hpm5e_ssc_esc_write(const volatile void* data, uint16_t address,
+extern "C" void dust_esc_esc_write(const volatile void* data, uint16_t address,
                                     uint16_t count) {
     ++native_pdram_writes;
     assert(unsigned(address) + count <= esc.size());
@@ -68,7 +68,7 @@ extern "C" void hpm5e_ssc_esc_write(const volatile void* data, uint16_t address,
 }
 static void WriteMappedInputs() {
     APPL_InputMapping(native_mapped_inputs.data());
-    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
 }
 extern "C" void PDO_InputMapping(void) {
     ++native_input_refreshes;
@@ -355,8 +355,8 @@ int main() {
     assert(APPL_StopInputHandler() == 0);
     APPL_InputMapping(native_mapped_inputs.data());
     writes = native_pdram_writes;
-    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
-    hpm5e_ssc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
+    dust_esc_esc_write(native_mapped_inputs.data(), DUST_TX_ADDRESS, nPdInputSize);
     assert(native_pdram_writes == writes + 2);
     auto ArmFreshGateway = [&] {
         native_can_dirty = native_can_frame_enabled = native_can_invalid = native_offer_uart = false;

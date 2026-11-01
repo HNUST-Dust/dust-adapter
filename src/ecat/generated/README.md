@@ -25,4 +25,7 @@ No change to the SSC configuration or application behavior is made by adding CI.
   `src/ecat/appl_interfaces/sampleappl.h` 与仓库自有回调替换，不参与编译。
 
 升级或重新配置 SSC 工程时，必须通过 `tools/import_ssc.py` 受控导入，并更新
-`import_hashes.json`；不要直接编辑本目录中的文件。
+`import_hashes.json`；不要直接编辑本目录中的文件。`import_ssc.py` 会在导入后自动
+应用项目适配补丁：`ecatslv.h` 的 ESC 硬件头引用改为 `ecat/esc_hw.h`，
+`ecat_def.h` 的 mailbox 临界区钩子改为 `dust_esc_enter_critical()` /
+`dust_esc_leave_critical()`。
