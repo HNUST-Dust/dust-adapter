@@ -50,7 +50,6 @@
 | `src/io/uart_adapter.cpp` | UART 适配层：接收队列、epoch/窗口、超时、状态编码与快照 |
 | `src/io/can_adapter.hpp` | CAN 适配层对外接口（状态由 can_adapter.cpp 私有） |
 | `src/io/uart_adapter.hpp` | UART 适配层对外接口（状态由 uart_adapter.cpp 私有） |
-| `src/io/io_common.hpp` | IO 层时间辅助 |
 | `src/io/can_profile.hpp` | 编译期 CAN 白名单与保护帧策略 |
 | `src/io/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
 | `src/ecat/gateway.cpp` | 网关：CoE 对象字典、SSC `APPL_*` 回调、Core 生命周期与周期 poll |

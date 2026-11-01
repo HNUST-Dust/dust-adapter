@@ -14,12 +14,15 @@
 
 #include "drivers/can_driver.hpp"
 #include "io/can_profile.hpp"
-#include "io/io_common.hpp"
 #include "io/latest_can.hpp"
 #include "protocol/io_policy.hpp"
 
 namespace ecat {
 namespace {
+
+uint64_t Now() {
+    return k_ticks_to_us_floor64(k_uptime_ticks());
+}
 
 struct CanPort {
     const device* dev;

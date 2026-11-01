@@ -8,11 +8,11 @@
 #include <algorithm>
 #include <cerrno>
 
+#include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
 #include "io/can_adapter.hpp"
 #include "io/can_profile.hpp"
-#include "io/io_common.hpp"
 #include "io/uart_adapter.hpp"
 #if defined(CONFIG_ONBOARD_IMU_RAW)
 #include "drivers/imu_sensor.hpp"
@@ -27,6 +27,10 @@ namespace ecat {
 int AllocateBootIdentity(uint64_t& boot);
 
 namespace {
+uint64_t Now() {
+    return k_ticks_to_us_floor64(k_uptime_ticks());
+}
+
 bool initialized = false;
 bool ready = false;
 bool capturing = false;

@@ -13,11 +13,14 @@
 #include <zephyr/sys/atomic.h>
 
 #include "drivers/uart_driver.hpp"
-#include "io/io_common.hpp"
 #include "protocol/io_policy.hpp"
 
 namespace ecat {
 namespace {
+
+uint64_t Now() {
+    return k_ticks_to_us_floor64(k_uptime_ticks());
+}
 
 struct UartBlock {
     uint32_t epoch = 0, captured = 0;
