@@ -9,7 +9,7 @@ import shutil
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('source', type=pathlib.Path, help='Configured ssc_generated/src directory')
 parser.add_argument('--destination', type=pathlib.Path,
-                    default=pathlib.Path(__file__).resolve().parents[1]/'src/ecat/generated')
+                    default=pathlib.Path(__file__).resolve().parents[1]/'src/ssc_generated')
 args = parser.parse_args()
 source = args.source.resolve()
 required = ('ecat_def.h', 'ecatslv.c', 'ecatappl.c', 'sampleappl.c', 'sampleappl.h', 'applInterface.h', 'eeprom.h')
@@ -23,10 +23,10 @@ if args.destination.exists():
     parser.error('Destination exists; choose a new directory rather than overwriting licensed files')
 args.destination.parent.mkdir(parents=True, exist_ok=True)
 shutil.copytree(source, args.destination)
-# 项目适配：本仓库把 HPM5E 绑定头/临界区钩子统一命名为 ecat/esc_hw.*，
+# 项目适配：本仓库把 HPM5E 绑定头统一到 adapters/esc/esc_hw.h，
 # 导入后自动同步授权导出文件中的引用，避免手工改 generated 目录。
 adaptations = {
-    'ecatslv.h': (('#include "hpm5e_esc_hw.h"', '#include "ecat/esc/esc_hw.h"'),),
+    'ecatslv.h': (('#include "hpm5e_esc_hw.h"', '#include "adapters/esc/esc_hw.h"'),),
     'ecat_def.h': (('hpm5e_ssc_enter_critical()', 'esc_enter_critical()'),
                    ('hpm5e_ssc_leave_critical()', 'esc_leave_critical()')),
 }
