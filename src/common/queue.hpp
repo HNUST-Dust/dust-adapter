@@ -1,8 +1,13 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+
+/* 无堆有界队列；单执行上下文容器，不跨线程使用。 */
 #pragma once
-#include "protocol/protocol.hpp"
+
+#include <array>
+#include <cstddef>
+
 namespace ecat {
-// 周期线程独占；ISR 接收队列由平台提供，不得调用本容器。
+
 template <typename T, size_t Depth>
 class IoQueue {
    public:
@@ -39,27 +44,5 @@ class IoQueue {
     std::array<T, Depth> values_{};
     size_t head_ = 0, count_ = 0;
 };
-struct PendingCan {
-    CanFrame frame;
-    uint64_t deadline_us = 0;
-};
-inline bool CanExpired(const PendingCan& value, uint64_t now) {
-    return value.deadline_us && now >= value.deadline_us;
-}
-// counter 必须先持久化并读回，才可把 boot 暴露给主站；零是保留值。
-inline bool NextBootIdentity(uint64_t identity, uint64_t previous,
-                             uint64_t& counter, uint64_t& boot) {
-    if (!identity || previous == UINT64_MAX) {
-        return false;
-    }
-    counter = previous + 1;
-    boot = identity ^ counter;
-    if (!boot) {
-        if (counter == UINT64_MAX) {
-            return false;
-        }
-        boot = identity ^ ++counter;
-    }
-    return true;
-}
+
 }  // namespace ecat
