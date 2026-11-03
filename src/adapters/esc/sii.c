@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include "ecat/esc/sii.h"
+#include "adapters/esc/sii.h"
 
 #include <errno.h>
 #include <string.h>
