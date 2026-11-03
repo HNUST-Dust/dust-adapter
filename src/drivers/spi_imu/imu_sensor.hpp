@@ -14,7 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
 
-namespace modules {
+namespace drivers {
 
 /**
  * HXY 板载 IMU 传输与非阻塞采样；原始突发格式固定。
@@ -101,4 +101,4 @@ class ImuSensor final {
     uint32_t transfer_start_cycle_ = 0U;
 };
 
-}  // namespace modules
+}  // namespace drivers

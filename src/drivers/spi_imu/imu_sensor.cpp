@@ -5,7 +5,7 @@
  * @brief 实现板载 IMU 初始化、INT1 处理和异步 SPI 采集。
  */
 
-#include "drivers/imu_sensor.hpp"
+#include "drivers/spi_imu/imu_sensor.hpp"
 
 #include <errno.h>
 #include <string.h>
@@ -102,7 +102,7 @@ const struct spi_config g_onboard_imu_spi_config = {
 };
 }  // namespace
 
-namespace modules {
+namespace drivers {
 
 /**
  * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
@@ -358,11 +358,11 @@ int ImuSensor::TryStartAsync() {
     return StartBurstRead();
 }
 
-}  // namespace modules
+}  // namespace drivers
 
 #else
 
-namespace modules {
+namespace drivers {
 
 /**
  * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
@@ -426,6 +426,6 @@ int ImuSensor::StartBurstRead() {
     return -ENOTSUP;
 }
 
-}  // namespace modules
+}  // namespace drivers
 
 #endif

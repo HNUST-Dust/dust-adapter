@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include "drivers/uart_driver.hpp"
+#include "drivers/uart/uart_driver.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -9,7 +9,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/linker/section_tags.h>
 
-#include "drivers/uart_receive.hpp"
+#include "drivers/uart/uart_receive.hpp"
 
 namespace drivers {
 namespace {

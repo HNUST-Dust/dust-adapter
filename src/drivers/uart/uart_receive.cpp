@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "drivers/uart_receive.hpp"
+#include "drivers/uart/uart_receive.hpp"
 
 #if defined(CONFIG_UART_HPMICRO_RX_LINE_IDLE)
 #include <drivers/uart_hpmicro.h>
