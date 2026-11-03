@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #pragma once
-#include "protocol/protocol.hpp"
+#include "domain/pdo/layout.hpp"
 
 namespace ecat {
 // 对应 CoE expedited SDO；完整访问由 SSC 适配层显式拒绝。

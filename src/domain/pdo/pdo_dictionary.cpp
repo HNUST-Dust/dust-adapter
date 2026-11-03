@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "protocol/pdo_dictionary.hpp"
+#include "domain/pdo/pdo_dictionary.hpp"
 
 namespace ecat {
 PdoDictionary::Object* PdoDictionary::Find(uint16_t index) {
