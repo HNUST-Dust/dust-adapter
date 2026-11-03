@@ -36,22 +36,18 @@ CAN 白名单与保护帧由 `config/can_devices.yaml` 编译进固件，
 目录与线程职责见 [源码架构](docs/architecture.md)，
 SSC 配置与许可见 [EtherCAT 从站](docs/ethercat.md)。
 
-## 测试
+## 构建检查
 
-```sh
-./scripts/test_protocol.sh
-```
-
-该入口通过 `tests/CMakeLists.txt` + CTest 运行原生协议/布局/IO/SSC 合约测试与
-配置生成一致性检查，再运行锁定的 `hpm_support` 外部原生测试（不可用时明确 SKIP）。
-硬件探针固件位于 `tests/`，不在此入口内，需单独 `west build` 并烧录；
+CI 执行文档链接检查、依赖边界检查与目标固件构建。仓库不再维护宿主机测试；
+功能正确性以目标构建和实板台架验收为准。
+硬件探针固件位于 `tests/probes/`，需单独 `west build` 并烧录；
 联机前须确认 EtherCAT 主站不活动。
 
 ## 目录结构
 
 ```text
 dust-adapter/
-├── CMakeLists.txt        # 唯一固件构建入口
+├── CMakeLists.txt        # 分层静态库与唯一固件构建入口
 ├── Kconfig               # 可选功能开关
 ├── prj.conf              # 默认 EtherCAT 应用配置
 ├── boards/               # 板级 overlay
@@ -61,31 +57,24 @@ dust-adapter/
 ├── docs/                 # living 文档
 ├── scripts/              # 构建与测试入口
 ├── src/
-│   ├── main.c            # 板级初始化与主循环调度
-│   ├── protocol/         # 可原生测试的协议核心与 PDO 布局
-│   ├── io/               # CAN/UART 协议适配与 IO facade（依赖 protocol + drivers）
-│   │   ├── io_backend.cpp/hpp   # IO facade
-│   │   ├── can_adapter.cpp      # CAN 适配层
-│   │   ├── uart_adapter.cpp     # UART 适配层
-│   │   ├── can_adapter.hpp      # CAN 适配接口
-│   │   ├── uart_adapter.hpp     # UART 适配接口
-│   │   ├── can_profile.hpp      # CAN 白名单/保护帧策略
-│   │   └── latest_can.hpp       # 每总线最新反馈槽
-│   ├── ecat/             # SSC 网关、ESC 硬件适配与授权 SSC 源码
-│   │   ├── gateway.cpp/h        # 对象字典 + SSC 回调 + 生命周期
-│   │   ├── runtime.c/h          # SSC/网关生命周期
-│   │   ├── boot_identity.cpp    # 启动身份
-│   │   ├── sampleappl.h         # 自定义 SSC 应用接口头
-│   │   ├── esc/                 # ESC 寄存器/SII/启动与 PHY 适配
-│   │   └── generated/           # SSC 工具导出源码（非 Apache-2.0）
-│   └── drivers/          # 板级与硬件驱动
-│       ├── can_driver.*  # CAN 硬件驱动（无协议依赖）
-│       ├── uart_driver.* # UART 硬件驱动（无协议依赖）
-│       └── ...           # PWM、蜂鸣器、IMU、加热等
-├── tests/                # 原生合约测试与硬件探针固件
-├── tools/                # 配置/ESI/schema 生成与文档检查
+│   ├── main.cpp           # 入口
+│   ├── composition.*      # 组合根
+│   ├── scheduler.*        # 实时循环
+│   ├── common/           # 跨层值类型（Error/Bytes/CAN/UART/IMU/故障钩子）
+│   ├── domain/           # protocol（会话/线协议/CAN/UART 子协议）、pdo、can、uart、protection
+│   ├── drivers/          # 窄硬件原语 + CAN/UART/IMU 端口实现
+│   ├── adapters/
+│   │   ├── esc/          # ESC 寄存器/SII/PHY/启动
+│   │   └── ethercat_ssc/ # 唯一 include SSC 的适配器（回调/对象字典/映射）
+│   └── ssc_generated/    # 授权 SSC 5.13 源码（非 Apache-2.0）
+├── tests/probes/         # 硬件探针固件（非宿主机测试）
+├── tools/                # 配置/ESI/schema 生成与依赖边界检查
 └── west.yml              # West manifest
 ```
+
+依赖方向：`common → domain → drivers/adapters → app`；domain 按 protocol/pdo/can/uart/protection 划分；
+单板资源/DTS 别名集中在 `composition.cpp`。
+越界 include 由 `tools/check_driver_boundary.py` 校验，主约束是 CMake target 链接图。
 
 ## 文档
 
@@ -97,5 +86,5 @@ dust-adapter/
 ## 许可
 
 除第三方组件外，本仓库采用 Apache-2.0（见 `LICENSE`、`NOTICE`）。
-`src/ecat/generated` 为已获授权的 Beckhoff SSC 5.13，**不适用** Apache-2.0，
-许可与导入说明见 [SSC 许可](src/ecat/generated/README.md)。
+`src/ssc_generated` 为已获授权的 Beckhoff SSC 5.13，**不适用** Apache-2.0，
+许可与导入说明见 [SSC 许可](src/ssc_generated/README.md)。

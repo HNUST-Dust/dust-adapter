@@ -47,8 +47,8 @@ jobs:
         run: |
           west init -l dust-adapter
           west update
-      - name: Test inherited gateway protocol and safety contracts
-        run: bash dust-adapter/scripts/test_protocol.sh
+      - name: Check dependency boundaries
+        run: python3 dust-adapter/tools/check_driver_boundary.py
       - name: Build EtherCAT slave firmware
         run: bash dust-adapter/scripts/ci_build.sh ethercat
       - uses: actions/upload-artifact@v4

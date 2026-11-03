@@ -4,7 +4,7 @@
 
 状态：正式生产布线。字段小端，长度由启动时 SDO 0x2100 配置构造、提交时用布局 CRC32 校验，运行期不可改。RxPDO = 主站 → adapter，TxPDO = adapter → 主站。
 
-唯一事实源：`config/pdo_schema.yaml`（含 `production` 生产 profile），由 `tools/generate_pdo_schema.py` 生成 `src/protocol/pdo_schema.hpp`，提供命名偏移常量与字段 Walk，固件与主站同源使用。本文件是字段级可读说明；协议核心状态机见 [EtherCAT 协议核心](ethercat-protocol-core.md)。
+唯一事实源：`config/pdo_schema.yaml`（含 `production` 生产 profile），由 `tools/generate_pdo_schema.py` 生成 `build/<dir>/generated/pdo_schema.hpp`，提供命名偏移常量与字段 Walk，固件与主站同源使用。本文件是字段级可读说明；协议核心状态机见 [EtherCAT 协议核心](ethercat-protocol-core.md)。
 
 ## 1. 生产布线
 

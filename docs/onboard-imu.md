@@ -10,12 +10,12 @@
 Adapter 负责芯片初始化、DMA 采样、时间戳和用于本地温控的温度换算；
 其他原始字节完整转发，交给 dust-control 解析。当前实现：
 
-- 采样：`src/drivers/imu_sensor.cpp` 使用 SPI3 + XDMA 6/7，CS=PC21、DRDY=PC18，
+- 采样：`src/drivers/spi_imu/imu_sensor.cpp` 使用 SPI3 + XDMA 6/7，CS=PC21、DRDY=PC18，
   DRDY 中断记录采样时刻，异步 DMA 完成后再取最新样本。
-- 转发：`src/io/io_backend.cpp` 每个发布周期取最新突发，
+- 转发：`src/adapters/ethercat_ssc/io_coordinator.cpp` 每个发布周期取最新突发，
   EtherCAT PDO 保留 25 字节原始 SPI 传输和 binary32 温度字段，
   见 [PDO 协议](ethercat-pdo-protocol.md)。
-- 温控：`src/drivers/imu_heater.cpp` 的系统工作队列按
+- 温控：`src/drivers/pwm/outputs.cpp` 由调度器按周期调用（内部按 `period_ms` 限流），按
   `CONFIG_IMU_HEATER_PERIOD_MS`（默认 10 ms）运行单向加热 PID，
   目标温度 `CONFIG_IMU_TARGET_C`（默认 45 ℃）。
   超过 200 ms 没有新温度样本即判故障并停止加热；

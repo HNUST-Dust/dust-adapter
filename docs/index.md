@@ -26,7 +26,7 @@
 
 | 文档 | 说明 |
 |---|---|
-| [源码架构](architecture.md) | `src/main.c`、`src/protocol`、`src/ecat`（含 `generated`/`sampleappl.h`/`esc_hw.*`）、`src/drivers` 的职责与数据流 |
+| [源码架构](architecture.md) | `src/main.cpp`/`composition`/`scheduler`、`src/common`、`src/domain`、`src/adapters`、`src/drivers`、`src/ssc_generated` 的职责与数据流 |
 | [EtherCAT 协议核心](ethercat-protocol-core.md) | 配置事务、状态机、授权期限、UART/反馈/诊断编码 |
 | [PDO 协议](ethercat-pdo-protocol.md) | ABI 5.0 字段级线格式与布局签名 |
 
@@ -36,7 +36,7 @@
 |---|---|
 | [EtherCAT 从站](ethercat.md) | SSC 5.13、FreeRun 当前能力、许可与构建入口 |
 | [SSC 网关接入](ethercat-ssc-gateway.md) | 对象字典、SII/ESI、SM 分区、CAN/UART 后端、启动计数与诊断 |
-| [EtherCAT 协议核心](ethercat-protocol-core.md) | 与 Zephyr/SSC 解耦的可原生测试协议核心 |
+| [EtherCAT 协议核心](ethercat-protocol-core.md) | 与 Zephyr/SSC 解耦的协议核心 |
 | [PDO 协议](ethercat-pdo-protocol.md) | 生产 profile 的 RxPDO/TxPDO 字段与语义 |
 
 ## 板级
@@ -51,8 +51,8 @@
 
 | 文档 | 说明 |
 |---|---|
-| [源码架构](architecture.md) | 构建入口、生成文件与测试入口说明 |
-| [README](<../README.md>) | `scripts/build.sh ethercat` 与 `scripts/test_protocol.sh` 用法 |
+| [源码架构](architecture.md) | 构建入口、生成文件与依赖边界说明 |
+| [README](<../README.md>) | `scripts/build.sh ethercat` 用法 |
 
-测试统一从 `scripts/test_protocol.sh` 进入，覆盖 `tests/` 下的原生合约测试；
-硬件探针固件位于 `tests/`，需单独构建与烧录，联机前须确认 EtherCAT 主站不活动。
+CI 执行文档链接检查、依赖边界检查与目标固件构建；仓库不维护宿主机测试。
+硬件探针固件位于 `tests/probes/`，需单独构建与烧录，联机前须确认 EtherCAT 主站不活动。

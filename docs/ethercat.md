@@ -33,11 +33,11 @@ SSC 5.13，**FreeRun** 周期交换，单 SSC 主线程。板级接线见
 
 ## SSC 配置与许可
 
-`src/ecat/generated` 保留已获授权纳入的 SSC 5.13 文件及 Beckhoff 原始许可，
-**不适用** 本仓库的 Apache-2.0，见 [SSC 许可](../src/ecat/generated/README.md)。
+`src/ssc_generated` 保留已获授权纳入的 SSC 5.13 文件及 Beckhoff 原始许可，
+**不适用** 本仓库的 Apache-2.0，见 [SSC 许可](../src/ssc_generated/README.md)。
 
 构建时 CMake 把 SSC 源码复制到构建目录 `ssc_gateway`，用自有
-`src/ecat/sampleappl.h`、应用回调和生成的 `eeprom.h`/SII 替换计数器应用；
+`src/adapters/ethercat_ssc/sampleappl.h`、应用回调和生成的 `eeprom.h`/SII 替换计数器应用；
 原目录不改写，也不编译其 `sampleappl.c`。SSC 约束通过生成的
 `gateway_config.h` 覆盖 `ecat_def.h` 默认值，DC 相关配置在构建期被拒绝。
 
@@ -65,9 +65,8 @@ cd dust-adapter
 ## 验证
 
 ```sh
-./scripts/test_protocol.sh
+./scripts/build.sh ethercat -p always
 ```
 
-覆盖协议/布局/PDO 字典/SSC/IO 后端/驱动边界的原生合约测试，以及 ESI/schema
-一致性与 CAN profile 生成器检查。实板上的枚举、OP/Discover 与长时间稳定性
-仍需独立验收。
+构建期生成 ESI/SII、CAN profile 与 PDO schema；实板上的枚举、OP/Discover
+与长时间稳定性仍需独立验收。

@@ -2,8 +2,8 @@
 
 # HPM5E31 SSC 网关接入
 
-当前构建已替换旧计数器应用，由 `src/ecat/gateway.cpp` 接入
-`src/protocol/` 协议核心。本文描述 SSC 对象字典、SII/ESI、SM 分区、
+当前构建已替换旧计数器应用，由 `src/adapters/ethercat_ssc/` 接入
+`src/domain/` 协议核心。本文描述 SSC 对象字典、SII/ESI、SM 分区、
 CAN/UART 后端、启动身份与诊断边界；协议语义见
 [EtherCAT 协议核心](ethercat-protocol-core.md)，
 从站总体状态见 [EtherCAT 从站](ethercat.md)。
@@ -61,15 +61,13 @@ ESI 归档副本是 `config/esi/DUST_HPM5E31_Gateway.xml`。该身份只用于�
 生成文件位于构建目录 `ssc_gateway/`，XML 已做内容契约检查，
 尚未做 ETG XSD/一致性认证，也未实测 IgH 对该 SII 的枚举。
 
-## 构建与离线验证
+## 构建
 
 ```sh
 ./scripts/build.sh ethercat -p always
-./scripts/test_protocol.sh
 ```
 
-原生 SSC 测试直接编译真实 `coeappl.c` / `objdef.c`，仅替换 ESC 寄存器与时钟边界，
-并把整数宽度固定为目标机的 32 位 ABI。ASan/UBSan 覆盖：
+构建直接编译真实 `coeappl.c` / `objdef.c`，整数宽度使用目标机 32 位 ABI。
 配置/映射乱序、多个 PDO、真实 SDO 状态/位宽/Complete Access 校验、CRC 不一致、
 UART5 非法 TX、SM 地址/看门狗、业务描述位宽、SAFEOP Ready、OP Discover、
 Arm 拒绝、故障锁存与显式重新初始化。另检查生成 ESI/SII/SSC 的身份和 SM 地址一致。
@@ -78,7 +76,7 @@ SSC 后端桩分别验证缺少保护拒绝 Arm、保护就绪允许 Arm/派发�
 
 ## CAN/UART 后端与配置
 
-`src/io/io_backend.cpp` 在 FreeRun 线程中串行处理协议动作和队列；ISR 只投递接收块、
+`src/adapters/ethercat_ssc/io_coordinator.cpp` 在 FreeRun 线程中串行处理协议动作和队列；ISR 只投递接收块、
 完成状态及故障标记。OP 每个新 Rx 影像只发布一次 Tx，避免主循环空转导致 UART 上行窗口轮转。
 
 - DTS aliases `dust_can_0..3` 和 `dust_uart_1..6` 绑定物理接口。
@@ -118,7 +116,7 @@ SSC 后端桩分别验证缺少保护拒绝 Arm、保护就绪允许 Arm/派发�
 
 ## 启动计数存储
 
-`src/ecat/boot_identity.cpp` 只读取 OTP UID，不烧写 OTP。NVS 使用
+`src/identity.cpp` 只读取 OTP UID，不烧写 OTP。NVS 使用
 `ethercat_eeprom_partition`（0xd0000、64 KiB）前 8 KiB，即两个 4 KiB 扇区；
 不与 RAM SII 镜像共享数据。链接区通过 `CONFIG_ROM_END_OFFSET=0x30000`
 止于 0xd0000，避免代码增长覆盖存储区。
@@ -129,7 +127,6 @@ SSC 后端桩分别验证缺少保护拒绝 Arm、保护就绪允许 Arm/派发�
 
 ## 验证边界
 
-`./scripts/test_protocol.sh` 覆盖上述协议的离线证据，`./scripts/build.sh ethercat`
-验证目标构建。这些证据不替代实板验收；主站对新 SII 的枚举、YAML 动态映射、
+`./scripts/build.sh ethercat` 验证目标构建；生成期检查覆盖 ESI/SII 与 schema。这些证据不替代实板验收；主站对新 SII 的枚举、YAML 动态映射、
 Discover/Arm、CAN 空载收发、UART 短帧与连续流、断线/超时保护和长时间稳定性
 仍需在台架单独验证。

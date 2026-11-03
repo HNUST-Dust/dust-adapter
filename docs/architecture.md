@@ -1,139 +1,82 @@
 > 状态：living · 更新：2026-11-02 · 分支：ethercat
 
-# 源码组织、线程边界与构建入口
+# 源码组织、依赖方向与执行模型
 
-本文描述当前仓库的固件分层、执行上下文和构建/测试入口。
+本文描述 v2 固件架构的分层、依赖规则、执行上下文与构建/测试入口。
 协议细节见 [EtherCAT 协议核心](ethercat-protocol-core.md) 与
-[PDO 协议](ethercat-pdo-protocol.md)，SSC 接入细节见
+[PDO 协议](ethercat-pdo-protocol.md)，SSC 接入见
 [SSC 网关接入](ethercat-ssc-gateway.md)。
 
-## 单一构建入口
+## 设计目标
 
-仓库只有一个固件构建入口：根目录 `CMakeLists.txt` + `prj.conf`，板级覆盖在
-`boards/`，工作区/依赖路径由 `cmake/prepare.cmake` 准备。
-`scripts/build.sh ethercat` 只是 `west build -b dust-hpm5e31` 的封装；
-`src/ecat/generated` 的授权源码与 `src/ecat/sampleappl.h` 由 CMake 复制到构建目录
-`build/<dir>/ssc_gateway` 后编译，不改写第三方源文件。
+- **低耦合**：共享值类型在 `common/`；SSC 只在 `adapters/ethercat_ssc`，
+  Zephyr 外设访问集中在 `drivers/`，单板配置集中在 `composition.cpp`。
+- **高内聚**：唯一生命周期状态机、唯一保护/停机所有者、单一对象索引事实源。
+- **单板单产品**：不为多板/宿主机测试引入额外抽象层。
 
-构建期生成的文件都落在构建目录，不提交：
+## 分层与依赖
 
-- `build/<dir>/generated/can_profile_generated.hpp`：由
-  `tools/generate_can_profile.py` 从 `config/can_devices.yaml` 生成。
-- `build/<dir>/ssc_gateway/`：SSC 源码副本、`sampleappl.h`、`gateway_config.h`、
-  SII 镜像与 SSC 宏定义。
-
-随仓库提交的生成/派生文件：
-
-- `src/protocol/pdo_schema.hpp`：由 `tools/generate_pdo_schema.py` 从
-  `config/pdo_schema.yaml` 生成，固件与主机共用同一份字段定义，不手改。
-- `src/ecat/generated/`：SSC 5.13 工具导出的配置后工程源码与授权栈实现，
-  构建期不重新生成，只能通过 `tools/import_ssc.py` 受控更新（详见其 README）。
-- `config/esi/DUST_HPM5E31_Gateway.xml`：由
-  `tools/generate_gateway_esi.py` 从 `config/ethercat_gateway.json` 生成并归档，
-  与构建期 SII 同源。
-
-## 源码分层
-
-| 路径 | 职责 |
-|---|---|
-| `src/main.c` | 板级外设初始化、主循环调度策略；生命周期由 `src/ecat/runtime.c` 承担 |
-| `src/protocol/` | 与 Zephyr、SSC、外设解耦的协议核心与布局，可原生编译测试 |
-| `src/protocol/protocol.hpp` | ABI 常量、配置/布局/Layout/Actions/Core 接口 |
-| `src/protocol/core.cpp` | 配置提交、状态机、会话与过期判据、UART 窗口、PDO 编解码 |
-| `src/protocol/layout.cpp` | 由配置与 Limits 生成候选 PDO 布局 |
-| `src/protocol/pdo_dictionary.*` | CoE 映射暂存器、过程 RAM 分配与冻结 |
-| `src/protocol/digest.hpp` | 布局/影像摘要 |
-| `src/protocol/io_policy.hpp` | 无堆的有界队列、命令过期与启动身份推导 |
-| `src/protocol/pdo_schema.hpp` | 由 schema 生成的字段偏移与 Walk（勿手改） |
-| `src/io/io_backend.cpp` + `io_backend.hpp` | IO facade：初始化、保护、配置、状态查询、动作派发与跨周期采集 |
-| `src/io/can_adapter.cpp` | CAN 适配层：Core 事件、接收队列、批次 deadline、保护帧、反馈快照与状态 |
-| `src/io/uart_adapter.cpp` | UART 适配层：接收队列、epoch/窗口、超时、状态编码与快照 |
-| `src/io/can_adapter.hpp` | CAN 适配层对外接口（状态由 can_adapter.cpp 私有） |
-| `src/io/uart_adapter.hpp` | UART 适配层对外接口（状态由 uart_adapter.cpp 私有） |
-| `src/io/can_profile.hpp` | 编译期 CAN 白名单与保护帧策略 |
-| `src/io/latest_can.hpp` | 每总线按 ID 的最新反馈槽 |
-| `src/ecat/gateway.cpp` | 网关：CoE 对象字典、SSC `APPL_*` 回调、Core 生命周期与周期 poll |
-| `src/ecat/runtime.c` + `runtime.h` | SSC/网关生命周期（启动、reset、rearm、poll/MainLoop 步进）与 `stack_ready` 状态 |
-| `src/ecat/boot_identity.cpp` | NVS 启动身份读取/递增与读回 |
-| `src/ecat/sampleappl.h` | 自定义 SSC 应用接口头，构建时替换授权包内的同名文件 |
-| `src/ecat/esc/esc_hw.h` | SSC `HW_*` 契约头与 ESC 启动/启停 API 声明 |
-| `src/ecat/esc/esc_regs.c` | ESC 寄存器读写、定时器、AL event、临界区、IRQ 与 EEPROM 命令循环 |
-| `src/ecat/esc/sii.c` + `sii.h` | SII 镜像存储与 EEPROM 读/写/reload 响应 |
-| `src/ecat/esc/esc_boot.c` | ESC/PHY/SII 启动、FreeRun 启停、链路维护与 PDI/RESET 中断钩子 |
-| `src/drivers/` | 板级驱动：PWM、蜂鸣器、IMU、加热 PID，以及与 EtherCAT 无关的硬件层 |
-| `src/drivers/can_driver.*` | CAN 硬件驱动：设备/位率/过滤器、原始帧收发、abort 与状态 |
-| `src/drivers/uart_driver.*` | UART 硬件驱动：端口配置、接收缓冲/idle、原始块收发与 abort；`uart_receive.*` 为其内部实现 |
-| `src/ecat/generated/` | 已授权的 SSC 5.13 配置生成源码与许可，不适用 Apache-2.0；`src/ecat/sampleappl.h` 是本仓库自有的 SSC 应用接口头，二者职责不同 |
-
-## 启动与主循环
-
-`src/main.c` 只负责板级外设初始化、启动/停止调用和主循环调度策略；ESC/PHY/SII
-启动在 `src/ecat/esc/esc_boot.c`，SSC 生命周期在 `src/ecat/runtime.c`。
-
-1. `ecat_runtime_init()` 注册 ESC PDI/RESET 钩子，`esc_init()` 完成
-   SII 镜像装载、EEPROM 模拟配置与装载检查、PHY 复位/配置、信号配置和链路更新。
-2. 蜂鸣器初始化，`ecat_runtime_start()` 调用 `MainInit()` 与
-   `gateway_init()`（IO 后端、启动身份和协议核心对象字典）。
-3. 板级输出（IMU 加热 PID）初始化，`ecat_runtime_enable()` 置位
-   `stack_ready` 并启动 ESC（关闭 FreeRun 不需要的 SYNC0/SYNC1 中断）。
-4. 进入 `for (;;)` 主循环：`ecat_runtime_step()` 处理 reset/rearm、SSC
-   `MainLoop()` 前后各一次 `gateway_poll()`、每 100 ms 更新 PHY 链路，并
-   返回 Active/Idle/Fatal；主循环据此选择 10 µs 忙等或 `k_usleep(100)`。
-
-会话结束（`APPL_StopInputHandler`）后核心处于 Protected，主循环在屏蔽 ESC IRQ
-的安全上下文中重建网关，产生新的 boot_id 并清空映射/判据/过程影像，使主站下一次
-启动可直接重新配置 0x2100，无需断电或 ESC 复位；重建失败时保持 IRQ 屏蔽并停住主循环。
-
-## 执行上下文
-
-当前选择 FreeRun + **单 SSC 主线程**：主线程（`CONFIG_MAIN_THREAD_PRIORITY=0`）
-唯一拥有 SSC、协议核心、软件队列、UART 窗口和 ESC 寄存器访问。
-
-| 上下文 | 职责 | 边界 |
+| 路径 | 职责 | 允许依赖 |
 |---|---|---|
-| 主线程 | SSC `MainLoop()`、PDO 回调、`Core.Process/Publish/Tick`、CAN/UART 队列排空与硬件提交 | 不把 Core 或 SSC 调用放进 ISR/工作线程 |
-| ESC PDI/RESET IRQ | 处理 EEPROM 模拟、把 PDI 通知延迟给主线程 | 只做有界工作，不在 ISR 内解析业务协议 |
-| CAN IRQ | 接收帧投递到每总线 `k_msgq`，主线程排空 | ISR 不直接调用 Core/SSC，不发送帧 |
-| UART 中断/DMA 完成 | idle 检测与异步收发回调，把完整块/状态入队 | 不覆盖在途缓冲区，不推进 ACK |
-| 系统工作队列 | IMU 加热 PID 周期工作（默认 10 ms）与板级输出 | 通过互斥区获取最新温度，不访问 ESC/过程数据 |
+| `src/common/` | 跨层值类型（Error/Bytes/CAN/UART/IMU/故障钩子/栈事件） | 仅标准库 |
+| `src/domain/` | `protocol/`（会话、线协议、CAN/UART 子协议）、`pdo/`（配置/布局/映射）、`can/`、`uart/`、`protection/` | `common/`、`drivers/` |
+| `src/drivers/` | 窄硬件原语 + CAN/UART/IMU 设备类（ISR 入队、批次/块提交） | `common/`、Zephyr/HPM SDK |
+| `src/adapters/esc/` | ESC 寄存器/SII/PHY/启动 | Zephyr/HPM SDK |
 
-FreeRun 下不使用 SM/DC 同步中断；SYNC0/SYNC1 中断在启动后关闭。默认打开的若干
-编译期优化开关（跳过多余覆盖清零、输入映射前刷新一次 CAN 反馈、网关 AL 状态诊断等）
-都只在主线程生效，不改变 wire ABI。
+> 注：授权 SSC 的 `ecatslv.h` 由 `tools/import_ssc.py` 在导入时把 ESC 硬件头引用
+> 统一改为 `adapters/esc/esc_hw.h`（仓库唯一的 ESC 硬件契约头），因此不需要
+> 额外的兼容头文件。
+| `src/adapters/ethercat_ssc/` | SSC 适配器（唯一 include SSC 的地方）：生命周期、回调翻译、对象字典、PDO 暂存、IO 编排、反馈聚合、发布调度 | `common/`、`domain/`、SSC |
+| `src/ssc_generated/` | 授权 SSC 5.13 配置后源码（非 Apache-2.0，仅导入工具更新） | 无（仅构建期复制） |
+| `src/`（main/composition/scheduler/lifecycle/identity） | 组合根（单板资源/DTS 别名）、启动身份、实时循环、生命周期、main | 以上全部 + 生成头 |
 
-## 数据流
+CMake 目标：`dust_domain`（链接 Zephyr 接口）；`dust_drivers`（硬件原语 +
+设备类）与 `dust_adapters`（ESC/SSC）→ `app`。越界 include 由
+`tools/check_driver_boundary.py` 兜底。
 
-- 下行：主站 RxPDO → SSC `APPL_OutputMapping` 复制到 `rx_image` →
-  `APPL_Application` 调用 `Core.Process()` → `Actions` 交给 `io_backend`
-  的 CAN 批次/UART 交付 → 硬件提交。CAN/UART 中断只把接收结果入队。
-- 上行：主线程采集 CAN 反馈槽、UART 上行块与 IMU 最新突发 →
-  `Core.Publish()` 编码 `tx_image` → SSC `APPL_InputMapping` 复制到 ESC 输入区。
-- 本地保护：`io_backend` 的校验回调与停机回调在 `Core` 构造时安装，
-  保护就绪后才声明 capability bit31；保护帧、命令期限和最终提交检查均在
-  `io_backend` 内完成。
+## 执行模型
 
-## 测试入口
+- **单实时主线程**（prio 0）拥有 Session、SSC、IO 队列、UART 窗口与 ESC 访问；
+  125 µs 周期下不加锁、不阻塞、不打印、不分配堆。
+- **ISR 只入队**：CAN RX、UART idle/DMA、IMU DRDY、ESC PDI/RESET 只写 SPSC 有界环
+  或置位事件标志；不调用 domain 服务。
+- **板级输出**由调度器每周期调用（适配器内部按 `period_ms` 限流），
+  不依赖系统工作队列；加热 PID 与主站是否发布无关。
+- **状态机唯一**：`Boot → Configurable → Ready → Active → Protected → Rearm`；
+  AL 状态是输入，IRQ 门控是输出。
 
-统一入口：
+## 关键数据流
 
-```sh
-./scripts/test_protocol.sh
+```
+下行：ESC RxPDO → SSC APPL_OutputMapping → SscStack 调 Session.Process
+     → Actions → IoCoordinator.Dispatch → CanIoService/UartIoService
+     → drivers::CanBusPort/UartPort → 硬件
+上行：硬件 ISR → 端口环 → CanIoService.DrainReceive/UartIoService.Capture
+     → FeedbackAggregator → Session.Publish → tx_image
+     → SSC APPL_InputMapping → ESC
+保护：服务上报 FaultSink → ProtectionService 锁存 → Session.Protect
+     → 固定顺序 safe-stop（UART abort、CAN 撤销+保护帧）；
+       Protected 时调度器将加热器置安全状态
+rearm：会话结束 → LifecycleService 在安全上下文 Stop/重新生成 boot_id/Start/Enable
 ```
 
-该脚本先通过 `tests/CMakeLists.txt` 构建并运行 CTest 原生合约测试
-（协议/布局/PDO 字典/IO/SSC/驱动边界、生成配置一致性），再运行锁定的
-`hpm_support` 外部原生测试；外部脚本不可用时明确 SKIP，真实失败让总入口返回非 0。
-需要与主机布局交叉检查时设置 `HOST_ROOT`。
-硬件探针固件位于 `tests/`，不属于该入口，需单独 `west build` 并烧录；
-联机测试前须确认 EtherCAT 主站不活动。
-固件构建验证：
+## 构建期生成
 
-```sh
-./scripts/build.sh ethercat -p always
-```
+| 生成物 | 来源 | 使用方 |
+|---|---|---|
+| `build/<dir>/generated/pdo_schema.hpp` | `config/pdo_schema.yaml` | `domain/pdo`、`domain/protocol` |
+| `build/<dir>/generated/can_profile_generated.hpp` | `config/can_devices.yaml` | `composition` → `CanTopology` |
+| `build/<dir>/ssc_gateway/*` | SSC 授权源码 + `config/ethercat_gateway.json` | `adapters/ethercat_ssc` |
+
+生成物只落在构建目录，不提交；对象索引/区域常量只从生成头取。
+
+## 构建检查
+
+CI 执行文档链接检查、依赖边界检查与目标固件构建：
+`tools/check_doc_links.py`、`tools/check_driver_boundary.py`、`west build`。
+硬件探针固件位于 `tests/probes`，需单独构建烧录。
 
 ## 工作区依赖
 
 `west.yml` 固定 Zephyr（hpmicro fork）、`hpm_support` 与 `sdk_env` 版本；
-`hpm_support` 提供板级 DTS、HPM_ESC 驱动和 PHY 初始化。修改依赖版本需要
-同步验证构建与板级行为。
+`hpm_support` 提供板级 DTS、HPM_ESC 驱动和 PHY 初始化。

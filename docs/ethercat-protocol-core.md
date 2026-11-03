@@ -2,7 +2,7 @@
 
 # EtherCAT 协议核心
 
-协议核心代码位于 `src/protocol/`，与 Zephyr、SSC、IgH、CAN/UART 驱动分离，
+协议核心代码位于 `src/domain/`，与 Zephyr、SSC、IgH、CAN/UART 驱动分离，
 C++17、无异常、无 RTTI、运行时不分配堆内存。固件与主机 dust-control 使用同一份
 PDO schema 与布局 CRC 规则；字段级线格式见 [PDO 协议](ethercat-pdo-protocol.md)。
 
@@ -83,7 +83,7 @@ IMU 保留 25 字节原始数据和 binary32 温度；能力存在不代表当�
 
 ## 动态 PDO 写入与过程 RAM 分配
 
-`src/protocol/pdo_dictionary.hpp` 提供独立于 SSC 的 CoE 映射暂存器，SSC 回调复用
+`src/domain/pdo/pdo_dictionary.hpp` 提供独立于 SSC 的 CoE 映射暂存器，SSC 回调复用
 同一套长度计算。支持 Rx `0x1600..0x1604`、Tx `0x1a00..0x1a04`，
 以及 `0x1c12/0x1c13` 分配对象。SDO 下载需遵循：subindex 0 写 0 禁用，
 写入全部条目，再以 subindex 0 发布条目数。映射条目为 32 位，分配条目为 16 位，
@@ -103,12 +103,12 @@ SSC/SII/主站必须共同采用同一 SM 物理地址方案，不能只在从�
 ## 验证
 
 ```sh
-./scripts/test_protocol.sh
 ./scripts/build.sh ethercat -p always
 ```
 
-已通过 ASan/UBSan 原生合约测试与主从布局比对：有效布局逐条目/PDO 分组/CRC 相同，
-超预算配置双方均拒绝。覆盖重复/乱序/回绕、旧 boot/session、坏映射和不完整配置、
+协议核心不再维护宿主机测试；线格式与布局以构建期生成物和台架主从联调为准。
+以下为设计约束（曾由离线测试覆盖，现由代码审查与实板回归保证）：
+重复/乱序/回绕、旧 boot/session、坏映射和不完整配置、
 来源独立到期、首次等待、缺失本地保护、Stop、完整影像截断、部分坏包不派发、
 UART 重传/缺口/未发送 ACK/单方向容量/通道隔离及时间回绕。
 
