@@ -1,6 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
-#include "drivers/buzzer.h"
+#include "drivers/pwm/buzzer.h"
 int main(void)
 {
     int rc = buzzer_init();
