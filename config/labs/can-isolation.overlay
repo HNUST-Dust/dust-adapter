@@ -1,0 +1,3 @@
+/* Match the original wheel IRQ priority on the isolated buses. */
+&mcan1 { interrupts = <47 5>; };
+&mcan2 { interrupts = <48 5>; };

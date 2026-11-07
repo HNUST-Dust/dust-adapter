@@ -1,0 +1,2 @@
+/* Reserve HDMA0 for the opt-in ESC TX prototype; UART0 is not a gateway port. */
+&uart0 { status = "disabled"; };
