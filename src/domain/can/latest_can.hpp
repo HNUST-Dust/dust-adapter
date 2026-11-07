@@ -44,7 +44,7 @@ class LatestCanSlots {
         bool changed = false;
         for (size_t i = 0; i < count_; ++i) {
             if (valid_[i] &&
-                uint32_t(now - frames_[i].capture_us) >= max_age_us) {
+                int32_t(now - frames_[i].capture_us) >= int32_t(max_age_us)) {
                 valid_[i] = false;
                 changed = true;
             }

@@ -76,6 +76,7 @@ struct UartPortConfig {
 
 /* 硬件中断/DMA 收到的 UART 原始块。 */
 struct UartRxBlock {
+
     uint8_t port = 0;
     uint32_t epoch = 0;
     uint32_t capture_us = 0;

@@ -24,24 +24,41 @@ Scheduler::Scheduler(LifecycleService& lifecycle, SscStack& stack,
       outputs_(outputs) {}
 
 Scheduler::Step Scheduler::RunOnce() {
-    if (!lifecycle_.Step()) {
-        return Step::Fatal;
+    {
+
+        if (!lifecycle_.Step()) {
+            return Step::Fatal;
+        }
     }
-    stack_.Poll();
-    stack_.Step();
-    stack_.Poll();
+    {
+
+        stack_.Poll(false);
+    }
+    {
+
+        stack_.Step();
+    }
+    {
+
+        stack_.Poll();
+    }
 
     /* 传感器/热控与主站是否发布无关；PID 由适配器内部按周期限流。 */
-    feedback_.PollSensors();
-    float temperature = 0;
-    uint64_t capture_us = 0;
-    if (feedback_.LatestTemperature(temperature, capture_us)) {
-        outputs_.ObserveTemperature(temperature, capture_us);
+    {
+
     }
-    const uint64_t now = NowUs();
-    outputs_.Tick(now);
-    if (session_.state() == BusinessState::Protected) {
-        outputs_.SafeState();
+    {
+
+        float temperature = 0;
+        uint64_t capture_us = 0;
+        if (feedback_.LatestTemperature(temperature, capture_us)) {
+            outputs_.ObserveTemperature(temperature, capture_us);
+        }
+        const uint64_t now = NowUs();
+        outputs_.Tick(now);
+        if (session_.state() == BusinessState::Protected) {
+            outputs_.SafeState();
+        }
     }
 
     (void)io_;

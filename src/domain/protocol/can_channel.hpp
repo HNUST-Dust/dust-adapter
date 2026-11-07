@@ -34,7 +34,8 @@ class CanChannel {
     void Commit(const Staged& staged);
 
     void Encode(MutableBytes image, const Layout& layout,
-                const Configuration& config, const Feedback& feedback) const;
+                const Configuration& config, const Feedback& feedback,
+                uint32_t now_us) const;
 
    private:
     std::array<Source, 2> sources_{};

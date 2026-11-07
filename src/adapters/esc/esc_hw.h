@@ -15,6 +15,10 @@ extern "C" {
 uint16_t esc_hw_init(void);
 void esc_hw_release(void);
 void esc_read(volatile void *data, uint16_t address, uint16_t length);
+void esc_pdo_output_received(void);
+void esc_pdo_mapping_state(bool active);
+uint32_t esc_sbus_first_write_us(uint32_t sequence);
+void esc_sbus_write_reset(void);
 void esc_write(const volatile void *data, uint16_t address,
                          uint16_t length);
 uint16_t esc_al_event(void);

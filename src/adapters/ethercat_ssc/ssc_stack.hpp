@@ -24,7 +24,9 @@ class SscStack {
     void Enable();
     void Stop();
     void Step();
-    void Poll();
+    void RunPdoWorker();
+    void RunCanTransmit(unsigned side);
+    void Poll(bool commit_tx = true);
     StackEvents TakeEvents();
     bool TransportHealthy() const;
     AlState Al() const;
@@ -46,12 +48,10 @@ class SscStack {
     void AckError();
 
    private:
+    void GatewayStep();
+    void GatewayStatus();
     void ResetRuntimeState();
     int ApplyLimits();
-    void RefreshCanBeforeMapping();
-    void PublishRegular(uint64_t now);
-    void PublishCanOnly(uint64_t now);
-    void HandleStatusRequest();
 
     Session& session_;
     LayoutService& layout_;
@@ -59,6 +59,7 @@ class SscStack {
     ProtectionService& protection_;
     const SscBoardConfig& board_;
     bool transport_healthy_ = false;
+    bool io_serviced_ = false;
 };
 
 }  // namespace ecat

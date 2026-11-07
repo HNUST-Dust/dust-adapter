@@ -7,6 +7,15 @@
 #include <cstring>
 
 namespace ecat {
+namespace {
+UartPort::Hi91Consumer hi91_consumer = nullptr;
+}
+
+void UartPort::SetHi91Consumer(Hi91Consumer consumer) {
+    const auto key = irq_lock();
+    hi91_consumer = consumer;
+    irq_unlock(key);
+}
 
 UartPort::UartPort(const UartPortConfig* ports, size_t count) {
     port_count_ = std::min(count, kPortCount);
@@ -56,9 +65,19 @@ void UartPort::EventTrampoline(void* context, uint8_t index,
         case drivers::UartEventType::RxFault:
             atomic_set(&port.fault, 1);
             break;
+        case drivers::UartEventType::RxIdleBlock:
+        case drivers::UartEventType::RxFullBlock:
         case drivers::UartEventType::RxBlock: {
             const uint32_t epoch = uint32_t(atomic_get(&self->epoch_));
             if (!epoch || !length) {
+                break;
+            }
+            if (index == 1 && hi91_consumer && length <= 128) {
+                hi91_consumer(epoch, data, length,
+                    uint32_t(k_ticks_to_us_floor64(k_uptime_ticks())),
+                    atomic_get(&port.gap) != 0);
+                atomic_inc(&port.received);
+                atomic_clear(&port.gap);
                 break;
             }
             UartRxBlock block;

@@ -43,6 +43,7 @@ bool IoCoordinator::CanCapacityValid(const Configuration& value) const {
 void IoCoordinator::ApplyLimits(Limits& limits) const {
     can_.ApplyLimits(limits);
     uart_.ApplyLimits(limits);
+    feedback_.ApplyLimits(limits);
 }
 
 void IoCoordinator::Configure(const Configuration& value) {
@@ -62,7 +63,11 @@ void IoCoordinator::Stop() {
 }
 
 void IoCoordinator::Service(Session& session, uint64_t now) {
-    can_.Pump(now);
+
+    {
+
+        can_.Pump(now);
+    }
     if (session.state() == BusinessState::Active &&
         can_.LeaseExpired(now)) {
         if (fault_sink_.report) {
@@ -70,7 +75,10 @@ void IoCoordinator::Service(Session& session, uint64_t now) {
         }
         return;
     }
-    uart_.Service(session, now);
+    {
+
+        uart_.Service(session, now);
+    }
 }
 
 void IoCoordinator::Capture(Session& session, Feedback& feedback,
@@ -78,12 +86,20 @@ void IoCoordinator::Capture(Session& session, Feedback& feedback,
     feedback_.Capture(session, feedback, now);
 }
 
+void IoCoordinator::StartGatewayUart(){ uart_.EnterActive(); }
+bool IoCoordinator::TakeGatewayUart(unsigned port,UartRxBlock& block){
+    return uart_.TakeGatewayRx(port,block);
+}
+
+
+
 void IoCoordinator::CaptureCan(Feedback& feedback) {
     feedback_.CaptureCan(feedback);
 }
 
 bool IoCoordinator::Dispatch(Session& session, const Actions& actions,
                              uint64_t now) {
+
     if (session.state() != BusinessState::Active) {
         return true;
     }
@@ -100,6 +116,7 @@ bool IoCoordinator::Dispatch(Session& session, const Actions& actions,
 }
 
 bool IoCoordinator::DrainCan(uint64_t now) {
+
     return feedback_.DrainCan(now);
 }
 

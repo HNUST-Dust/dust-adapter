@@ -64,6 +64,7 @@ class CanService {
 
     /* 供 ProtectionService 安装到 Session::Protection 的白名单校验。 */
     bool ValidateFrame(const CanFrame& frame) const;
+    int CopyProtectionFrames(uint8_t bus, CanFrame* frames, size_t capacity) const;
     uint32_t ProtectionSignature() const {
         return topology_.protection_signature;
     }

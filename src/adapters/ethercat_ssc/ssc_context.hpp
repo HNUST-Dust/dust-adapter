@@ -8,6 +8,8 @@
 #include <cstdint>
 
 #include "common/abi.hpp"
+#include "common/queue.hpp"
+#include "common/hi91_compact.hpp"
 #include "adapters/ethercat_ssc/io_coordinator.hpp"
 #include "adapters/ethercat_ssc/layout_service.hpp"
 #include "domain/protection/protection.hpp"
@@ -41,7 +43,7 @@ struct SscContext {
     ProtectionService* protection = nullptr;
     const SscBoardConfig* board = nullptr;
 
-    constexpr static unsigned kObjectCount = 35;
+    constexpr static unsigned kObjectCount = 37;
     std::array<SscObject, kObjectCount> objects{};
     /* 十个映射对象共享相同元数据；业务记录只为实际布局分配描述。 */
     std::array<TSDOINFOENTRYDESC, 256> mapping_entries{};
@@ -57,6 +59,25 @@ struct SscContext {
     std::array<uint8_t, kMaxImageBytes> tx_image{};
     Feedback feedback{};
     Actions actions{};
+    std::array<uint8_t, 60> device_rx{}, device_tx{};
+    std::array<uint8_t, 60> combined_imu{}, combined_uart{};
+    struct SbusOffer {
+        UartRxBlock block{};
+        uint32_t sequence = 0;
+    } sbus_offer;
+    dust::hi91::Stream hi91_stream;
+    std::array<uint8_t, 60> hi91_page{};
+    uint32_t hi91_parse_epoch = 0, hi91_session_generation = 0;
+    uint32_t hi91_parser_generation = 0;
+    uint32_t hi91_sample_seq = 0, hi91_sample_capture = 0;
+    uint32_t hi91_device_time_ms = 0;
+    bool hi91_sample_valid = false;
+    bool hi91_enabled = true, sbus_enabled = true;
+    uint32_t device_session = 0;
+    uint64_t device_last_rx = 0;
+    uint8_t device_state = 1, device_sequence = 0;
+    uint8_t gateway_fault_reason = 0;
+    bool device_echo = false;
     bool mapping_ready = false;
     bool new_output = false;
     bool can_dirty = false;

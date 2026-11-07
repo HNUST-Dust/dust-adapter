@@ -30,6 +30,7 @@ class ImuSensor final {
     struct Burst {
         uint8_t rx[kBurstTransferSize];
         uint32_t data_ready_cycle;
+
         float temperature_c;
     };
 
@@ -37,6 +38,12 @@ class ImuSensor final {
      * 初始化传感器、SPI 传输和数据就绪中断。
      */
     int Init();
+    // Register during initialization; callback runs with a complete owned burst.
+    using BurstReady = void (*)(void*, const Burst&);
+    void SetBurstReady(BurstReady ready, void* context) {
+        burst_ready_context_ = context;
+        burst_ready_ = ready;
+    }
 
     /**
      * 无等待复制已完成的 DMA 传输。
@@ -47,8 +54,15 @@ class ImuSensor final {
      * 无等待提交最新待处理的 DRDY 样本。
      */
     int TryStartAsync();
+    void WaitForEvent();
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+    static void BeginArrivalTest();
+    static void FreezeArrivalTest(uint32_t (&words)[4]);
+#endif
 
    private:
+    BurstReady burst_ready_ = nullptr;
+    void* burst_ready_context_ = nullptr;
     /**
      * @brief 在 GPIO 中断上下文中记录 DRDY 周期时间戳。
      */
@@ -99,6 +113,7 @@ class ImuSensor final {
     atomic_t timeout_recovery_started_ = ATOMIC_INIT(0);
     uint32_t active_data_ready_cycle_ = 0U;
     uint32_t transfer_start_cycle_ = 0U;
+
 };
 
 }  // namespace drivers

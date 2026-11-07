@@ -22,10 +22,15 @@ class LayoutService {
         return prepared_;
     }
     const ImageLayout& mapped_rx() const {
-        return mapped_rx_;
+        return prepared_.rx;
     }
     const ImageLayout& mapped_tx() const {
         return mapped_tx_;
+    }
+    const ImageLayout& physical_rx() const { return mapped_rx_; }
+    const ImageLayout& physical_tx() const { return mapped_tx_; }
+    const ConfigurationTransaction& session_transaction() const {
+        return transaction_;
     }
     const ConfigurationTransaction& transaction() const {
         return transaction_;

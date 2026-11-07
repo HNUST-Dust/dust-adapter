@@ -34,8 +34,7 @@ Error Session::Publish(MutableBytes image, uint64_t now,
         }
         for (unsigned n = 0; n < batch.count; ++n) {
             const auto& f = batch.frames[n];
-            if (f.id > 0x7ff || f.length > 8 ||
-                uint32_t(uint32_t(now) - f.capture_us) >= kTimeoutUs) {
+            if (f.id > 0x7ff || f.length > 8) {
                 return invalid(Error::Wire);
             }
         }
@@ -57,13 +56,11 @@ Error Session::Publish(MutableBytes image, uint64_t now,
         return invalid(Error::State);
     }
     auto clear = [&](unsigned from, unsigned to) {
-#if defined(CONFIG_ECAT_PUBLISH_SKIP_OVERWRITE_CLEAR)
         // Header bytes0..(size-1) and the entire diagnostics block are
         // overwritten on every successful publication. Keep reserved/payload
         // clearing between them.
         from = std::max(from, unsigned(pdo::tx::header::size));
         to = std::min(to, unsigned(layout_.diagnostics));
-#endif
         if (from < to) std::fill(image.data + from, image.data + to, uint8_t(0));
     };
     unsigned clear_from = 0;
@@ -105,7 +102,8 @@ Error Session::Publish(MutableBytes image, uint64_t now,
     p[pdo::tx::header::business_state] = uint8_t(state_);
     p[pdo::tx::header::fault_flags] = uint8_t(fault_);
 
-    can_channel_.Encode(image, layout_, config_, feedback);
+    /* 最新槽可能在排空与发布之间刚好到期；编码时丢弃过期反馈。 */
+    can_channel_.Encode(image, layout_, config_, feedback, uint32_t(now));
     uart_channel_.Encode(image, layout_, config_, now, advance_uart,
                          state_ == BusinessState::Active);
 

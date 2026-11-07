@@ -13,6 +13,12 @@
 #include "common/types.hpp"
 
 namespace ecat {
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+void BeginMotorArrivalTest();
+void FreezeMotorArrivalTest(uint32_t (&words)[36]);
+#endif
+
+void CopyLatestMotorRecords(uint8_t* destination, uint32_t now_us);
 
 class CanBusPort {
    public:

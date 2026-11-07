@@ -14,9 +14,28 @@
 namespace drivers {
 namespace {
 
-constexpr size_t kRxBlockSize = 128;
+constexpr size_t kRxBlockSize = CONFIG_ECAT_UART_RX_DMA_BYTES;
+static_assert(kRxBlockSize % 4 == 0);
 constexpr size_t kTxBlockSize = 512;
 constexpr uint32_t kIdleTimeoutUs = 200;
+
+uint32_t IdleTimeoutUs(uint8_t index) {
+#if defined(CONFIG_ECAT_UART2_IDLE_US)
+    if (index == 1) {
+        return CONFIG_ECAT_UART2_IDLE_US;
+    }
+#else
+    (void)index;
+#endif
+    return kIdleTimeoutUs;
+}
+
+size_t RxBlockSize(uint8_t index) {
+    if (index == 1) {
+        return 64;
+    }
+    return kRxBlockSize;
+}
 
 struct PortState {
     const device* dev = nullptr;
@@ -52,16 +71,18 @@ void UartTrampoline(const device* dev, uart_event* event, void* user) {
             event_callback(event_context, state->index, UartEventType::TxAborted,
                            nullptr, 0);
             break;
-        case UART_RX_RDY:
+        case UART_RX_RDY: {
+            const auto type = UartEventType::RxBlock;
             event_callback(
-                event_context, state->index, UartEventType::RxBlock,
+                event_context, state->index, type,
                 event->data.rx.buf + event->data.rx.offset, event->data.rx.len);
             break;
+        }
         case UART_RX_BUF_REQUEST: {
             const unsigned next = state->next_buffer;
             state->next_buffer ^= 1;
             if (uart_rx_buf_rsp(dev, rx_buffers[state->index][next],
-                                kRxBlockSize)) {
+                                RxBlockSize(state->index))) {
                 event_callback(event_context, state->index,
                                UartEventType::RxGap, nullptr, 0);
             }
@@ -73,8 +94,8 @@ void UartTrampoline(const device* dev, uart_event* event, void* user) {
             break;
         case UART_RX_DISABLED:
             state->next_buffer = 1;
-            if (uart_rx_enable(dev, rx_buffers[state->index][0], kRxBlockSize,
-                               kIdleTimeoutUs)) {
+            if (uart_rx_enable(dev, rx_buffers[state->index][0], RxBlockSize(state->index),
+                               IdleTimeoutUs(state->index))) {
                 event_callback(event_context, state->index,
                                UartEventType::RxFault, nullptr, 0);
             }
@@ -117,7 +138,7 @@ int UartInit(const UartPortConfig* ports, size_t count, UartEventCallback event,
         // UART 是字节流，缩短分块间隔不改变上层帧协议。
         const int result = platform::StartUartReceive(
             state->dev, UartTrampoline, state, rx_buffers[state->index][0],
-            kRxBlockSize, kIdleTimeoutUs);
+            RxBlockSize(state->index), IdleTimeoutUs(state->index));
         if (result) {
             return result;
         }

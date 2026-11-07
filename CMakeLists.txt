@@ -11,6 +11,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/prepare.cmake)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(dust_ethercat_slave)
 
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==============================================================================
@@ -35,6 +36,10 @@ set(ADAPTER_CAN_CONFIG
     "${ADAPTER_ROOT}/config/can_devices.yaml"
     CACHE FILEPATH "MCU CAN device/protection configuration"
 )
+if(CONFIG_ECAT_CAN_ISOLATION)
+    # Keep the diagnostic topology and protection whitelist inseparable.
+    set(ADAPTER_CAN_CONFIG "${ADAPTER_ROOT}/config/can_isolation.yaml")
+endif()
 set(PDO_SCHEMA "${ADAPTER_ROOT}/config/pdo_schema.yaml")
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)

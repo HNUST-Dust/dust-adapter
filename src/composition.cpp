@@ -16,6 +16,7 @@
 
 #include "adapters/esc/esc_hw.h"
 #include "common/types.hpp"
+#include "common/device_pdo.hpp"
 #include "domain/can/can_topology.hpp"
 #include "identity.hpp"
 #if defined(CONFIG_BUZZER)
@@ -24,6 +25,39 @@
 
 namespace app {
 namespace {
+constexpr int kCanWorkerPriority = K_PRIO_COOP(CONFIG_NUM_COOP_PRIORITIES - 1);
+// Share priority with bounded sensor workers so ACK/watchdog work cannot starve.
+constexpr int kPdoWorkerPriority = K_PRIO_PREEMPT(0);
+constexpr int kImuWorkerPriority = K_PRIO_PREEMPT(0);
+
+
+K_THREAD_STACK_DEFINE(imu_worker_stack, 2048);
+k_thread imu_worker_thread;
+
+void ImuWorkerLoop(void* context, void*, void*) {
+    auto& feedback = *static_cast<ecat::FeedbackAggregator*>(context);
+    for (;;) {
+        feedback.PollSensors();
+        // DMA/DRDY events provide pacing; yield to equal-priority maintenance
+        // without imposing another tick before a completed sample is published.
+        k_yield();
+        feedback.WaitForImuEvent();
+    }
+}
+
+K_THREAD_STACK_DEFINE(pdo_worker_stack, 3072);
+k_thread pdo_worker_thread;
+
+void PdoWorkerLoop(void* context, void*, void*) {
+    static_cast<ecat::SscStack*>(context)->RunPdoWorker();
+}
+
+K_THREAD_STACK_ARRAY_DEFINE(can_transmit_stacks, dust::device_pdo::kTxBuses.size(), 2048);
+k_thread can_transmit_threads[dust::device_pdo::kTxBuses.size()];
+
+void CanTransmitLoop(void* context, void* side, void*) {
+    static_cast<ecat::SscStack*>(context)->RunCanTransmit(uintptr_t(side));
+}
 
 struct BoardData {
     std::array<ecat::CanBusConfig, 4> can_buses{};
@@ -203,9 +237,27 @@ int Composition::Init() {
 }
 
 void Composition::Run() {
+    k_thread_priority_set(k_current_get(), K_PRIO_PREEMPT(4));
+    k_thread_create(&pdo_worker_thread, pdo_worker_stack,
+                    K_THREAD_STACK_SIZEOF(pdo_worker_stack), PdoWorkerLoop,
+                    &stack_, nullptr, nullptr, kPdoWorkerPriority, 0, K_NO_WAIT);
+    for (unsigned side = 0; side < dust::device_pdo::kTxBuses.size(); ++side) {
+        k_thread_create(&can_transmit_threads[side], can_transmit_stacks[side],
+                        K_THREAD_STACK_SIZEOF(can_transmit_stacks[side]), CanTransmitLoop,
+                        &stack_, reinterpret_cast<void*>(uintptr_t(side)), nullptr,
+                        kCanWorkerPriority, 0, K_NO_WAIT);
+    }
+    k_thread_create(&imu_worker_thread, imu_worker_stack,
+                    K_THREAD_STACK_SIZEOF(imu_worker_stack), ImuWorkerLoop,
+                    &feedback_, nullptr, nullptr, kImuWorkerPriority, 0, K_NO_WAIT);
     for (;;) {
         const ecat::Scheduler::Step step = scheduler_.RunOnce();
         if (step == ecat::Scheduler::Step::Fatal) {
+            k_thread_abort(&pdo_worker_thread);
+            k_thread_abort(&imu_worker_thread);
+            for (auto& thread : can_transmit_threads) {
+                k_thread_abort(&thread);
+            }
             printk("Gateway fatal; IRQs remain disabled\n");
             return;
         }

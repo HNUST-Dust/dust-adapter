@@ -26,6 +26,7 @@ class UartService {
 
     /* 进入 Active：清接收队列并推进 capture epoch。 */
     void EnterActive();
+    bool TakeGatewayRx(unsigned port,UartRxBlock& block);
     /* 停止：清队列、推进 epoch、必要时 abort。 */
     void Stop();
     void AbortAll();

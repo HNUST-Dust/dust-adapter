@@ -2,6 +2,7 @@
 
 #include "composition.hpp"
 
+
 extern "C" int main(void) {
     static app::Composition composition;
     if (composition.Init() != 0) {

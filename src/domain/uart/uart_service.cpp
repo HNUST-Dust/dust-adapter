@@ -72,6 +72,10 @@ void UartService::Stop() {
     }
 }
 
+bool UartService::TakeGatewayRx(unsigned port,UartRxBlock& block) {
+    return port<kPortCount && port_.TakeRx(uint8_t(port),block) && block.epoch==epoch_;
+}
+
 void UartService::EnterActive() {
     for (unsigned index = 0; index < kPortCount; ++index) {
         auto& port = ports_[index];
@@ -163,6 +167,10 @@ void UartService::Capture(Session& session, uint64_t now) {
                 port.discontinuity |= port.pending.discontinuity;
             }
             /* now 由调用方在每个周期传入；块年龄以同一时间基准判定。 */
+            if (int32_t(uint32_t(now) - port.pending.capture_us) < 0) {
+                /* ISR 可能在本轮取时后入队；保留到下一轮再提交。 */
+                break;
+            }
             if (uint32_t(uint32_t(now) - port.pending.capture_us) >= kTimeoutUs) {
                 if (fault_sink_.report) {
                     fault_sink_.Report(Error::UartTimeout);

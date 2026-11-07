@@ -10,10 +10,19 @@ namespace ecat {
 
 class ImuSource {
    public:
+    using SampleReady = void (*)(void*, const ImuSample&);
+    void SetSampleReady(SampleReady ready, void* context) {
+        ready_ = ready;
+        ready_context_ = context;
+    }
     int Init();
     bool Poll(ImuSample& out);
+    void WaitForEvent() { sensor_.WaitForEvent(); }
 
    private:
+    void DecodeBurst(const drivers::ImuSensor::Burst&, ImuSample&);
+    SampleReady ready_ = nullptr;
+    void* ready_context_ = nullptr;
     drivers::ImuSensor sensor_;
     uint32_t sequence_ = 0;
 };

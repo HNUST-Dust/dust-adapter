@@ -1,0 +1,101 @@
+# DTG2 only: requires wheel rewiring and matched host.
+schema_version: 1
+command_timeout_us: 20000
+protect_on_boot: true
+can_buses:
+- channel: 3
+  bitrate: 1000000
+  devices:
+  - name: left_joint_b
+    command_id: 0
+    feedback_ids:
+    - 16
+    protection_frame:
+      data:
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 253
+  - name: left_joint_d
+    command_id: 3
+    feedback_ids:
+    - 19
+    protection_frame:
+      data:
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 253
+- channel: 0
+  bitrate: 1000000
+  devices:
+  - name: right_joint_b
+    command_id: 1
+    feedback_ids:
+    - 17
+    protection_frame:
+      data:
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 253
+  - name: right_joint_d
+    command_id: 2
+    feedback_ids:
+    - 18
+    protection_frame:
+      data:
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 255
+      - 253
+- channel: 2
+  bitrate: 1000000
+  devices:
+  - name: left_wheel
+    command_id: 512
+    feedback_ids:
+    - 513
+    protection_frame:
+      data:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+- channel: 1
+  bitrate: 1000000
+  devices:
+  - name: right_wheel
+    command_id: 512
+    feedback_ids:
+    - 513
+    protection_frame:
+      data:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0

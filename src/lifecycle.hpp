@@ -30,7 +30,7 @@ class LifecycleService {
     bool Step();
 
     bool Active() const {
-        return session_.state() == BusinessState::Active;
+        return stack_.Active();
     }
     bool Fatal() const {
         return fatal_;

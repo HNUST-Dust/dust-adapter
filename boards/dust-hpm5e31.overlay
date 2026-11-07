@@ -20,3 +20,12 @@
 };
 
 /* XDMA 0..5 belong to UART4..6; channels 6/7 serve SPI3 RX/TX. */
+
+/* DTG1 acquisition and feedback IRQ priorities. */
+/* Complete acquisition/feedback events before the ESC PDI handler. */
+&mcan0 { interrupts = <46 5>; };
+&mcan3 { interrupts = <49 5>; };
+&gpioc { interrupts = <3 5>; };
+&xdma { interrupts = <67 5>; };
+&uart2 { interrupts = <21 5>; };
+&hdma { interrupts = <40 5>; };

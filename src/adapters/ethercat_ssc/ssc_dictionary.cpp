@@ -120,15 +120,15 @@ UINT8 SscRead(UINT16 index, UINT8 subindex, UINT32 size, UINT16* data,
         return 0;
     }
     const auto& prepared = g_ctx.layout->prepared();
-    const auto& image = index < 0x3000 ? prepared.rx : prepared.tx;
+    const auto& image =
+        index < 0x3000 ? prepared.rx : prepared.tx;
     for (unsigned i = 0; i < image.count; ++i) {
         const auto& entry = image.entries[i];
         if (entry.index == index && entry.subindex == subindex) {
             if (size != entry.bits / 8U) {
                 return ABORTIDX_PARAM_LENGTH_ERROR;
             }
-            const auto& buffer =
-                index < 0x3000 ? g_ctx.rx_image : g_ctx.tx_image;
+            const auto& buffer = index < 0x3000 ? g_ctx.rx_image : g_ctx.tx_image;
             std::memcpy(bytes, buffer.data() + entry.offset, size);
             return 0;
         }
@@ -239,6 +239,9 @@ bool SscRegisterObjects() {
     }
     sSyncManOutPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
     sSyncManInPar.u16SyncTypesSupported = SYNCTYPE_FREERUNSUPP;
+    sSyncManOutPar.u16SyncTypesSupported |= SYNCTYPE_SYNCHRONSUPP;
+    sSyncManInPar.u16SyncTypesSupported |= SYNCTYPE_SYNCHRONSUPP;
+    if (!Add(0x2050,0,32,false) || !Add(0x3051,0,32,false)) return false;
     return true;
 }
 

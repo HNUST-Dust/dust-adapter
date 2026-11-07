@@ -118,7 +118,7 @@ Error CanChannel::Parse(Bytes image, const RxHeader& header,
 
 void CanChannel::Encode(MutableBytes image, const Layout& layout,
                         const Configuration& config,
-                        const Feedback& feedback) const {
+                        const Feedback& feedback, uint32_t now_us) const {
     auto* p = image.data;
     for (unsigned bus = 0; bus < 4; ++bus) {
         if (layout.feedback[bus] == kAbsent) {
@@ -128,11 +128,14 @@ void CanChannel::Encode(MutableBytes image, const Layout& layout,
         const auto& batch = feedback.can[bus];
         Put32(out + pdo::tx::can::batch_sequence, batch.sequence);
         Put32(out + pdo::tx::can::cumulative_drops, batch.drops);
-        out[pdo::tx::can::frame_count] = uint8_t(batch.count);
+        unsigned count = 0;
         for (unsigned n = 0; n < batch.count; ++n) {
-            auto* f = out + pdo::tx::can::header_size +
-                      pdo::tx::can::frame_stride * n;
             const auto& event = batch.frames[n];
+            if (uint32_t(now_us - event.capture_us) >= kTimeoutUs) {
+                continue;
+            }
+            auto* f = out + pdo::tx::can::header_size +
+                      pdo::tx::can::frame_stride * count++;
             Put16(f + pdo::tx::can::frame_id, uint16_t(event.id));
             Put32(f + pdo::tx::can::frame_bus_sequence, event.sequence);
             Put32(f + pdo::tx::can::frame_capture_time_us, event.capture_us);
@@ -140,6 +143,7 @@ void CanChannel::Encode(MutableBytes image, const Layout& layout,
             std::copy(event.data.begin(), event.data.end(),
                       f + pdo::tx::can::frame_data);
         }
+        out[pdo::tx::can::frame_count] = uint8_t(count);
     }
 }
 

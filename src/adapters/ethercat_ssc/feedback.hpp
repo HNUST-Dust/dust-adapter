@@ -19,24 +19,31 @@ class FeedbackAggregator {
     FeedbackAggregator(CanService& can, UartService& uart, ImuSource& imu);
 
     int Initialize();
+    void ApplyLimits(Limits& limits) const;
     bool CanCapacityValid(const Configuration& value) const;
     void Configure(const Configuration& value);
 
     bool DrainCan(uint64_t now);
     /* 每周期采样 IMU（热控需要），与主站是否发布无关。 */
     void PollSensors();
+    void WaitForImuEvent() { imu_.WaitForEvent(); }
     /* 只采样 CAN 反馈（额外发布时保留 UART 影像与窗口）。 */
     void CaptureCan(Feedback& feedback);
+    bool CopyImuPage(uint8_t* destination) const;
     void Capture(Session& session, Feedback& feedback, uint64_t now);
 
     bool LatestTemperature(float& temperature_c, uint64_t& capture_us) const;
 
    private:
+    bool SnapshotImu(ImuSample& sample) const;
+    void PublishImu(const ImuSample& sample);
     CanService& can_;
     UartService& uart_;
     ImuSource& imu_;
     ImuSample latest_{};
+    std::array<uint8_t, 28> imu_page_{};
     bool have_sample_ = false;
+    bool imu_ready_ = false;
     bool imu_enabled_ = false;
     uint32_t imu_sequence_ = 0;
 };

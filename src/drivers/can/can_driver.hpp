@@ -18,6 +18,9 @@ struct CanFrame {
     uint32_t id = 0;
     uint8_t length = 0;
     uint8_t data[8]{};
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+    uint16_t arrival_timestamp = 0, arrival_age_ticks = 0;
+#endif
 };
 
 struct CanBusConfig {
@@ -44,7 +47,8 @@ bool CanReady(uint8_t bus);
 
 /* 提交一批帧；完成（成功或失败）时回调 done。同步返回提交结果。 */
 int CanSendBatch(uint8_t bus, const CanFrame* frames, size_t count,
-                 uint64_t deadline_us, CanTxDoneCallback done, void* context);
+                 uint64_t deadline_us, CanTxDoneCallback done, void* context,
+                 bool (*admit)(void*) = nullptr, void* admit_context = nullptr);
 
 /* 返回 0 表示撤销成功；非 0 与 hpm_mcan_abort_tx 语义一致。 */
 int CanAbortTx(uint8_t bus);

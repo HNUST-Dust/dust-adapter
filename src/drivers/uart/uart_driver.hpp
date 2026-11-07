@@ -15,6 +15,8 @@ namespace drivers {
 
 enum class UartEventType {
     RxBlock,
+    RxIdleBlock,
+    RxFullBlock,
     RxGap,
     RxFault,
     TxDone,
@@ -27,7 +29,7 @@ struct UartPortConfig {
     bool configure_8e2 = false;  // 1 start bit + 8 data + even parity + 2 stop
 };
 
-/* 事件回调在中断上下文调用；data 仅对 RxBlock 有效。 */
+/* 事件回调在中断上下文调用；data 仅对接收块事件有效。 */
 using UartEventCallback = void (*)(void* context, uint8_t port,
                                    UartEventType type, const uint8_t* data,
                                    size_t length);

@@ -13,6 +13,7 @@
 
 #include "adapters/esc/sii.h"
 
+
 static const struct device *const esc = DEVICE_DT_GET(DT_NODELABEL(esc0));
 static uint32_t timer_origin_ms;
 static unsigned int critical_key;
@@ -72,9 +73,38 @@ void esc_read(volatile void *data, uint16_t address, uint16_t length)
 	hpm_esc_read(esc, address, (void *)data, length);
 }
 
+#include <zephyr/sys/byteorder.h>
+static bool pdo_pending, pdo_active;
+static uint32_t sbus_write_sequence, sbus_write_us;
+
+void esc_pdo_output_received(void) { pdo_pending = true; }
+void esc_pdo_mapping_state(bool active) {
+    pdo_active = active;
+}
+void esc_sbus_write_reset(void) { sbus_write_sequence = sbus_write_us = 0; }
+uint32_t esc_sbus_first_write_us(uint32_t sequence) {
+    return sequence == sbus_write_sequence ? sbus_write_us : 0;
+}
+
 void esc_write(const volatile void *data, uint16_t address, uint16_t length)
 {
-	hpm_esc_write(esc, address, (const void *)data, length);
+    if (address == 0x1d00 && length >= 60 && pdo_active &&
+        !pdo_pending)
+        return;
+    {
+        hpm_esc_write(esc, address, (const void *)data, length);
+        if (address == 0x1d00 && length >= 60) {
+            pdo_pending = false;
+            const uint8_t *page = (const uint8_t *)data;
+            if (length == 180 && page[120] == 0x41) {
+                const uint32_t sequence = sys_get_le32(page + 122);
+                if (!sbus_write_us || sbus_write_sequence != sequence) {
+                    sbus_write_sequence = sequence;
+                    sbus_write_us = (uint32_t)k_ticks_to_us_floor64(k_uptime_ticks());
+                }
+            }
+        }
+    }
 }
 
 uint16_t esc_al_event(void)

@@ -248,7 +248,7 @@ bool CanService::DrainReceive(uint64_t now_us) {
             if (!bus_.TakeRx(uint8_t(bus), value)) {
                 break;
             }
-            if (uint32_t(now - value.capture_us) >= kTimeoutUs) {
+            if (int32_t(now - value.capture_us) >= int32_t(kTimeoutUs)) {
                 ++port.drain_drops;
                 continue;
             }
@@ -305,7 +305,7 @@ bool CanService::Dispatch(const Actions& actions, uint64_t now) {
         if (!batch.valid) {
             continue;
         }
-        if (!batch.count || batch.count > batch.frames.size() ||
+        if (batch.count > batch.frames.size() ||
             batch.deadline_us <= now) {
             if (fault_sink_.report) {
                 fault_sink_.Report(Error::Wire);
@@ -333,12 +333,14 @@ bool CanService::Dispatch(const Actions& actions, uint64_t now) {
             return false;
         }
     }
-    for (const auto& batch : actions.can) {
+    for (unsigned source = 0; source < actions.can.size(); ++source) {
+        const auto& batch = actions.can[source];
         if (!batch.valid) {
             continue;
         }
         const uint64_t deadline =
             std::min(batch.deadline_us, now + topology_.command_timeout_us);
+        source_deadlines_[source] = deadline;
         for (unsigned i = 0; i < batch.count; ++i) {
             if (!ports_[batch.frames[i].bus].transmit.Push(
                     {batch.frames[i], deadline})) {
@@ -393,6 +395,28 @@ bool CanService::ValidateFrame(const CanFrame& frame) const {
         return false;
     }
     return topology_.AllowsTransmit(frame);
+}
+
+int CanService::CopyProtectionFrames(uint8_t bus, CanFrame* frames,
+                                     size_t capacity) const {
+    if (bus >= kBusCount || !frames) {
+        return -EINVAL;
+    }
+    size_t count = 0;
+    for (size_t i = 0; i < topology_.protection_count; ++i) {
+        count += topology_.protection_frames[i].bus == bus;
+    }
+    if (count > capacity) {
+        return -ENOSPC;
+    }
+    size_t index = 0;
+    for (size_t i = 0; i < topology_.protection_count; ++i) {
+        const auto& frame = topology_.protection_frames[i];
+        if (frame.bus == bus) {
+            frames[index++] = frame;
+        }
+    }
+    return int(count);
 }
 
 uint32_t CanService::QueuedFrames(uint8_t bus) const {

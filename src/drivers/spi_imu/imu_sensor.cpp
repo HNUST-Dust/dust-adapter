@@ -56,6 +56,7 @@ constexpr uint8_t kGyroRange2000Dps = 0x00U;
 constexpr size_t kBurstPayloadSize = 24U;
 constexpr size_t kBurstTransferSize = kBurstPayloadSize + 1U;
 constexpr uint32_t kTransferTimeoutUs = 1500U;
+K_SEM_DEFINE(imu_event, 0, 1);
 
 uint8_t __nocache __aligned(CONFIG_DMA_BUFFER_ALIGNMENT)
     g_onboard_imu_tx[kBurstTransferSize];
@@ -103,6 +104,34 @@ const struct spi_config g_onboard_imu_spi_config = {
 }  // namespace
 
 namespace drivers {
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+namespace {
+struct ArrivalStat {uint32_t previous=0,count=0,maximum=0;bool have=false;};
+ArrivalStat imu_arrivals[2];
+bool imu_arrival_active;
+void ObserveImuArrival(unsigned index,uint32_t cycle) {
+    if (!imu_arrival_active) return;
+    auto& a=imu_arrivals[index];
+    if(a.have){
+        const uint32_t us=k_cyc_to_us_floor32(cycle-a.previous);
+        if(us>a.maximum)a.maximum=us;
+        ++a.count;
+    }
+    a.previous=cycle;a.have=true;
+}
+}
+void ImuSensor::BeginArrivalTest() {
+    const auto key=irq_lock();
+    imu_arrivals[0]={};imu_arrivals[1]={};imu_arrival_active=true;
+    irq_unlock(key);
+}
+void ImuSensor::FreezeArrivalTest(uint32_t (&words)[4]) {
+    const auto key=irq_lock();imu_arrival_active=false;
+    for(unsigned i=0;i<2;++i){words[i*2]=imu_arrivals[i].count;words[i*2+1]=imu_arrivals[i].maximum;}
+    irq_unlock(key);
+}
+#endif
+
 
 /**
  * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
@@ -256,7 +285,12 @@ void ImuSensor::DataReadyCallback(const struct device* port,
     ARG_UNUSED(port);
     ARG_UNUSED(pins);
     auto* imu = CONTAINER_OF(callback, ImuSensor, data_ready_callback_);
-    imu->QueueLatestDataReady(k_cycle_get_32());
+    const auto cycle=k_cycle_get_32();
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+    ObserveImuArrival(0,cycle);
+#endif
+    imu->QueueLatestDataReady(cycle);
+    k_sem_give(&imu_event);
 }
 
 /**
@@ -301,8 +335,18 @@ void ImuSensor::TransferCallback(const struct device* dev, int status,
                                  void* userdata) {
     ARG_UNUSED(dev);
     auto* imu = static_cast<ImuSensor*>(userdata);
+#if defined(CONFIG_ECAT_SOURCE_ARRIVAL_STATS)
+    if(!status)ObserveImuArrival(1,k_cycle_get_32());
+#endif
     atomic_set(&imu->transfer_status_, status);
     atomic_set(&imu->transfer_complete_, 1);
+    if (!status && imu->burst_ready_) {
+        Burst burst;
+        if (imu->TryTakeCompleted(burst)) {
+            imu->burst_ready_(imu->burst_ready_context_, burst);
+        }
+    }
+    k_sem_give(&imu_event);
 }
 
 /**
@@ -334,6 +378,10 @@ bool ImuSensor::TryTakeCompleted(Burst& burst) {
  * @return 提交成功返回零；正在传输返回 -EBUSY，无样本返回
  * -EAGAIN，否则返回驱动错误。
  */
+void ImuSensor::WaitForEvent() {
+    (void)k_sem_take(&imu_event, K_USEC(kTransferTimeoutUs));
+}
+
 int ImuSensor::TryStartAsync() {
     if (atomic_get(&transfer_in_flight_) != 0) {
         const uint32_t elapsed_us =

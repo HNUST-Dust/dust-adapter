@@ -25,6 +25,8 @@ class UartPort {
                  uint32_t timeout_us);
     int Abort(uint8_t port);
     bool TakeRx(uint8_t port, UartRxBlock& out);
+    using Hi91Consumer = void (*)(uint32_t, const uint8_t*, size_t, uint32_t, bool);
+    static void SetHi91Consumer(Hi91Consumer consumer);
     void SetRxEpoch(uint32_t epoch);
     UartStats Stats(uint8_t port) const;
     bool Faulted(uint8_t port) const;

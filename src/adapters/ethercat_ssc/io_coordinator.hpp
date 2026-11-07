@@ -38,7 +38,18 @@ class IoCoordinator {
     /* 发布前采集：CAN 反馈槽 + UART 窗口 + IMU 最新样本。 */
     void Capture(Session& session, Feedback& feedback, uint64_t now);
     void CaptureCan(Feedback& feedback);
+    void StartGatewayUart();
+    bool CopyImuPage(uint8_t* destination) const {
+        return feedback_.CopyImuPage(destination);
+    }
+    bool TakeGatewayUart(unsigned port,UartRxBlock& block);
     bool Dispatch(Session& session, const Actions& actions, uint64_t now);
+    bool ValidateGatewayCan(const CanFrame& frame) const {
+        return can_.ValidateFrame(frame);
+    }
+    int CopyGatewayProtection(uint8_t bus, CanFrame* frames, size_t capacity) const {
+        return can_.CopyProtectionFrames(bus, frames, capacity);
+    }
     bool DrainCan(uint64_t now);
     int QueryCanStatus(unsigned channel, unsigned page,
                        std::array<uint32_t, 3>& values) const;
