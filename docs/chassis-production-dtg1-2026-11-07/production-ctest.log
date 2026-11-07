@@ -1,0 +1,32 @@
+Internal ctest changing into directory: /home/wbr-infantry/dust-control/build/dtg1-tests
+Test project /home/wbr-infantry/dust-control/build/dtg1-tests
+      Start  1: chassis.observation_queue
+ 1/13 Test  #1: chassis.observation_queue .........   Passed    0.01 sec
+      Start  2: runtime.statistics
+ 2/13 Test  #2: runtime.statistics ................   Passed    0.00 sec
+      Start  3: devices.motor_protocol_boundary
+ 3/13 Test  #3: devices.motor_protocol_boundary ...   Passed    0.00 sec
+      Start  4: chassis.output_targets
+ 4/13 Test  #4: chassis.output_targets ............   Passed    0.00 sec
+      Start  5: devices.independent_decoders
+ 5/13 Test  #5: devices.independent_decoders ......   Passed    0.00 sec
+      Start  6: devices.snapshot_concurrency
+ 6/13 Test  #6: devices.snapshot_concurrency ......   Passed    0.30 sec
+      Start  7: architecture.dependencies
+ 7/13 Test  #7: architecture.dependencies .........   Passed    0.09 sec
+      Start  8: ethercat.pdo_layout
+ 8/13 Test  #8: ethercat.pdo_layout ...............   Passed    0.11 sec
+      Start  9: ethercat.pdo_compact
+ 9/13 Test  #9: ethercat.pdo_compact ..............   Passed    0.02 sec
+      Start 10: ethercat.runtime
+10/13 Test #10: ethercat.runtime ..................   Passed    0.34 sec
+      Start 11: ethercat.configuration
+11/13 Test #11: ethercat.configuration ............   Passed    0.19 sec
+      Start 12: chassis.control_contracts
+12/13 Test #12: chassis.control_contracts .........   Passed    0.00 sec
+      Start 13: ethercat.dtg1_contracts
+13/13 Test #13: ethercat.dtg1_contracts ...........   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 13
+
+Total Test time (real) =   1.06 sec

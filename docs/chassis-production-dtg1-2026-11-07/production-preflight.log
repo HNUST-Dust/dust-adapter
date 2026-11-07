@@ -1,0 +1,6 @@
+Configuration loaded: /home/wbr-infantry/dust-control/config
+Chassis: 1 kHz, IgH EtherCAT / CAN, output=disabled
+EtherCAT adapter base ready
+[INFO] [1794047553.432558276] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+Stopped; missed control releases=0
+Adapter base: EtherCAT master stopped

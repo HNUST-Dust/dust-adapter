@@ -1,0 +1,36 @@
+{
+  "samples": 119414,
+  "state_samples": {
+    "0": 68495,
+    "2": 300,
+    "4": 646,
+    "5": 49973
+  },
+  "balance_span_s": 50.265003174,
+  "active_feedback_invalid": 0,
+  "active_imu_invalid": 0,
+  "active_remote_invalid": 0,
+  "compute_us": {
+    "min": 1.43,
+    "p50": 5.997,
+    "p99": 21.333000000000002,
+    "max": 40.06
+  },
+  "last": {
+    "sequence": 124240,
+    "monotonic_ns": 30558247948793,
+    "state": 5,
+    "imu_fresh": true,
+    "remote_fresh": true,
+    "feedback_valid": true,
+    "motor_stale_mask": 0,
+    "missed_releases": 0,
+    "queue_drops": 0,
+    "control_duration_us": 8.963000000000001,
+    "imu_age_us": 265.0,
+    "pitch_deg": 1.5186388492584229,
+    "roll_deg": -0.7089201807975769,
+    "left_length_m": 0.15167473509792567,
+    "right_length_m": 0.15124830218519753
+  }
+}

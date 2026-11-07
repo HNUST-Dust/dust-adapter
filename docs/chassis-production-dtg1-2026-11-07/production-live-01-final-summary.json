@@ -1,0 +1,87 @@
+{
+  "samples": 179918,
+  "observed_span_s": 186.033982851,
+  "state_samples": {
+    "0": 83310,
+    "2": 300,
+    "4": 646,
+    "5": 95662
+  },
+  "segments": [
+    {
+      "state": 0,
+      "start_sequence": 129,
+      "duration_s": 72.89999969,
+      "pitch_deg": -0.30313625931739807,
+      "roll_deg": -2.357909917831421,
+      "feedback_valid": true,
+      "motor_stale_mask": 0
+    },
+    {
+      "state": 2,
+      "start_sequence": 73029,
+      "duration_s": 0.300000154,
+      "pitch_deg": -0.30313625931739807,
+      "roll_deg": -2.357909917831421,
+      "feedback_valid": true,
+      "motor_stale_mask": 0
+    },
+    {
+      "state": 4,
+      "start_sequence": 73329,
+      "duration_s": 0.645997409,
+      "pitch_deg": -0.30313625931739807,
+      "roll_deg": -2.357909917831421,
+      "feedback_valid": true,
+      "motor_stale_mask": 0
+    },
+    {
+      "state": 5,
+      "start_sequence": 73975,
+      "duration_s": 96.182004208,
+      "pitch_deg": 16.200138092041016,
+      "roll_deg": -1.6203017234802246,
+      "feedback_valid": true,
+      "motor_stale_mask": 0
+    },
+    {
+      "state": 0,
+      "start_sequence": 170157,
+      "duration_s": 16.00598139,
+      "pitch_deg": 0.39448168873786926,
+      "roll_deg": -0.8091973662376404,
+      "feedback_valid": true,
+      "motor_stale_mask": 0
+    }
+  ],
+  "active_feedback_invalid": 0,
+  "active_imu_invalid": 0,
+  "active_remote_invalid": 0,
+  "compute_us": {
+    "min": 1.43,
+    "p50": 4.672,
+    "p99": 21.299,
+    "max": 40.06
+  },
+  "last": {
+    "sequence": 186163,
+    "monotonic_ns": 30620170931217,
+    "state": 0,
+    "imu_fresh": true,
+    "remote_fresh": true,
+    "feedback_valid": true,
+    "motor_stale_mask": 0,
+    "missed_releases": 0,
+    "queue_drops": 0,
+    "control_duration_us": 2.672,
+    "imu_age_us": 624.0,
+    "pitch_deg": 31.549346923828125,
+    "roll_deg": -0.42082974314689636,
+    "left_length_m": 0.33675298933257425,
+    "right_length_m": 0.3323597624201724
+  },
+  "node_sha256": "d0848d6c3ce4243032157a6790f47f0f7c4dadeb490aac212cdda5a34bca875b",
+  "host_config_enable_output_default": false,
+  "live_config_enable_output": true,
+  "onsite_feedback": "动作不错，延迟没有大到影响控制效果；用户已失能并结束"
+}

@@ -1,0 +1,6 @@
+Configuration loaded: /tmp/dust-production-live-config
+Chassis: 1 kHz, IgH EtherCAT / CAN, output=remote-gated
+EtherCAT adapter base ready
+[INFO] [1794047804.386323034] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+Stopped; missed control releases=0
+Adapter base: EtherCAT master stopped
