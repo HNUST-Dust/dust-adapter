@@ -1,0 +1,1737 @@
+{
+  "date": "2026-11-05",
+  "cycle_us": 125,
+  "motor_output_enabled": false,
+  "imu_priority": "CAN and control IMU both priority; no multirate IMU decimation",
+  "runs": {
+    "full-1": {
+      "host": {
+        "tx_bytes": 410,
+        "hi91_valid": 20000,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 12813,
+          "mean_us": 414.079,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "hi91_reassembly_wait": {
+          "count": 20000,
+          "mean_us": 974.553,
+          "p50_upper_us": 1425,
+          "p99_upper_us": 1975,
+          "max_us": 5315
+        },
+        "started": true,
+        "active_seconds": 20.0001,
+        "error": "",
+        "cycles": 161207,
+        "missed_periods": 0,
+        "max_lateness_us": 25.717,
+        "received": 161233,
+        "incomplete_including_startup_shutdown": 1199,
+        "protected_images": 24,
+        "right_age": {
+          "count": 20096,
+          "mean_us": 293.68,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "left_age": {
+          "count": 20063,
+          "mean_us": 279.365,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 20095,
+          "mean_us": 994.761,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2249
+        },
+        "left_arrival_interval": {
+          "count": 20062,
+          "mean_us": 996.38,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2375
+        },
+        "status_rtt": {
+          "count": 3934,
+          "mean_us": 702.393,
+          "p50_upper_us": 700,
+          "p99_upper_us": 1050,
+          "max_us": 1209
+        },
+        "imu_updates": 38406,
+        "imu_missing": 15083,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 38406,
+          "mean_us": 1006.5,
+          "p50_upper_us": 1075,
+          "p99_upper_us": 1450,
+          "max_us": 2089
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 12813,
+            "bytes": 1640064,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 1696,
+            "bytes": 35700,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 53490,
+          "mean_us": 341.48470975883345,
+          "max_us": 725.6666666666666,
+          "over_125us": 53490
+        },
+        "loop_interval": {
+          "count": 53489,
+          "mean_us": 374.5239317118161,
+          "max_us": 758.25,
+          "over_125us": 53489
+        },
+        "pdo_input_mapping": {
+          "count": 53490,
+          "mean_us": 85.26864522963793,
+          "max_us": 229.45833333333334,
+          "over_125us": 3530
+        },
+        "pdo_output_mapping": {
+          "count": 53490,
+          "mean_us": 26.556800336511497,
+          "max_us": 170.83333333333334,
+          "over_125us": 82
+        },
+        "esc_read_131": {
+          "count": 53490,
+          "mean_us": 23.80964744188945,
+          "max_us": 166.66666666666666,
+          "over_125us": 62
+        },
+        "esc_write_410": {
+          "count": 53490,
+          "mean_us": 66.34250482956315,
+          "max_us": 205.95833333333334,
+          "over_125us": 2086
+        },
+        "lifecycle": {
+          "count": 53490,
+          "mean_us": 2.225264068050103,
+          "max_us": 130.83333333333334,
+          "over_125us": 1
+        },
+        "poll_before": {
+          "count": 53490,
+          "mean_us": 5.635452888390353,
+          "max_us": 178.66666666666666,
+          "over_125us": 10
+        },
+        "ssc_step": {
+          "count": 53490,
+          "mean_us": 247.181568984857,
+          "max_us": 478.375,
+          "over_125us": 53490
+        },
+        "poll_after": {
+          "count": 53490,
+          "mean_us": 6.859372468374151,
+          "max_us": 205.25,
+          "over_125us": 30
+        },
+        "sensors": {
+          "count": 53490,
+          "mean_us": 59.874678288776714,
+          "max_us": 256.5833333333333,
+          "over_125us": 1949
+        },
+        "board_outputs": {
+          "count": 53490,
+          "mean_us": 7.765033183772668,
+          "max_us": 248.125,
+          "over_125us": 755
+        },
+        "poll_watchdog": {
+          "count": 106980,
+          "mean_us": 1.3771674612077023,
+          "max_us": 124.54166666666667,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 53490,
+          "mean_us": 9.83636115784882,
+          "max_us": 131.45833333333334,
+          "over_125us": 2
+        },
+        "can_pump": {
+          "count": 53490,
+          "mean_us": 1.163945753100268,
+          "max_us": 98.625,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 53490,
+          "mean_us": 8.039569701501838,
+          "max_us": 130.04166666666666,
+          "over_125us": 1
+        },
+        "can_drain": {
+          "count": 106979,
+          "mean_us": 3.5312167964429158,
+          "max_us": 120.45833333333333,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 53490,
+          "mean_us": 104.65793216800648,
+          "max_us": 288.0,
+          "over_125us": 9394
+        },
+        "rx_process": {
+          "count": 53490,
+          "mean_us": 28.55372343740263,
+          "max_us": 167.41666666666666,
+          "over_125us": 84
+        },
+        "dispatch": {
+          "count": 53490,
+          "mean_us": 7.196451829002306,
+          "max_us": 135.375,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 53490,
+          "mean_us": 30.009902941359755,
+          "max_us": 201.45833333333334,
+          "over_125us": 113
+        },
+        "regular_encode": {
+          "count": 53490,
+          "mean_us": 18.40989359381816,
+          "max_us": 155.54166666666666,
+          "over_125us": 20
+        },
+        "can_capture": {
+          "count": 15082,
+          "mean_us": 4.7202874287229815,
+          "max_us": 116.0,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 15082,
+          "mean_us": 5.058640542810415,
+          "max_us": 119.20833333333333,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 53490,
+          "mean_us": 9.567176107683679,
+          "max_us": 151.08333333333334,
+          "over_125us": 14
+        }
+      }
+    },
+    "pdo64-1": {
+      "host": {
+        "tx_bytes": 346,
+        "hi91_valid": 20000,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 25629,
+          "mean_us": 583.78,
+          "p50_upper_us": 625,
+          "p99_upper_us": 1125,
+          "max_us": 1700
+        },
+        "hi91_reassembly_wait": {
+          "count": 20000,
+          "mean_us": 974.585,
+          "p50_upper_us": 1125,
+          "p99_upper_us": 1950,
+          "max_us": 2265
+        },
+        "started": true,
+        "active_seconds": 20,
+        "error": "",
+        "cycles": 160937,
+        "missed_periods": 0,
+        "max_lateness_us": 36.436,
+        "received": 160963,
+        "incomplete_including_startup_shutdown": 925,
+        "protected_images": 24,
+        "right_age": {
+          "count": 20104,
+          "mean_us": 282.347,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "left_age": {
+          "count": 20063,
+          "mean_us": 265.643,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1300
+        },
+        "right_arrival_interval": {
+          "count": 20103,
+          "mean_us": 994.388,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "left_arrival_interval": {
+          "count": 20062,
+          "mean_us": 996.435,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2374
+        },
+        "status_rtt": {
+          "count": 3938,
+          "mean_us": 691.493,
+          "p50_upper_us": 700,
+          "p99_upper_us": 1075,
+          "max_us": 1225
+        },
+        "imu_updates": 39478,
+        "imu_missing": 15397,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 39478,
+          "mean_us": 991.871,
+          "p50_upper_us": 1050,
+          "p99_upper_us": 1450,
+          "max_us": 1913
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 25626,
+            "bytes": 1640064,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 1696,
+            "bytes": 35700,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 54875,
+          "mean_us": 331.9188777524678,
+          "max_us": 700.8333333333334,
+          "over_125us": 54875
+        },
+        "loop_interval": {
+          "count": 54874,
+          "mean_us": 365.0761046518692,
+          "max_us": 737.875,
+          "over_125us": 54874
+        },
+        "pdo_input_mapping": {
+          "count": 54875,
+          "mean_us": 75.77490280941534,
+          "max_us": 242.83333333333334,
+          "over_125us": 2848
+        },
+        "pdo_output_mapping": {
+          "count": 54875,
+          "mean_us": 26.631398633257405,
+          "max_us": 188.45833333333334,
+          "over_125us": 85
+        },
+        "esc_read_131": {
+          "count": 54875,
+          "mean_us": 23.926921032649965,
+          "max_us": 186.875,
+          "over_125us": 64
+        },
+        "esc_write_410": {
+          "count": 54875,
+          "mean_us": 57.508100227790436,
+          "max_us": 199.125,
+          "over_125us": 1307
+        },
+        "lifecycle": {
+          "count": 54875,
+          "mean_us": 2.2491541381928624,
+          "max_us": 122.875,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 54875,
+          "mean_us": 5.687520880789673,
+          "max_us": 179.83333333333334,
+          "over_125us": 12
+        },
+        "ssc_step": {
+          "count": 54875,
+          "mean_us": 239.2029126803341,
+          "max_us": 475.25,
+          "over_125us": 54875
+        },
+        "poll_after": {
+          "count": 54875,
+          "mean_us": 6.910623386484434,
+          "max_us": 207.25,
+          "over_125us": 39
+        },
+        "sensors": {
+          "count": 54875,
+          "mean_us": 58.74648367501898,
+          "max_us": 273.0833333333333,
+          "over_125us": 1976
+        },
+        "board_outputs": {
+          "count": 54875,
+          "mean_us": 7.542147304479879,
+          "max_us": 238.16666666666666,
+          "over_125us": 820
+        },
+        "poll_watchdog": {
+          "count": 109750,
+          "mean_us": 1.3989495064540622,
+          "max_us": 116.33333333333333,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 54875,
+          "mean_us": 10.390932422171602,
+          "max_us": 132.04166666666666,
+          "over_125us": 2
+        },
+        "can_pump": {
+          "count": 54875,
+          "mean_us": 1.1949620349278665,
+          "max_us": 123.5,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 54875,
+          "mean_us": 8.561665148063781,
+          "max_us": 130.625,
+          "over_125us": 1
+        },
+        "can_drain": {
+          "count": 109749,
+          "mean_us": 3.514735517711627,
+          "max_us": 125.16666666666667,
+          "over_125us": 1
+        },
+        "application": {
+          "count": 54875,
+          "mean_us": 106.34342748671222,
+          "max_us": 286.125,
+          "over_125us": 10930
+        },
+        "rx_process": {
+          "count": 54875,
+          "mean_us": 28.82998253606682,
+          "max_us": 180.41666666666666,
+          "over_125us": 101
+        },
+        "dispatch": {
+          "count": 54875,
+          "mean_us": 7.478321184510251,
+          "max_us": 137.20833333333334,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 54875,
+          "mean_us": 31.287141989369783,
+          "max_us": 179.125,
+          "over_125us": 159
+        },
+        "regular_encode": {
+          "count": 54875,
+          "mean_us": 17.731496583143507,
+          "max_us": 159.08333333333334,
+          "over_125us": 29
+        },
+        "can_capture": {
+          "count": 15396,
+          "mean_us": 4.679605633497878,
+          "max_us": 114.66666666666667,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 15396,
+          "mean_us": 5.070903156664069,
+          "max_us": 117.20833333333333,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 54875,
+          "mean_us": 9.485328777524678,
+          "max_us": 157.75,
+          "over_125us": 17
+        }
+      }
+    },
+    "both64-1": {
+      "host": {
+        "tx_bytes": 346,
+        "hi91_valid": 19999,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 25625,
+          "mean_us": 473.296,
+          "p50_upper_us": 525,
+          "p99_upper_us": 1025,
+          "max_us": 1400
+        },
+        "hi91_reassembly_wait": {
+          "count": 19999,
+          "mean_us": 975.228,
+          "p50_upper_us": 850,
+          "p99_upper_us": 1925,
+          "max_us": 2274
+        },
+        "started": true,
+        "active_seconds": 20.0001,
+        "error": "",
+        "cycles": 160913,
+        "missed_periods": 0,
+        "max_lateness_us": 25.4,
+        "received": 160939,
+        "incomplete_including_startup_shutdown": 901,
+        "protected_images": 24,
+        "right_age": {
+          "count": 20096,
+          "mean_us": 303.145,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "left_age": {
+          "count": 20065,
+          "mean_us": 293.028,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 20095,
+          "mean_us": 994.807,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "left_arrival_interval": {
+          "count": 20064,
+          "mean_us": 996.329,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1500,
+          "max_us": 2249
+        },
+        "status_rtt": {
+          "count": 3939,
+          "mean_us": 747.144,
+          "p50_upper_us": 750,
+          "p99_upper_us": 1125,
+          "max_us": 1242
+        },
+        "imu_updates": 46988,
+        "imu_missing": 0,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 46988,
+          "mean_us": 1095.91,
+          "p50_upper_us": 1150,
+          "p99_upper_us": 1550,
+          "max_us": 4587
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 25625,
+            "bytes": 1640000,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 1963,
+            "bytes": 35700,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 46989,
+          "mean_us": 391.65642047429543,
+          "max_us": 757.0416666666666,
+          "over_125us": 46989
+        },
+        "loop_interval": {
+          "count": 46988,
+          "mean_us": 426.02709202349536,
+          "max_us": 773.3333333333334,
+          "over_125us": 46988
+        },
+        "pdo_input_mapping": {
+          "count": 46989,
+          "mean_us": 80.87380113785495,
+          "max_us": 222.79166666666666,
+          "over_125us": 3986
+        },
+        "pdo_output_mapping": {
+          "count": 46989,
+          "mean_us": 29.771867706626374,
+          "max_us": 181.16666666666666,
+          "over_125us": 91
+        },
+        "esc_read_131": {
+          "count": 46989,
+          "mean_us": 26.93809544077692,
+          "max_us": 179.29166666666666,
+          "over_125us": 63
+        },
+        "esc_write_410": {
+          "count": 46989,
+          "mean_us": 61.481889378365146,
+          "max_us": 210.33333333333334,
+          "over_125us": 1552
+        },
+        "lifecycle": {
+          "count": 46989,
+          "mean_us": 1.2891350457908588,
+          "max_us": 95.83333333333333,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 46989,
+          "mean_us": 8.959814176367518,
+          "max_us": 196.54166666666666,
+          "over_125us": 28
+        },
+        "ssc_step": {
+          "count": 46989,
+          "mean_us": 272.91172579398017,
+          "max_us": 506.5,
+          "over_125us": 46989
+        },
+        "poll_after": {
+          "count": 46989,
+          "mean_us": 9.607889612462492,
+          "max_us": 190.41666666666666,
+          "over_125us": 39
+        },
+        "sensors": {
+          "count": 46989,
+          "mean_us": 71.74487291351878,
+          "max_us": 247.04166666666666,
+          "over_125us": 3973
+        },
+        "board_outputs": {
+          "count": 46989,
+          "mean_us": 16.655997502961686,
+          "max_us": 256.4583333333333,
+          "over_125us": 1311
+        },
+        "poll_watchdog": {
+          "count": 93978,
+          "mean_us": 1.379866387168628,
+          "max_us": 112.75,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 46989,
+          "mean_us": 13.929476402278546,
+          "max_us": 140.04166666666666,
+          "over_125us": 8
+        },
+        "can_pump": {
+          "count": 46989,
+          "mean_us": 1.248606056736683,
+          "max_us": 109.54166666666667,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 46989,
+          "mean_us": 12.161229223860904,
+          "max_us": 138.70833333333334,
+          "over_125us": 8
+        },
+        "can_drain": {
+          "count": 93977,
+          "mean_us": 3.0686546530888763,
+          "max_us": 125.58333333333333,
+          "over_125us": 1
+        },
+        "application": {
+          "count": 46989,
+          "mean_us": 123.09616257705703,
+          "max_us": 273.625,
+          "over_125us": 17954
+        },
+        "rx_process": {
+          "count": 46989,
+          "mean_us": 31.992221583774928,
+          "max_us": 163.0,
+          "over_125us": 103
+        },
+        "dispatch": {
+          "count": 46989,
+          "mean_us": 8.928360006242595,
+          "max_us": 132.83333333333334,
+          "over_125us": 1
+        },
+        "regular_capture": {
+          "count": 46989,
+          "mean_us": 32.23560390020359,
+          "max_us": 165.95833333333334,
+          "over_125us": 94
+        },
+        "regular_encode": {
+          "count": 46989,
+          "mean_us": 23.600291202905645,
+          "max_us": 152.91666666666666,
+          "over_125us": 19
+        },
+        "can_capture": {
+          "count": 15791,
+          "mean_us": 3.9628665062377304,
+          "max_us": 99.625,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 15791,
+          "mean_us": 4.576045426719861,
+          "max_us": 95.54166666666667,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 46989,
+          "mean_us": 11.862089176899559,
+          "max_us": 158.58333333333334,
+          "over_125us": 10
+        }
+      }
+    },
+    "both64-2": {
+      "host": {
+        "tx_bytes": 346,
+        "hi91_valid": 19999,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 25625,
+          "mean_us": 473.908,
+          "p50_upper_us": 525,
+          "p99_upper_us": 1025,
+          "max_us": 1300
+        },
+        "hi91_reassembly_wait": {
+          "count": 19999,
+          "mean_us": 975.504,
+          "p50_upper_us": 850,
+          "p99_upper_us": 1925,
+          "max_us": 2267
+        },
+        "started": true,
+        "active_seconds": 20,
+        "error": "",
+        "cycles": 160911,
+        "missed_periods": 0,
+        "max_lateness_us": 27.247,
+        "received": 160937,
+        "incomplete_including_startup_shutdown": 903,
+        "protected_images": 24,
+        "right_age": {
+          "count": 20091,
+          "mean_us": 302.394,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "left_age": {
+          "count": 20060,
+          "mean_us": 292.876,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 20090,
+          "mean_us": 995.034,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "left_arrival_interval": {
+          "count": 20059,
+          "mean_us": 996.561,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1500,
+          "max_us": 2375
+        },
+        "status_rtt": {
+          "count": 3937,
+          "mean_us": 747.248,
+          "p50_upper_us": 750,
+          "p99_upper_us": 1125,
+          "max_us": 1370
+        },
+        "imu_updates": 47120,
+        "imu_missing": 0,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 47120,
+          "mean_us": 1095.03,
+          "p50_upper_us": 1150,
+          "p99_upper_us": 1550,
+          "max_us": 3684
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 25625,
+            "bytes": 1640000,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 1965,
+            "bytes": 35725,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 47120,
+          "mean_us": 390.43761760752693,
+          "max_us": 783.7083333333334,
+          "over_125us": 47120
+        },
+        "loop_interval": {
+          "count": 47119,
+          "mean_us": 424.8406596418996,
+          "max_us": 802.875,
+          "over_125us": 47119
+        },
+        "pdo_input_mapping": {
+          "count": 47120,
+          "mean_us": 80.52894383135258,
+          "max_us": 220.29166666666666,
+          "over_125us": 3890
+        },
+        "pdo_output_mapping": {
+          "count": 47120,
+          "mean_us": 29.594821731748727,
+          "max_us": 180.33333333333334,
+          "over_125us": 90
+        },
+        "esc_read_131": {
+          "count": 47120,
+          "mean_us": 26.79484295415959,
+          "max_us": 178.5,
+          "over_125us": 68
+        },
+        "esc_write_410": {
+          "count": 47120,
+          "mean_us": 61.27454725523486,
+          "max_us": 199.16666666666666,
+          "over_125us": 1466
+        },
+        "lifecycle": {
+          "count": 47120,
+          "mean_us": 1.281815046689304,
+          "max_us": 106.58333333333333,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 47120,
+          "mean_us": 8.925174200622523,
+          "max_us": 170.54166666666666,
+          "over_125us": 19
+        },
+        "ssc_step": {
+          "count": 47120,
+          "mean_us": 272.1007578169214,
+          "max_us": 492.2083333333333,
+          "over_125us": 47120
+        },
+        "poll_after": {
+          "count": 47120,
+          "mean_us": 9.592495224957554,
+          "max_us": 194.66666666666666,
+          "over_125us": 46
+        },
+        "sensors": {
+          "count": 47120,
+          "mean_us": 71.57923917657045,
+          "max_us": 268.875,
+          "over_125us": 3935
+        },
+        "board_outputs": {
+          "count": 47120,
+          "mean_us": 16.399122807017545,
+          "max_us": 241.79166666666666,
+          "over_125us": 1276
+        },
+        "poll_watchdog": {
+          "count": 94240,
+          "mean_us": 1.3910918930390492,
+          "max_us": 123.33333333333333,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 47120,
+          "mean_us": 14.019195670628184,
+          "max_us": 155.45833333333334,
+          "over_125us": 6
+        },
+        "can_pump": {
+          "count": 47120,
+          "mean_us": 1.2795469015280136,
+          "max_us": 102.29166666666667,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 47120,
+          "mean_us": 12.223262415110357,
+          "max_us": 138.25,
+          "over_125us": 3
+        },
+        "can_drain": {
+          "count": 94239,
+          "mean_us": 3.1014061764945158,
+          "max_us": 109.04166666666667,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 47120,
+          "mean_us": 123.05629509762309,
+          "max_us": 297.9166666666667,
+          "over_125us": 17988
+        },
+        "rx_process": {
+          "count": 47120,
+          "mean_us": 32.10814321590266,
+          "max_us": 182.45833333333334,
+          "over_125us": 104
+        },
+        "dispatch": {
+          "count": 47120,
+          "mean_us": 8.830812287775892,
+          "max_us": 127.91666666666667,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 47120,
+          "mean_us": 32.12672874221845,
+          "max_us": 165.16666666666666,
+          "over_125us": 116
+        },
+        "regular_encode": {
+          "count": 47120,
+          "mean_us": 23.58215548953028,
+          "max_us": 158.08333333333334,
+          "over_125us": 25
+        },
+        "can_capture": {
+          "count": 15455,
+          "mean_us": 3.9281003990078722,
+          "max_us": 106.625,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 15455,
+          "mean_us": 4.573436320500377,
+          "max_us": 96.66666666666667,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 47120,
+          "mean_us": 11.751620861629881,
+          "max_us": 157.20833333333334,
+          "over_125us": 7
+        }
+      }
+    }
+  },
+  "censored": {
+    "full-censored": {
+      "host": {
+        "tx_bytes": 410,
+        "hi91_valid": 13264,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 8498,
+          "mean_us": 415.062,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "hi91_reassembly_wait": {
+          "count": 13264,
+          "mean_us": 974.71,
+          "p50_upper_us": 1425,
+          "p99_upper_us": 2000,
+          "max_us": 2290
+        },
+        "started": true,
+        "active_seconds": 13.265,
+        "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+        "cycles": 107409,
+        "missed_periods": 0,
+        "max_lateness_us": 65.615,
+        "received": 107434,
+        "incomplete_including_startup_shutdown": 1279,
+        "protected_images": 24,
+        "right_age": {
+          "count": 13327,
+          "mean_us": 294.537,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "left_age": {
+          "count": 13298,
+          "mean_us": 280.448,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 13326,
+          "mean_us": 994.998,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2125
+        },
+        "left_arrival_interval": {
+          "count": 13297,
+          "mean_us": 997.17,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2249
+        },
+        "status_rtt": {
+          "count": 2614,
+          "mean_us": 704.377,
+          "p50_upper_us": 700,
+          "p99_upper_us": 1025,
+          "max_us": 1243
+        },
+        "imu_updates": 25554,
+        "imu_missing": 9867,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 25554,
+          "mean_us": 1008.59,
+          "p50_upper_us": 1075,
+          "p99_upper_us": 1450,
+          "max_us": 1762
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 8498,
+            "bytes": 1087744,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 1124,
+            "bytes": 23675,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 35421,
+          "mean_us": 342.02536513179564,
+          "max_us": 724.2083333333334,
+          "over_125us": 35421
+        },
+        "loop_interval": {
+          "count": 35420,
+          "mean_us": 375.1293043007717,
+          "max_us": 740.8333333333334,
+          "over_125us": 35420
+        },
+        "pdo_input_mapping": {
+          "count": 35421,
+          "mean_us": 85.4460654225836,
+          "max_us": 250.45833333333334,
+          "over_125us": 2370
+        },
+        "pdo_output_mapping": {
+          "count": 35421,
+          "mean_us": 26.517886046883675,
+          "max_us": 156.95833333333334,
+          "over_125us": 51
+        },
+        "esc_read_131": {
+          "count": 35421,
+          "mean_us": 23.753764245315867,
+          "max_us": 153.875,
+          "over_125us": 38
+        },
+        "esc_write_410": {
+          "count": 35421,
+          "mean_us": 66.50320784280511,
+          "max_us": 213.0,
+          "over_125us": 1402
+        },
+        "lifecycle": {
+          "count": 35421,
+          "mean_us": 2.2478779067031796,
+          "max_us": 115.45833333333333,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 35421,
+          "mean_us": 5.708266282713645,
+          "max_us": 158.875,
+          "over_125us": 3
+        },
+        "ssc_step": {
+          "count": 35421,
+          "mean_us": 247.41734658347687,
+          "max_us": 484.0833333333333,
+          "over_125us": 35421
+        },
+        "poll_after": {
+          "count": 35421,
+          "mean_us": 6.867447982835041,
+          "max_us": 196.58333333333334,
+          "over_125us": 16
+        },
+        "sensors": {
+          "count": 35421,
+          "mean_us": 60.1023145403386,
+          "max_us": 264.125,
+          "over_125us": 1345
+        },
+        "board_outputs": {
+          "count": 35421,
+          "mean_us": 7.6960630699302675,
+          "max_us": 234.375,
+          "over_125us": 456
+        },
+        "poll_watchdog": {
+          "count": 70842,
+          "mean_us": 1.4092846287042526,
+          "max_us": 112.20833333333333,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 35421,
+          "mean_us": 9.86798321146589,
+          "max_us": 127.58333333333333,
+          "over_125us": 3
+        },
+        "can_pump": {
+          "count": 35421,
+          "mean_us": 1.1797638877125622,
+          "max_us": 117.16666666666667,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 35421,
+          "mean_us": 8.03419463971467,
+          "max_us": 126.125,
+          "over_125us": 2
+        },
+        "can_drain": {
+          "count": 70841,
+          "mean_us": 3.534324520169582,
+          "max_us": 117.91666666666667,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 35421,
+          "mean_us": 104.84336739975343,
+          "max_us": 269.5416666666667,
+          "over_125us": 6299
+        },
+        "rx_process": {
+          "count": 35421,
+          "mean_us": 28.67247183873973,
+          "max_us": 178.83333333333334,
+          "over_125us": 64
+        },
+        "dispatch": {
+          "count": 35421,
+          "mean_us": 7.111069939677969,
+          "max_us": 125.33333333333333,
+          "over_125us": 1
+        },
+        "regular_capture": {
+          "count": 35421,
+          "mean_us": 30.065470812982884,
+          "max_us": 180.16666666666666,
+          "over_125us": 89
+        },
+        "regular_encode": {
+          "count": 35421,
+          "mean_us": 18.447695811336025,
+          "max_us": 145.66666666666666,
+          "over_125us": 14
+        },
+        "can_capture": {
+          "count": 9866,
+          "mean_us": 4.728528954659098,
+          "max_us": 128.66666666666666,
+          "over_125us": 1
+        },
+        "can_encode": {
+          "count": 9866,
+          "mean_us": 4.989868403270491,
+          "max_us": 109.58333333333333,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 35421,
+          "mean_us": 9.547516539152856,
+          "max_us": 148.33333333333334,
+          "over_125us": 13
+        }
+      }
+    },
+    "both64-censored": {
+      "host": {
+        "tx_bytes": 346,
+        "hi91_valid": 9011,
+        "hi91_crc_errors": 0,
+        "hi91_nonadvancing": 0,
+        "uart2_age": {
+          "count": 11546,
+          "mean_us": 478.166,
+          "p50_upper_us": 525,
+          "p99_upper_us": 1025,
+          "max_us": 1300
+        },
+        "hi91_reassembly_wait": {
+          "count": 9011,
+          "mean_us": 975.292,
+          "p50_upper_us": 850,
+          "p99_upper_us": 1925,
+          "max_us": 2274
+        },
+        "started": true,
+        "active_seconds": 9.01146,
+        "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+        "cycles": 72986,
+        "missed_periods": 0,
+        "max_lateness_us": 71.821,
+        "received": 73011,
+        "incomplete_including_startup_shutdown": 888,
+        "protected_images": 24,
+        "right_age": {
+          "count": 9054,
+          "mean_us": 302.839,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "left_age": {
+          "count": 9031,
+          "mean_us": 290.665,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 9053,
+          "mean_us": 994.897,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 2124
+        },
+        "left_arrival_interval": {
+          "count": 9030,
+          "mean_us": 997.375,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1500,
+          "max_us": 2375
+        },
+        "status_rtt": {
+          "count": 1772,
+          "mean_us": 747.175,
+          "p50_upper_us": 750,
+          "p99_upper_us": 1125,
+          "max_us": 1243
+        },
+        "imu_updates": 21084,
+        "imu_missing": 0,
+        "imu_same_sequence_mutations": 0,
+        "imu_age": {
+          "count": 21084,
+          "mean_us": 1098.64,
+          "p50_upper_us": 1150,
+          "p99_upper_us": 1550,
+          "max_us": 4082
+        },
+        "uart": [
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 11546,
+            "bytes": 738944,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 886,
+            "bytes": 16100,
+            "discontinuities": 0,
+            "queue_drops": 0
+          },
+          {
+            "chunks": 0,
+            "bytes": 0,
+            "discontinuities": 0,
+            "queue_drops": 0
+          }
+        ]
+      },
+      "timing": {
+        "loop_body": {
+          "count": 21084,
+          "mean_us": 393.6094866565484,
+          "max_us": 729.0,
+          "over_125us": 21084
+        },
+        "loop_interval": {
+          "count": 21083,
+          "mean_us": 427.775435184746,
+          "max_us": 784.4583333333334,
+          "over_125us": 21083
+        },
+        "pdo_input_mapping": {
+          "count": 21084,
+          "mean_us": 80.92846076013407,
+          "max_us": 238.16666666666666,
+          "over_125us": 1775
+        },
+        "pdo_output_mapping": {
+          "count": 21084,
+          "mean_us": 29.47454428318472,
+          "max_us": 159.125,
+          "over_125us": 35
+        },
+        "esc_read_131": {
+          "count": 21084,
+          "mean_us": 26.681735360146718,
+          "max_us": 157.29166666666666,
+          "over_125us": 28
+        },
+        "esc_write_410": {
+          "count": 21084,
+          "mean_us": 61.37505138177448,
+          "max_us": 192.16666666666666,
+          "over_125us": 679
+        },
+        "lifecycle": {
+          "count": 21084,
+          "mean_us": 1.2880363466767848,
+          "max_us": 96.0,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 21084,
+          "mean_us": 9.109907591854803,
+          "max_us": 179.5,
+          "over_125us": 11
+        },
+        "ssc_step": {
+          "count": 21084,
+          "mean_us": 273.773447875166,
+          "max_us": 476.5416666666667,
+          "over_125us": 21084
+        },
+        "poll_after": {
+          "count": 21084,
+          "mean_us": 9.540297144754316,
+          "max_us": 206.83333333333334,
+          "over_125us": 19
+        },
+        "sensors": {
+          "count": 21084,
+          "mean_us": 72.47470633339657,
+          "max_us": 257.4583333333333,
+          "over_125us": 1846
+        },
+        "board_outputs": {
+          "count": 21084,
+          "mean_us": 16.7279908145197,
+          "max_us": 260.0416666666667,
+          "over_125us": 601
+        },
+        "poll_watchdog": {
+          "count": 42168,
+          "mean_us": 1.4094682776829193,
+          "max_us": 106.375,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 21084,
+          "mean_us": 14.17104795105293,
+          "max_us": 140.04166666666666,
+          "over_125us": 3
+        },
+        "can_pump": {
+          "count": 21084,
+          "mean_us": 1.26974838740277,
+          "max_us": 107.125,
+          "over_125us": 0
+        },
+        "uart_service": {
+          "count": 21084,
+          "mean_us": 12.357221906026686,
+          "max_us": 138.0,
+          "over_125us": 2
+        },
+        "can_drain": {
+          "count": 42167,
+          "mean_us": 3.05087805629995,
+          "max_us": 113.875,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 21084,
+          "mean_us": 123.8795492632644,
+          "max_us": 276.5,
+          "over_125us": 8226
+        },
+        "rx_process": {
+          "count": 21084,
+          "mean_us": 32.27218902169101,
+          "max_us": 158.33333333333334,
+          "over_125us": 43
+        },
+        "dispatch": {
+          "count": 21084,
+          "mean_us": 8.927607032188705,
+          "max_us": 120.54166666666667,
+          "over_125us": 0
+        },
+        "regular_capture": {
+          "count": 21084,
+          "mean_us": 32.2150366786821,
+          "max_us": 181.25,
+          "over_125us": 51
+        },
+        "regular_encode": {
+          "count": 21084,
+          "mean_us": 23.839003114526022,
+          "max_us": 149.29166666666666,
+          "over_125us": 15
+        },
+        "can_capture": {
+          "count": 7330,
+          "mean_us": 3.9143303774442932,
+          "max_us": 87.33333333333333,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 7330,
+          "mean_us": 4.609618008185539,
+          "max_us": 104.29166666666667,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 21084,
+          "mean_us": 12.082752324037184,
+          "max_us": 138.91666666666666,
+          "over_125us": 5
+        }
+      }
+    }
+  },
+  "notes": [
+    "UART2 PDO capacity is configured by host via existing ABI5 with a new layout signature; RX remains131, TX becomes346",
+    "both64 also enables preserving IMU on late CAN refresh, so it is a combined candidate, not a pure UART IRQ experiment",
+    "Censored runs are retained and excluded from performance comparisons",
+    "IMU sequence updates are publication updates, not physical sensor samples",
+    "UART age starts at DMA/event capture, excludes earlier serial accumulation",
+    "HI91 reassembly wait is host first-byte-chunk availability to complete-frame-chunk availability, not one-way physical IMU latency"
+  ],
+  "full_and_pdo_only_sha256": "ddb2dff9f10dc432da1fc5b0838dfa9efdc1149aa8978b854bde2c07a3c78af9",
+  "uart64_and_preserve_imu_sha256": "1526d5bc70ce9445ba14af9792c54b85fea57886a24223d630adc12fff1e9cad",
+  "restored_normal_check": {
+    "tx_bytes": 410,
+    "hi91_valid": 2870,
+    "hi91_crc_errors": 0,
+    "hi91_nonadvancing": 0,
+    "uart2_age": {
+      "count": 1839,
+      "mean_us": 271.071,
+      "p50_upper_us": 325,
+      "p99_upper_us": 625,
+      "max_us": 900
+    },
+    "hi91_reassembly_wait": {
+      "count": 2870,
+      "mean_us": 999.174,
+      "p50_upper_us": 1450,
+      "p99_upper_us": 1975,
+      "max_us": 2229
+    },
+    "started": true,
+    "active_seconds": 2.87018,
+    "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+    "cycles": 24230,
+    "missed_periods": 0,
+    "max_lateness_us": 66.982,
+    "received": 24255,
+    "incomplete_including_startup_shutdown": 1260,
+    "protected_images": 24,
+    "right_age": {
+      "count": 2878,
+      "mean_us": 181.897,
+      "p50_upper_us": 225,
+      "p99_upper_us": 525,
+      "max_us": 700
+    },
+    "left_age": {
+      "count": 2879,
+      "mean_us": 153.421,
+      "p50_upper_us": 125,
+      "p99_upper_us": 425,
+      "max_us": 600
+    },
+    "right_arrival_interval": {
+      "count": 2877,
+      "mean_us": 997.487,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1400,
+      "max_us": 2250
+    },
+    "left_arrival_interval": {
+      "count": 2878,
+      "mean_us": 996.621,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1375,
+      "max_us": 2499
+    },
+    "status_rtt": {
+      "count": 567,
+      "mean_us": 656.693,
+      "p50_upper_us": 650,
+      "p99_upper_us": 975,
+      "max_us": 1604
+    },
+    "imu_updates": 6708,
+    "imu_missing": 2264,
+    "imu_same_sequence_mutations": 0,
+    "imu_age": {
+      "count": 6708,
+      "mean_us": 827.654,
+      "p50_upper_us": 825,
+      "p99_upper_us": 1275,
+      "max_us": 1927
+    },
+    "uart": [
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 1839,
+        "bytes": 235392,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 243,
+        "bytes": 5120,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      }
+    ]
+  },
+  "final_state": {
+    "master": "Idle",
+    "slave": "PREOP",
+    "normal_hex_sha256": "142cf1da7ef60197f0d2f82d085c95a2b19dc094c3982e5d01536059f71ec675",
+    "uart_rx_dma_bytes": 128,
+    "tx_bytes": 410,
+    "experimental_switches": false,
+    "stability_check_passed": false
+  }
+}

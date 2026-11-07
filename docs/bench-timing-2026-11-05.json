@@ -1,0 +1,362 @@
+{
+  "clock_hz": 24000000,
+  "pdo_rx_bytes": 131,
+  "pdo_tx_bytes": 410,
+  "cycle_us": 125,
+  "aggregate": {
+    "byte": {
+      "loop_body": {
+        "count": 61617,
+        "mean_us": 717.2064358591515,
+        "max_us": 1249.9583333333333,
+        "over_125us": 61617
+      },
+      "loop_interval": {
+        "count": 61614,
+        "mean_us": 740.8325204769478,
+        "max_us": 1267.6666666666667,
+        "over_125us": 61614
+      },
+      "pdo_input_mapping": {
+        "count": 122652,
+        "mean_us": 126.08034826174868,
+        "max_us": 308.875,
+        "over_125us": 43623
+      },
+      "pdo_output_mapping": {
+        "count": 61617,
+        "mean_us": 53.17502948320539,
+        "max_us": 206.54166666666666,
+        "over_125us": 589
+      },
+      "esc_read_131": {
+        "count": 61617,
+        "mean_us": 50.491408620997454,
+        "max_us": 204.95833333333334,
+        "over_125us": 389
+      },
+      "esc_write_410": {
+        "count": 122652,
+        "mean_us": 111.67541329669851,
+        "max_us": 263.75,
+        "over_125us": 15906
+      }
+    },
+    "word": {
+      "loop_body": {
+        "count": 98930,
+        "mean_us": 480.63744398396176,
+        "max_us": 1073.3333333333333,
+        "over_125us": 98930
+      },
+      "loop_interval": {
+        "count": 98927,
+        "mean_us": 503.57299153247675,
+        "max_us": 1087.2083333333333,
+        "over_125us": 98927
+      },
+      "pdo_input_mapping": {
+        "count": 172616,
+        "mean_us": 68.47579091741206,
+        "max_us": 243.91666666666666,
+        "over_125us": 6437
+      },
+      "pdo_output_mapping": {
+        "count": 98930,
+        "mean_us": 27.34064784864719,
+        "max_us": 164.83333333333334,
+        "over_125us": 120
+      },
+      "esc_read_131": {
+        "count": 98930,
+        "mean_us": 24.870006991475456,
+        "max_us": 162.54166666666666,
+        "over_125us": 68
+      },
+      "esc_write_410": {
+        "count": 172616,
+        "mean_us": 57.27030204809134,
+        "max_us": 211.375,
+        "over_125us": 3605
+      }
+    }
+  },
+  "runs": [
+    {
+      "variant": "byte",
+      "trial": "1",
+      "duration_s": 6.591222999850288,
+      "exit": 1,
+      "metrics": {
+        "loop_body": {
+          "count": 8021,
+          "mean_us": 715.2602647217719,
+          "max_us": 1249.9583333333333,
+          "over_125us": 8021
+        },
+        "loop_interval": {
+          "count": 8020,
+          "mean_us": 738.8370895677473,
+          "max_us": 1265.4166666666667,
+          "over_125us": 8020
+        },
+        "pdo_input_mapping": {
+          "count": 15900,
+          "mean_us": 126.11288522012579,
+          "max_us": 270.3333333333333,
+          "over_125us": 5693
+        },
+        "pdo_output_mapping": {
+          "count": 8021,
+          "mean_us": 52.97312263641275,
+          "max_us": 187.08333333333334,
+          "over_125us": 76
+        },
+        "esc_read_131": {
+          "count": 8021,
+          "mean_us": 50.30102751111665,
+          "max_us": 179.375,
+          "over_125us": 55
+        },
+        "esc_write_410": {
+          "count": 15900,
+          "mean_us": 111.60690775681341,
+          "max_us": 243.95833333333334,
+          "over_125us": 2076
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\n",
+      "stderr": "[ERROR] [1793811842.179878712] [dust_control]: EtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "byte",
+      "trial": "2",
+      "duration_s": 20.554128375137225,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 26790,
+          "mean_us": 717.7431815353988,
+          "max_us": 1249.375,
+          "over_125us": 26790
+        },
+        "loop_interval": {
+          "count": 26789,
+          "mean_us": 741.2572993268382,
+          "max_us": 1267.6666666666667,
+          "over_125us": 26789
+        },
+        "pdo_input_mapping": {
+          "count": 53079,
+          "mean_us": 126.34585397866074,
+          "max_us": 293.9166666666667,
+          "over_125us": 19038
+        },
+        "pdo_output_mapping": {
+          "count": 26790,
+          "mean_us": 53.43479998755755,
+          "max_us": 198.54166666666666,
+          "over_125us": 285
+        },
+        "esc_read_131": {
+          "count": 26790,
+          "mean_us": 50.7298214507901,
+          "max_us": 192.75,
+          "over_125us": 190
+        },
+        "esc_write_410": {
+          "count": 53079,
+          "mean_us": 111.77634987471504,
+          "max_us": 263.75,
+          "over_125us": 7054
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793811874.746456704] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "byte",
+      "trial": "3",
+      "duration_s": 20.51078158384189,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 26806,
+          "mean_us": 717.2523517744784,
+          "max_us": 1238.8333333333333,
+          "over_125us": 26806
+        },
+        "loop_interval": {
+          "count": 26805,
+          "mean_us": 741.0050239383199,
+          "max_us": 1259.375,
+          "over_125us": 26805
+        },
+        "pdo_input_mapping": {
+          "count": 53673,
+          "mean_us": 125.80814220682032,
+          "max_us": 308.875,
+          "over_125us": 18892
+        },
+        "pdo_output_mapping": {
+          "count": 26806,
+          "mean_us": 52.97582941629983,
+          "max_us": 206.54166666666666,
+          "over_125us": 228
+        },
+        "esc_read_131": {
+          "count": 26806,
+          "mean_us": 50.31010470292721,
+          "max_us": 204.95833333333334,
+          "over_125us": 144
+        },
+        "esc_write_410": {
+          "count": 53673,
+          "mean_us": 111.59588775237705,
+          "max_us": 259.25,
+          "over_125us": 6776
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793811906.196984655] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "word",
+      "trial": "1",
+      "duration_s": 20.54377654194832,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 40237,
+          "mean_us": 470.83886824730143,
+          "max_us": 1005.5416666666666,
+          "over_125us": 40237
+        },
+        "loop_interval": {
+          "count": 40236,
+          "mean_us": 493.7382060426815,
+          "max_us": 1033.1666666666667,
+          "over_125us": 40236
+        },
+        "pdo_input_mapping": {
+          "count": 67781,
+          "mean_us": 68.62261794111427,
+          "max_us": 243.91666666666666,
+          "over_125us": 2607
+        },
+        "pdo_output_mapping": {
+          "count": 40237,
+          "mean_us": 27.30955132506565,
+          "max_us": 164.83333333333334,
+          "over_125us": 66
+        },
+        "esc_read_131": {
+          "count": 40237,
+          "mean_us": 24.84724155213692,
+          "max_us": 162.54166666666666,
+          "over_125us": 33
+        },
+        "esc_write_410": {
+          "count": 67781,
+          "mean_us": 57.41880406505265,
+          "max_us": 211.375,
+          "over_125us": 1460
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\n",
+      "stderr": "[INFO] [1793811981.653337823] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "word",
+      "trial": "2",
+      "duration_s": 21.765135082881898,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 38680,
+          "mean_us": 490.36329929334715,
+          "max_us": 1073.3333333333333,
+          "over_125us": 38680
+        },
+        "loop_interval": {
+          "count": 38679,
+          "mean_us": 513.3572028749451,
+          "max_us": 1087.2083333333333,
+          "over_125us": 38679
+        },
+        "pdo_input_mapping": {
+          "count": 69631,
+          "mean_us": 68.32059894299952,
+          "max_us": 232.625,
+          "over_125us": 2543
+        },
+        "pdo_output_mapping": {
+          "count": 38680,
+          "mean_us": 27.30353110996208,
+          "max_us": 164.70833333333334,
+          "over_125us": 34
+        },
+        "esc_read_131": {
+          "count": 38680,
+          "mean_us": 24.818282488796967,
+          "max_us": 160.54166666666666,
+          "over_125us": 21
+        },
+        "esc_write_410": {
+          "count": 69631,
+          "mean_us": 57.06605534891069,
+          "max_us": 201.25,
+          "over_125us": 1403
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793812017.831399020] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nAdapter base: EtherCAT master stopped\n"
+    },
+    {
+      "variant": "word",
+      "trial": "3",
+      "duration_s": 10.7819095000159,
+      "exit": 1,
+      "metrics": {
+        "loop_body": {
+          "count": 20013,
+          "mean_us": 481.5403175435967,
+          "max_us": 1047.2083333333333,
+          "over_125us": 20013
+        },
+        "loop_interval": {
+          "count": 20012,
+          "mean_us": 504.4359196981811,
+          "max_us": 1065.5,
+          "over_125us": 20012
+        },
+        "pdo_input_mapping": {
+          "count": 35204,
+          "mean_us": 68.50005207741545,
+          "max_us": 226.16666666666666,
+          "over_125us": 1287
+        },
+        "pdo_output_mapping": {
+          "count": 20013,
+          "mean_us": 27.474905894501905,
+          "max_us": 156.25,
+          "over_125us": 20
+        },
+        "esc_read_131": {
+          "count": 20013,
+          "mean_us": 25.01574809707024,
+          "max_us": 146.25,
+          "over_125us": 14
+        },
+        "esc_write_410": {
+          "count": 35204,
+          "mean_us": 57.38836495852744,
+          "max_us": 189.83333333333334,
+          "over_125us": 742
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\n",
+      "stderr": "[ERROR] [1793812047.196959154] [dust_control]: EtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    }
+  ]
+}

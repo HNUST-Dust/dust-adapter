@@ -1,0 +1,223 @@
+{
+  "run2": {
+    "rx_bytes": 10,
+    "tx_bytes": 10,
+    "cycle_us": 125,
+    "active_seconds": 20.000127,
+    "error": "",
+    "cycles": 160372,
+    "wkc_failures": 0,
+    "invalid": 0,
+    "stop_seen": true,
+    "probes": 4000,
+    "rtt": {
+      "count": 3856,
+      "mean_us": 249.21,
+      "max_us": 373.87
+    },
+    "imu_interval": {
+      "count": 12347,
+      "mean_us": 1619.57,
+      "max_us": 6375.05
+    },
+    "motor_intervals": [
+      {
+        "count": 13591,
+        "mean_us": 1471.43,
+        "max_us": 4499.95
+      },
+      {
+        "count": 13614,
+        "mean_us": 1468.95,
+        "max_us": 4499.98
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      },
+      {
+        "count": 13289,
+        "mean_us": 1504.88,
+        "max_us": 5624.99
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      }
+    ]
+  },
+  "restored": {
+    "tx_bytes": 410,
+    "hi91_valid": 5513,
+    "hi91_crc_errors": 0,
+    "hi91_nonadvancing": 0,
+    "uart2_age": {
+      "count": 3532,
+      "mean_us": 283.692,
+      "p50_upper_us": 325,
+      "p99_upper_us": 625,
+      "max_us": 800
+    },
+    "hi91_reassembly_wait": {
+      "count": 5513,
+      "mean_us": 974.219,
+      "p50_upper_us": 1425,
+      "p99_upper_us": 1950,
+      "max_us": 2240
+    },
+    "started": true,
+    "active_seconds": 5.51376,
+    "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+    "cycles": 45406,
+    "missed_periods": 0,
+    "max_lateness_us": 120.311,
+    "received": 45431,
+    "incomplete_including_startup_shutdown": 1286,
+    "protected_images": 24,
+    "fault_flags": 6,
+    "right_age": {
+      "count": 5530,
+      "mean_us": 183.49,
+      "p50_upper_us": 225,
+      "p99_upper_us": 425,
+      "max_us": 800
+    },
+    "left_age": {
+      "count": 5530,
+      "mean_us": 168.969,
+      "p50_upper_us": 225,
+      "p99_upper_us": 425,
+      "max_us": 800
+    },
+    "right_arrival_interval": {
+      "count": 5529,
+      "mean_us": 996.91,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1400,
+      "max_us": 2250
+    },
+    "left_arrival_interval": {
+      "count": 5529,
+      "mean_us": 996.666,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1400,
+      "max_us": 2519
+    },
+    "status_rtt": {
+      "count": 1085,
+      "mean_us": 652.459,
+      "p50_upper_us": 650,
+      "p99_upper_us": 1025,
+      "max_us": 1118
+    },
+    "imu_updates": 12625,
+    "imu_missing": 4187,
+    "imu_same_sequence_mutations": 0,
+    "imu_age": {
+      "count": 12625,
+      "mean_us": 841.667,
+      "p50_upper_us": 850,
+      "p99_upper_us": 1275,
+      "max_us": 2003
+    },
+    "uart": [
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 3532,
+        "bytes": 452096,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 468,
+        "bytes": 9850,
+        "discontinuities": 0,
+        "queue_drops": 0
+      },
+      {
+        "chunks": 0,
+        "bytes": 0,
+        "discontinuities": 0,
+        "queue_drops": 0
+      }
+    ]
+  },
+  "run1": {
+    "rx_bytes": 10,
+    "tx_bytes": 10,
+    "cycle_us": 125,
+    "active_seconds": 20.000126,
+    "error": "",
+    "cycles": 184237,
+    "wkc_failures": 0,
+    "invalid": 0,
+    "stop_seen": true,
+    "probes": 4000,
+    "rtt": {
+      "count": 3830,
+      "mean_us": 249.48,
+      "max_us": 374.08
+    },
+    "imu_interval": {
+      "count": 11864,
+      "mean_us": 1685.62,
+      "max_us": 10249.98
+    },
+    "motor_intervals": [
+      {
+        "count": 13363,
+        "mean_us": 1496.65,
+        "max_us": 6374.01
+      },
+      {
+        "count": 13373,
+        "mean_us": 1495.43,
+        "max_us": 5750.02
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      },
+      {
+        "count": 13129,
+        "mean_us": 1523.21,
+        "max_us": 5499.99
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      },
+      {
+        "count": 0,
+        "mean_us": 0.0,
+        "max_us": 0.0
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-> 状态：living · 更新：2026-11-02 · 分支：ethercat
+> 状态：living · 更新：2026-11-07 · 分支：ethercat
 
 # 源码组织、依赖方向与执行模型
 
@@ -36,29 +36,31 @@ CMake 目标：`dust_domain`（链接 Zephyr 接口）；`dust_drivers`（硬件
 
 ## 执行模型
 
-- **单实时主线程**（prio 0）拥有 Session、SSC、IO 队列、UART 窗口与 ESC 访问；
-  125 µs 周期下不加锁、不阻塞、不打印、不分配堆。
-- **ISR 只入队**：CAN RX、UART idle/DMA、IMU DRDY、ESC PDI/RESET 只写 SPSC 有界环
-  或置位事件标志；不调用 domain 服务。
-- **板级输出**由调度器每周期调用（适配器内部按 `period_ms` 限流），
-  不依赖系统工作队列；加热 PID 与主站是否发布无关。
-- **状态机唯一**：`Boot → Configurable → Ready → Active → Protected → Rearm`；
-  AL 状态是输入，IRQ 门控是输出。
+原接线 DTG1 直接交接版本已部署并完成一分钟实测，见 [直接交接报告](gateway-direct-ingress-2026-11-07.md)。DTG2 隔离试验因终端电阻约束取消，未部署。固定下行 60 B、上行 180 B，主站交换周期 125 µs。
+
+- ESC PDI/SM 中断负责过程影像映射，下行六命令整批校验后分发物理 CAN lane。默认 DTG1 用 CAN0/CAN3 两个 lane；DTG2 隔离配置用 CAN0..3 四个 lane，路由及保护 YAML 同步切换。
+- CAN TX worker 使用最高协作优先级，硬件消息 RAM 准备允许外部中断；最终 TXBAR 请求在驱动锁内检查停止、时效与新命令序号。
+- CAN RX 回调更新最新完整反馈缓冲，InputMapping 合并快照，路由电机不再重复进入消息队列。
+- 新候选在成功 SPI/DMA 回调中发布完整板载 IMU 紧凑页；优先级 0 的 IMU 线程只负责启动排队采集、事件等待及故障恢复。有界 UART ingress 完成 HI91 CRC/裁剪与完整页发布，取消独立 HI91 线程。
+- 优先级 0 的 PDO owner 处理握手、看门狗、SBUS 块确认。Arm 应答保持至首批有效命令；SBUS 保留一个不可变待确认页，由 InputMapping 重试，不另建中间八块队列。
+- 主循环优先级 4，处理生命周期与板级服务。默认 PLIC 非嵌套，IRQ 优先级仅决定待处理中断的选择顺序。
+- 输出与新命令各有 20 ms 保护。Stop、传输错误和看门狗触发后，取消待发命令并发送配置保护帧。
+
+正常配置不包含源到达统计。CONFIG_ECAT_SOURCE_ARRIVAL_STATS 为手动测量开关，默认 n；上位机到达间隔工具也只在手动启动时运行。
 
 ## 关键数据流
 
+```text
+下行：ESC RxPDO → OutputMapping → 整批解码和 CAN 白名单校验
+     → 两侧最新命令缓冲 → 独立 CAN TX worker → MCAN 批量提交
+上行 CAN：CAN RX 回调 → 最新完整反馈缓冲 → InputMapping → ESC
+上行 IMU：DRDY → 采集启动线程 → DMA 完成回调 → 完整页交接 → InputMapping
+上行 HI91：UART DMA/idle → 有界接收解析回调 → 完整页交接 → InputMapping
+上行 SBUS：UART DMA → PDO owner → 块确认/重试 → InputMapping
+保护：Stop / 超时 / 传输错误 → 取消发送 → YAML 配置保护帧
 ```
-下行：ESC RxPDO → SSC APPL_OutputMapping → SscStack 调 Session.Process
-     → Actions → IoCoordinator.Dispatch → CanIoService/UartIoService
-     → drivers::CanBusPort/UartPort → 硬件
-上行：硬件 ISR → 端口环 → CanIoService.DrainReceive/UartIoService.Capture
-     → FeedbackAggregator → Session.Publish → tx_image
-     → SSC APPL_InputMapping → ESC
-保护：服务上报 FaultSink → ProtectionService 锁存 → Session.Protect
-     → 固定顺序 safe-stop（UART abort、CAN 撤销+保护帧）；
-       Protected 时调度器将加热器置安全状态
-rearm：会话结束 → LifecycleService 在安全上下文 Stop/重新生成 boot_id/Start/Enable
-```
+
+固件没有运行时测试计数、时序跟踪或到达间隔探针。到达间隔由手动启动的上位机工具测量，正常运行不启动该工具。
 
 ## 构建期生成
 
@@ -80,3 +82,5 @@ CI 执行文档链接检查、依赖边界检查与目标固件构建：
 
 `west.yml` 固定 Zephyr（hpmicro fork）、`hpm_support` 与 `sdk_env` 版本；
 `hpm_support` 提供板级 DTS、HPM_ESC 驱动和 PHY 初始化。
+
+当前部署状态与未完成的 CAN 隔离验证以 [优先级优化记录](gateway-dtg1-optimization-2026-11-07.md) 为准。

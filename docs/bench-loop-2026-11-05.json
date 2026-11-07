@@ -1,0 +1,1302 @@
+{
+  "clock_hz": 24000000,
+  "cycle_us": 125,
+  "pdo_rx_bytes": 131,
+  "pdo_tx_bytes": 410,
+  "cache_snapshot": "Active exit freezes stats and writes back D-cache before OpenOCD reads. Reader validates count/max/sum/over relationships.",
+  "aggregate": {
+    "before": {
+      "loop_body": {
+        "count": 77972,
+        "mean_us": 559.07820275227,
+        "max_us": 1148.4166666666667,
+        "over_125us": 77972
+      },
+      "loop_interval": {
+        "count": 77969,
+        "mean_us": 582.9803875044356,
+        "max_us": 1165.2916666666667,
+        "over_125us": 77969
+      },
+      "pdo_input_mapping": {
+        "count": 136495,
+        "mean_us": 78.37612519384105,
+        "max_us": 260.3333333333333,
+        "over_125us": 7058
+      },
+      "pdo_output_mapping": {
+        "count": 77972,
+        "mean_us": 30.92919466817148,
+        "max_us": 180.70833333333334,
+        "over_125us": 110
+      },
+      "esc_read_131": {
+        "count": 77972,
+        "mean_us": 25.538525581832793,
+        "max_us": 176.5,
+        "over_125us": 61
+      },
+      "esc_write_410": {
+        "count": 136495,
+        "mean_us": 61.89858694457673,
+        "max_us": 231.125,
+        "over_125us": 3391
+      },
+      "lifecycle": {
+        "count": 77972,
+        "mean_us": 1.4613349450229995,
+        "max_us": 121.16666666666667,
+        "over_125us": 0
+      },
+      "poll_before": {
+        "count": 77972,
+        "mean_us": 73.72036543032543,
+        "max_us": 366.1666666666667,
+        "over_125us": 22843
+      },
+      "ssc_step": {
+        "count": 77972,
+        "mean_us": 292.0491201969938,
+        "max_us": 653.6666666666666,
+        "over_125us": 77972
+      },
+      "poll_after": {
+        "count": 77972,
+        "mean_us": 42.18913840865952,
+        "max_us": 331.75,
+        "over_125us": 3993
+      },
+      "sensors": {
+        "count": 77972,
+        "mean_us": 105.97696288411224,
+        "max_us": 315.6666666666667,
+        "over_125us": 23467
+      },
+      "board_outputs": {
+        "count": 77972,
+        "mean_us": 31.129440162280474,
+        "max_us": 299.2083333333333,
+        "over_125us": 3153
+      },
+      "poll_watchdog": {
+        "count": 155944,
+        "mean_us": 2.4043398591802188,
+        "max_us": 146.16666666666666,
+        "over_125us": 1
+      },
+      "io_service": {
+        "count": 233916,
+        "mean_us": 8.067884767751385,
+        "max_us": 239.41666666666666,
+        "over_125us": 387
+      },
+      "can_pump": {
+        "count": 233916,
+        "mean_us": 2.73198249229068,
+        "max_us": 212.25,
+        "over_125us": 274
+      },
+      "uart_service": {
+        "count": 233916,
+        "mean_us": 4.829229830366456,
+        "max_us": 153.75,
+        "over_125us": 5
+      },
+      "can_drain": {
+        "count": 370405,
+        "mean_us": 2.53486026556517,
+        "max_us": 138.625,
+        "over_125us": 3
+      },
+      "application": {
+        "count": 77972,
+        "mean_us": 127.56711811077481,
+        "max_us": 411.625,
+        "over_125us": 31321
+      },
+      "rx_process": {
+        "count": 77972,
+        "mean_us": 34.850780301475744,
+        "max_us": 179.75,
+        "over_125us": 215
+      },
+      "dispatch": {
+        "count": 77972,
+        "mean_us": 10.473469642948752,
+        "max_us": 144.25,
+        "over_125us": 7
+      },
+      "regular_capture": {
+        "count": 77972,
+        "mean_us": 37.76715466235742,
+        "max_us": 192.91666666666666,
+        "over_125us": 407
+      },
+      "regular_encode": {
+        "count": 77972,
+        "mean_us": 20.926181834504693,
+        "max_us": 169.20833333333334,
+        "over_125us": 106
+      },
+      "can_capture": {
+        "count": 91528,
+        "mean_us": 6.543310061766163,
+        "max_us": 130.29166666666666,
+        "over_125us": 2
+      },
+      "can_encode": {
+        "count": 91528,
+        "mean_us": 8.956679467849547,
+        "max_us": 127.70833333333333,
+        "over_125us": 2
+      },
+      "late_refresh": {
+        "count": 136495,
+        "mean_us": 11.064886686936031,
+        "max_us": 169.16666666666666,
+        "over_125us": 79
+      }
+    },
+    "after": {
+      "loop_body": {
+        "count": 93483,
+        "mean_us": 425.10373722138434,
+        "max_us": 892.125,
+        "over_125us": 93483
+      },
+      "loop_interval": {
+        "count": 93480,
+        "mean_us": 463.8959144558551,
+        "max_us": 911.8333333333334,
+        "over_125us": 93480
+      },
+      "pdo_input_mapping": {
+        "count": 93483,
+        "mean_us": 86.48549513458775,
+        "max_us": 253.125,
+        "over_125us": 6648
+      },
+      "pdo_output_mapping": {
+        "count": 93483,
+        "mean_us": 29.607885925783297,
+        "max_us": 167.83333333333334,
+        "over_125us": 220
+      },
+      "esc_read_131": {
+        "count": 93483,
+        "mean_us": 26.544576286597565,
+        "max_us": 164.625,
+        "over_125us": 176
+      },
+      "esc_write_410": {
+        "count": 93483,
+        "mean_us": 66.93478805415602,
+        "max_us": 237.75,
+        "over_125us": 3758
+      },
+      "lifecycle": {
+        "count": 93483,
+        "mean_us": 2.807486387899404,
+        "max_us": 135.0,
+        "over_125us": 3
+      },
+      "poll_before": {
+        "count": 93483,
+        "mean_us": 11.00324702530585,
+        "max_us": 198.33333333333334,
+        "over_125us": 55
+      },
+      "ssc_step": {
+        "count": 93483,
+        "mean_us": 290.49646504355513,
+        "max_us": 635.375,
+        "over_125us": 93483
+      },
+      "poll_after": {
+        "count": 93483,
+        "mean_us": 12.015260350366733,
+        "max_us": 230.54166666666666,
+        "over_125us": 100
+      },
+      "sensors": {
+        "count": 93483,
+        "mean_us": 78.54911944774273,
+        "max_us": 258.5833333333333,
+        "over_125us": 9011
+      },
+      "board_outputs": {
+        "count": 93483,
+        "mean_us": 19.073817788617536,
+        "max_us": 274.8333333333333,
+        "over_125us": 3068
+      },
+      "poll_watchdog": {
+        "count": 186966,
+        "mean_us": 2.4850616778808265,
+        "max_us": 137.08333333333334,
+        "over_125us": 2
+      },
+      "io_service": {
+        "count": 93483,
+        "mean_us": 17.65758257294553,
+        "max_us": 250.58333333333334,
+        "over_125us": 461
+      },
+      "can_pump": {
+        "count": 93483,
+        "mean_us": 5.097841764456283,
+        "max_us": 227.375,
+        "over_125us": 269
+      },
+      "uart_service": {
+        "count": 93483,
+        "mean_us": 12.004268155707456,
+        "max_us": 153.625,
+        "over_125us": 11
+      },
+      "can_drain": {
+        "count": 186963,
+        "mean_us": 3.7015817746470336,
+        "max_us": 165.25,
+        "over_125us": 3
+      },
+      "application": {
+        "count": 93483,
+        "mean_us": 130.75739751256023,
+        "max_us": 413.5416666666667,
+        "over_125us": 43397
+      },
+      "rx_process": {
+        "count": 93483,
+        "mean_us": 30.840025726602697,
+        "max_us": 183.79166666666666,
+        "over_125us": 204
+      },
+      "dispatch": {
+        "count": 93483,
+        "mean_us": 6.826856665561296,
+        "max_us": 141.04166666666666,
+        "over_125us": 4
+      },
+      "regular_capture": {
+        "count": 93483,
+        "mean_us": 36.341008525614285,
+        "max_us": 196.08333333333334,
+        "over_125us": 361
+      },
+      "regular_encode": {
+        "count": 93483,
+        "mean_us": 27.86105450545375,
+        "max_us": 175.91666666666666,
+        "over_125us": 160
+      },
+      "can_capture": {
+        "count": 32439,
+        "mean_us": 5.172477573291409,
+        "max_us": 149.95833333333334,
+        "over_125us": 1
+      },
+      "can_encode": {
+        "count": 32439,
+        "mean_us": 5.4182799510876825,
+        "max_us": 122.875,
+        "over_125us": 0
+      },
+      "late_refresh": {
+        "count": 93483,
+        "mean_us": 11.256414713548631,
+        "max_us": 167.45833333333334,
+        "over_125us": 36
+      }
+    }
+  },
+  "runs": [
+    {
+      "variant": "segments-before-coherent",
+      "trial": "1",
+      "duration_s": 6.383015708066523,
+      "exit": 1,
+      "metrics": {
+        "loop_body": {
+          "count": 9285,
+          "mean_us": 593.5795548375517,
+          "max_us": 1069.2083333333333,
+          "over_125us": 9285
+        },
+        "loop_interval": {
+          "count": 9284,
+          "mean_us": 613.8638876920867,
+          "max_us": 1099.3333333333333,
+          "over_125us": 9284
+        },
+        "pdo_input_mapping": {
+          "count": 16550,
+          "mean_us": 79.98915156092649,
+          "max_us": 232.45833333333334,
+          "over_125us": 947
+        },
+        "pdo_output_mapping": {
+          "count": 9285,
+          "mean_us": 30.963821576018667,
+          "max_us": 149.5,
+          "over_125us": 10
+        },
+        "esc_read_131": {
+          "count": 9285,
+          "mean_us": 25.485756596661282,
+          "max_us": 139.5,
+          "over_125us": 8
+        },
+        "esc_write_410": {
+          "count": 16550,
+          "mean_us": 61.870040281973814,
+          "max_us": 207.70833333333334,
+          "over_125us": 417
+        },
+        "lifecycle": {
+          "count": 9285,
+          "mean_us": 1.5208221145216299,
+          "max_us": 115.70833333333333,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 9285,
+          "mean_us": 81.4623900556453,
+          "max_us": 328.75,
+          "over_125us": 3353
+        },
+        "ssc_step": {
+          "count": 9285,
+          "mean_us": 303.1575345539401,
+          "max_us": 630.2916666666666,
+          "over_125us": 9285
+        },
+        "poll_after": {
+          "count": 9285,
+          "mean_us": 44.00113983126907,
+          "max_us": 290.4166666666667,
+          "over_125us": 552
+        },
+        "sensors": {
+          "count": 9285,
+          "mean_us": 116.1380183091007,
+          "max_us": 293.625,
+          "over_125us": 3862
+        },
+        "board_outputs": {
+          "count": 9285,
+          "mean_us": 38.115280021540116,
+          "max_us": 237.16666666666666,
+          "over_125us": 389
+        },
+        "poll_watchdog": {
+          "count": 18570,
+          "mean_us": 2.494807933943637,
+          "max_us": 146.16666666666666,
+          "over_125us": 1
+        },
+        "io_service": {
+          "count": 27855,
+          "mean_us": 8.286923353078443,
+          "max_us": 220.5,
+          "over_125us": 51
+        },
+        "can_pump": {
+          "count": 27855,
+          "mean_us": 2.8511802189912046,
+          "max_us": 208.66666666666666,
+          "over_125us": 33
+        },
+        "uart_service": {
+          "count": 27855,
+          "mean_us": 4.922323939448334,
+          "max_us": 133.125,
+          "over_125us": 1
+        },
+        "can_drain": {
+          "count": 44403,
+          "mean_us": 2.5557741969386454,
+          "max_us": 138.625,
+          "over_125us": 2
+        },
+        "application": {
+          "count": 9285,
+          "mean_us": 133.59206156883863,
+          "max_us": 381.0416666666667,
+          "over_125us": 4396
+        },
+        "rx_process": {
+          "count": 9285,
+          "mean_us": 35.86253365643511,
+          "max_us": 169.29166666666666,
+          "over_125us": 28
+        },
+        "dispatch": {
+          "count": 9285,
+          "mean_us": 11.036676539220966,
+          "max_us": 141.66666666666666,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 9285,
+          "mean_us": 38.613610662358646,
+          "max_us": 170.16666666666666,
+          "over_125us": 61
+        },
+        "regular_encode": {
+          "count": 9285,
+          "mean_us": 21.258239095315023,
+          "max_us": 158.58333333333334,
+          "over_125us": 17
+        },
+        "can_capture": {
+          "count": 11480,
+          "mean_us": 6.548076364692219,
+          "max_us": 130.29166666666666,
+          "over_125us": 1
+        },
+        "can_encode": {
+          "count": 11480,
+          "mean_us": 9.123040069686411,
+          "max_us": 111.0,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 16550,
+          "mean_us": 12.606064954682779,
+          "max_us": 163.70833333333334,
+          "over_125us": 15
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\n",
+      "stderr": "[ERROR] [1793813788.948730632] [dust_control]: EtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "segments-before-coherent",
+      "trial": "2",
+      "duration_s": 20.529662291985005,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 32970,
+          "mean_us": 581.7031164695178,
+          "max_us": 1148.4166666666667,
+          "over_125us": 32970
+        },
+        "loop_interval": {
+          "count": 32969,
+          "mean_us": 602.8273832994631,
+          "max_us": 1165.2916666666667,
+          "over_125us": 32969
+        },
+        "pdo_input_mapping": {
+          "count": 58146,
+          "mean_us": 79.55631370458272,
+          "max_us": 260.3333333333333,
+          "over_125us": 3162
+        },
+        "pdo_output_mapping": {
+          "count": 32970,
+          "mean_us": 31.138171064604187,
+          "max_us": 177.66666666666666,
+          "over_125us": 38
+        },
+        "esc_read_131": {
+          "count": 32970,
+          "mean_us": 25.675572490142553,
+          "max_us": 174.75,
+          "over_125us": 23
+        },
+        "esc_write_410": {
+          "count": 58146,
+          "mean_us": 61.9565397161169,
+          "max_us": 231.125,
+          "over_125us": 1482
+        },
+        "lifecycle": {
+          "count": 32970,
+          "mean_us": 1.4599977252047316,
+          "max_us": 121.16666666666667,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 32970,
+          "mean_us": 78.72276564553636,
+          "max_us": 366.1666666666667,
+          "over_125us": 11208
+        },
+        "ssc_step": {
+          "count": 32970,
+          "mean_us": 299.10435244161357,
+          "max_us": 645.5,
+          "over_125us": 32970
+        },
+        "poll_after": {
+          "count": 32970,
+          "mean_us": 43.32352011930037,
+          "max_us": 331.75,
+          "over_125us": 1960
+        },
+        "sensors": {
+          "count": 32970,
+          "mean_us": 112.33236149024366,
+          "max_us": 315.6666666666667,
+          "over_125us": 12051
+        },
+        "board_outputs": {
+          "count": 32970,
+          "mean_us": 36.81587301587302,
+          "max_us": 285.9583333333333,
+          "over_125us": 1369
+        },
+        "poll_watchdog": {
+          "count": 65940,
+          "mean_us": 2.4897242442624608,
+          "max_us": 118.25,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 98910,
+          "mean_us": 8.168490715465238,
+          "max_us": 239.41666666666666,
+          "over_125us": 177
+        },
+        "can_pump": {
+          "count": 98910,
+          "mean_us": 2.7930555555555556,
+          "max_us": 207.95833333333334,
+          "over_125us": 126
+        },
+        "uart_service": {
+          "count": 98910,
+          "mean_us": 4.8677328716341455,
+          "max_us": 126.16666666666667,
+          "over_125us": 1
+        },
+        "can_drain": {
+          "count": 157054,
+          "mean_us": 2.5581273001642746,
+          "max_us": 126.45833333333333,
+          "over_125us": 1
+        },
+        "application": {
+          "count": 32970,
+          "mean_us": 130.84546304721465,
+          "max_us": 409.125,
+          "over_125us": 14231
+        },
+        "rx_process": {
+          "count": 32970,
+          "mean_us": 35.17296153068446,
+          "max_us": 179.75,
+          "over_125us": 94
+        },
+        "dispatch": {
+          "count": 32970,
+          "mean_us": 10.568550955414013,
+          "max_us": 144.25,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 32970,
+          "mean_us": 38.05797947629158,
+          "max_us": 192.91666666666666,
+          "over_125us": 170
+        },
+        "regular_encode": {
+          "count": 32970,
+          "mean_us": 21.11378525932666,
+          "max_us": 166.95833333333334,
+          "over_125us": 50
+        },
+        "can_capture": {
+          "count": 39385,
+          "mean_us": 6.68022089628031,
+          "max_us": 120.83333333333333,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 39385,
+          "mean_us": 9.034882146333207,
+          "max_us": 125.83333333333333,
+          "over_125us": 1
+        },
+        "late_refresh": {
+          "count": 58146,
+          "mean_us": 12.132379412742637,
+          "max_us": 166.75,
+          "over_125us": 37
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793813841.027751466] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nAdapter base: EtherCAT master stopped\n"
+    },
+    {
+      "variant": "segments-before-coherent",
+      "trial": "3",
+      "duration_s": 20.428828625008464,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 35717,
+          "mean_us": 529.22439477933,
+          "max_us": 1148.1666666666667,
+          "over_125us": 35717
+        },
+        "loop_interval": {
+          "count": 35716,
+          "mean_us": 556.6320276626722,
+          "max_us": 1164.2083333333333,
+          "over_125us": 35716
+        },
+        "pdo_input_mapping": {
+          "count": 61799,
+          "mean_us": 76.83372438604724,
+          "max_us": 245.16666666666666,
+          "over_125us": 2949
+        },
+        "pdo_output_mapping": {
+          "count": 35717,
+          "mean_us": 30.727289059364818,
+          "max_us": 180.70833333333334,
+          "over_125us": 62
+        },
+        "esc_read_131": {
+          "count": 35717,
+          "mean_us": 25.425736810669054,
+          "max_us": 176.5,
+          "over_125us": 30
+        },
+        "esc_write_410": {
+          "count": 61799,
+          "mean_us": 61.8517047201411,
+          "max_us": 212.79166666666666,
+          "over_125us": 1492
+        },
+        "lifecycle": {
+          "count": 35717,
+          "mean_us": 1.4471050200184785,
+          "max_us": 114.41666666666667,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 35717,
+          "mean_us": 67.09008198710232,
+          "max_us": 345.3333333333333,
+          "over_125us": 8282
+        },
+        "ssc_step": {
+          "count": 35717,
+          "mean_us": 282.6487608608412,
+          "max_us": 653.6666666666666,
+          "over_125us": 35717
+        },
+        "poll_after": {
+          "count": 35717,
+          "mean_us": 40.67095384084143,
+          "max_us": 276.125,
+          "over_125us": 1481
+        },
+        "sensors": {
+          "count": 35717,
+          "mean_us": 97.46888853113829,
+          "max_us": 308.125,
+          "over_125us": 7554
+        },
+        "board_outputs": {
+          "count": 35717,
+          "mean_us": 24.064311112355462,
+          "max_us": 299.2083333333333,
+          "over_125us": 1395
+        },
+        "poll_watchdog": {
+          "count": 71434,
+          "mean_us": 2.3020042976733768,
+          "max_us": 123.54166666666667,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 107151,
+          "mean_us": 7.918075115180135,
+          "max_us": 228.58333333333334,
+          "over_125us": 159
+        },
+        "can_pump": {
+          "count": 107151,
+          "mean_us": 2.644619897776658,
+          "max_us": 212.25,
+          "over_125us": 115
+        },
+        "uart_service": {
+          "count": 107151,
+          "mean_us": 4.769487296743225,
+          "max_us": 153.75,
+          "over_125us": 3
+        },
+        "can_drain": {
+          "count": 168948,
+          "mean_us": 2.5077346284063737,
+          "max_us": 120.08333333333333,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 35717,
+          "mean_us": 122.97466542542767,
+          "max_us": 411.625,
+          "over_125us": 12694
+        },
+        "rx_process": {
+          "count": 35717,
+          "mean_us": 34.29036243245513,
+          "max_us": 169.95833333333334,
+          "over_125us": 93
+        },
+        "dispatch": {
+          "count": 35717,
+          "mean_us": 10.239289647320136,
+          "max_us": 141.33333333333334,
+          "over_125us": 3
+        },
+        "regular_capture": {
+          "count": 35717,
+          "mean_us": 37.2786523224235,
+          "max_us": 181.20833333333334,
+          "over_125us": 176
+        },
+        "regular_encode": {
+          "count": 35717,
+          "mean_us": 20.666685331914774,
+          "max_us": 169.20833333333334,
+          "over_125us": 39
+        },
+        "can_capture": {
+          "count": 40663,
+          "mean_us": 6.409356581331103,
+          "max_us": 128.08333333333334,
+          "over_125us": 1
+        },
+        "can_encode": {
+          "count": 40663,
+          "mean_us": 8.833967611833854,
+          "max_us": 127.70833333333333,
+          "over_125us": 1
+        },
+        "late_refresh": {
+          "count": 61799,
+          "mean_us": 9.64776129063577,
+          "max_us": 169.16666666666666,
+          "over_125us": 27
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793813861.944554604] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    },
+    {
+      "variant": "segments-after-coherent",
+      "trial": "1",
+      "duration_s": 20.552201374899596,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 42659,
+          "mean_us": 425.9725946849825,
+          "max_us": 890.5833333333334,
+          "over_125us": 42659
+        },
+        "loop_interval": {
+          "count": 42658,
+          "mean_us": 464.6804292278119,
+          "max_us": 910.2916666666666,
+          "over_125us": 42658
+        },
+        "pdo_input_mapping": {
+          "count": 42659,
+          "mean_us": 86.42718711174665,
+          "max_us": 253.125,
+          "over_125us": 3046
+        },
+        "pdo_output_mapping": {
+          "count": 42659,
+          "mean_us": 29.704044476741913,
+          "max_us": 167.83333333333334,
+          "over_125us": 101
+        },
+        "esc_read_131": {
+          "count": 42659,
+          "mean_us": 26.618809434507764,
+          "max_us": 163.08333333333334,
+          "over_125us": 80
+        },
+        "esc_write_410": {
+          "count": 42659,
+          "mean_us": 66.8762697594099,
+          "max_us": 229.16666666666666,
+          "over_125us": 1705
+        },
+        "lifecycle": {
+          "count": 42659,
+          "mean_us": 2.79915043328098,
+          "max_us": 126.08333333333333,
+          "over_125us": 1
+        },
+        "poll_before": {
+          "count": 42659,
+          "mean_us": 10.965386358486292,
+          "max_us": 192.33333333333334,
+          "over_125us": 29
+        },
+        "ssc_step": {
+          "count": 42659,
+          "mean_us": 290.90481004399226,
+          "max_us": 621.5833333333334,
+          "over_125us": 42659
+        },
+        "poll_after": {
+          "count": 42659,
+          "mean_us": 12.026526250810692,
+          "max_us": 222.70833333333334,
+          "over_125us": 46
+        },
+        "sensors": {
+          "count": 42659,
+          "mean_us": 78.83749716745977,
+          "max_us": 258.5833333333333,
+          "over_125us": 4128
+        },
+        "board_outputs": {
+          "count": 42659,
+          "mean_us": 19.30256315587957,
+          "max_us": 274.8333333333333,
+          "over_125us": 1409
+        },
+        "poll_watchdog": {
+          "count": 85318,
+          "mean_us": 2.488560444454863,
+          "max_us": 108.83333333333333,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 42659,
+          "mean_us": 17.769996757229812,
+          "max_us": 250.58333333333334,
+          "over_125us": 215
+        },
+        "can_pump": {
+          "count": 42659,
+          "mean_us": 5.127164451424866,
+          "max_us": 227.375,
+          "over_125us": 111
+        },
+        "uart_service": {
+          "count": 42659,
+          "mean_us": 12.078471131531447,
+          "max_us": 153.625,
+          "over_125us": 6
+        },
+        "can_drain": {
+          "count": 85317,
+          "mean_us": 3.7064594395020922,
+          "max_us": 165.25,
+          "over_125us": 3
+        },
+        "application": {
+          "count": 42659,
+          "mean_us": 131.07790364674904,
+          "max_us": 395.4583333333333,
+          "over_125us": 19861
+        },
+        "rx_process": {
+          "count": 42659,
+          "mean_us": 30.931208342123977,
+          "max_us": 169.875,
+          "over_125us": 102
+        },
+        "dispatch": {
+          "count": 42659,
+          "mean_us": 6.871108675777679,
+          "max_us": 141.04166666666666,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 42659,
+          "mean_us": 36.36190487353196,
+          "max_us": 196.08333333333334,
+          "over_125us": 171
+        },
+        "regular_encode": {
+          "count": 42659,
+          "mean_us": 27.92349113512584,
+          "max_us": 172.83333333333334,
+          "over_125us": 64
+        },
+        "can_capture": {
+          "count": 14773,
+          "mean_us": 5.176848529975857,
+          "max_us": 112.66666666666667,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 14773,
+          "mean_us": 5.391903021277556,
+          "max_us": 112.0,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 42659,
+          "mean_us": 11.262726896239169,
+          "max_us": 165.04166666666666,
+          "over_125us": 16
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793813948.970026970] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nAdapter base: EtherCAT master stopped\n"
+    },
+    {
+      "variant": "segments-after-coherent",
+      "trial": "2",
+      "duration_s": 20.506172040943056,
+      "exit": 124,
+      "metrics": {
+        "loop_body": {
+          "count": 42862,
+          "mean_us": 424.7808694181326,
+          "max_us": 892.125,
+          "over_125us": 42862
+        },
+        "loop_interval": {
+          "count": 42861,
+          "mean_us": 463.5350522619631,
+          "max_us": 911.8333333333334,
+          "over_125us": 42861
+        },
+        "pdo_input_mapping": {
+          "count": 42862,
+          "mean_us": 86.472146073445,
+          "max_us": 250.70833333333334,
+          "over_125us": 3028
+        },
+        "pdo_output_mapping": {
+          "count": 42862,
+          "mean_us": 29.469121832858942,
+          "max_us": 167.04166666666666,
+          "over_125us": 94
+        },
+        "esc_read_131": {
+          "count": 42862,
+          "mean_us": 26.42581812950088,
+          "max_us": 164.625,
+          "over_125us": 74
+        },
+        "esc_write_410": {
+          "count": 42862,
+          "mean_us": 66.92837089574293,
+          "max_us": 237.75,
+          "over_125us": 1720
+        },
+        "lifecycle": {
+          "count": 42862,
+          "mean_us": 2.811815633117136,
+          "max_us": 135.0,
+          "over_125us": 2
+        },
+        "poll_before": {
+          "count": 42862,
+          "mean_us": 11.021279532764064,
+          "max_us": 198.33333333333334,
+          "over_125us": 21
+        },
+        "ssc_step": {
+          "count": 42862,
+          "mean_us": 290.25821337470643,
+          "max_us": 635.375,
+          "over_125us": 42862
+        },
+        "poll_after": {
+          "count": 42862,
+          "mean_us": 12.003230328340566,
+          "max_us": 230.54166666666666,
+          "over_125us": 44
+        },
+        "sensors": {
+          "count": 42862,
+          "mean_us": 78.51361540136563,
+          "max_us": 251.625,
+          "over_125us": 4200
+        },
+        "board_outputs": {
+          "count": 42862,
+          "mean_us": 19.00774481669855,
+          "max_us": 259.25,
+          "over_125us": 1418
+        },
+        "poll_watchdog": {
+          "count": 85724,
+          "mean_us": 2.4758162824879846,
+          "max_us": 137.08333333333334,
+          "over_125us": 2
+        },
+        "io_service": {
+          "count": 42862,
+          "mean_us": 17.58843983792948,
+          "max_us": 233.125,
+          "over_125us": 217
+        },
+        "can_pump": {
+          "count": 42862,
+          "mean_us": 5.139195752259188,
+          "max_us": 225.5,
+          "over_125us": 140
+        },
+        "uart_service": {
+          "count": 42862,
+          "mean_us": 11.902942388751498,
+          "max_us": 149.41666666666666,
+          "over_125us": 3
+        },
+        "can_drain": {
+          "count": 85723,
+          "mean_us": 3.694291497031135,
+          "max_us": 117.625,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 42862,
+          "mean_us": 130.71573985503866,
+          "max_us": 413.5416666666667,
+          "over_125us": 19908
+        },
+        "rx_process": {
+          "count": 42862,
+          "mean_us": 30.782805865335263,
+          "max_us": 183.79166666666666,
+          "over_125us": 93
+        },
+        "dispatch": {
+          "count": 42862,
+          "mean_us": 6.807561670788421,
+          "max_us": 136.125,
+          "over_125us": 2
+        },
+        "regular_capture": {
+          "count": 42862,
+          "mean_us": 36.34961621016285,
+          "max_us": 185.75,
+          "over_125us": 161
+        },
+        "regular_encode": {
+          "count": 42862,
+          "mean_us": 27.906650024108377,
+          "max_us": 175.91666666666666,
+          "over_125us": 88
+        },
+        "can_capture": {
+          "count": 14823,
+          "mean_us": 5.17754784231712,
+          "max_us": 149.95833333333334,
+          "over_125us": 1
+        },
+        "can_encode": {
+          "count": 14823,
+          "mean_us": 5.462038161415818,
+          "max_us": 122.875,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 42862,
+          "mean_us": 11.228948913567573,
+          "max_us": 167.45833333333334,
+          "over_125us": 19
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\nStopped; missed control releases=0\n",
+      "stderr": "[INFO] [1793813969.979430401] [rclcpp]: signal_handler(SIGINT/SIGTERM)\nAdapter base: EtherCAT master stopped\n"
+    },
+    {
+      "variant": "segments-after-coherent",
+      "trial": "3",
+      "duration_s": 4.431803207844496,
+      "exit": 1,
+      "metrics": {
+        "loop_body": {
+          "count": 7962,
+          "mean_us": 422.1866522230595,
+          "max_us": 808.7916666666666,
+          "over_125us": 7962
+        },
+        "loop_interval": {
+          "count": 7961,
+          "mean_us": 461.63502805342716,
+          "max_us": 826.75,
+          "over_125us": 7961
+        },
+        "pdo_input_mapping": {
+          "count": 7962,
+          "mean_us": 86.86976157581847,
+          "max_us": 240.625,
+          "over_125us": 574
+        },
+        "pdo_output_mapping": {
+          "count": 7962,
+          "mean_us": 29.839696893577827,
+          "max_us": 159.45833333333334,
+          "over_125us": 25
+        },
+        "esc_read_131": {
+          "count": 7962,
+          "mean_us": 26.78616134974462,
+          "max_us": 157.20833333333334,
+          "over_125us": 22
+        },
+        "esc_write_410": {
+          "count": 7962,
+          "mean_us": 67.28286443942058,
+          "max_us": 228.66666666666666,
+          "over_125us": 333
+        },
+        "lifecycle": {
+          "count": 7962,
+          "mean_us": 2.8288432554634513,
+          "max_us": 100.45833333333333,
+          "over_125us": 0
+        },
+        "poll_before": {
+          "count": 7962,
+          "mean_us": 11.109023067905888,
+          "max_us": 152.91666666666666,
+          "over_125us": 5
+        },
+        "ssc_step": {
+          "count": 7962,
+          "mean_us": 289.59120928577414,
+          "max_us": 574.875,
+          "over_125us": 7962
+        },
+        "poll_after": {
+          "count": 7962,
+          "mean_us": 12.019661098551452,
+          "max_us": 195.08333333333334,
+          "over_125us": 10
+        },
+        "sensors": {
+          "count": 7962,
+          "mean_us": 77.19517185799214,
+          "max_us": 224.70833333333334,
+          "over_125us": 683
+        },
+        "board_outputs": {
+          "count": 7962,
+          "mean_us": 18.203932219710293,
+          "max_us": 264.125,
+          "over_125us": 241
+        },
+        "poll_watchdog": {
+          "count": 15924,
+          "mean_us": 2.516086829104915,
+          "max_us": 100.20833333333333,
+          "over_125us": 0
+        },
+        "io_service": {
+          "count": 7962,
+          "mean_us": 17.42750460520807,
+          "max_us": 220.83333333333334,
+          "over_125us": 29
+        },
+        "can_pump": {
+          "count": 7962,
+          "mean_us": 4.718114167294649,
+          "max_us": 193.29166666666666,
+          "over_125us": 18
+        },
+        "uart_service": {
+          "count": 7962,
+          "mean_us": 12.152170727622874,
+          "max_us": 125.75,
+          "over_125us": 2
+        },
+        "can_drain": {
+          "count": 15923,
+          "mean_us": 3.714694676463816,
+          "max_us": 108.79166666666667,
+          "over_125us": 0
+        },
+        "application": {
+          "count": 7962,
+          "mean_us": 129.2644383739429,
+          "max_us": 372.625,
+          "over_125us": 3628
+        },
+        "rx_process": {
+          "count": 7962,
+          "mean_us": 30.65951812777359,
+          "max_us": 154.875,
+          "over_125us": 9
+        },
+        "dispatch": {
+          "count": 7962,
+          "mean_us": 6.693633299840911,
+          "max_us": 118.20833333333333,
+          "over_125us": 0
+        },
+        "regular_capture": {
+          "count": 7962,
+          "mean_us": 36.18271163024366,
+          "max_us": 170.20833333333334,
+          "over_125us": 29
+        },
+        "regular_encode": {
+          "count": 7962,
+          "mean_us": 27.281074688101814,
+          "max_us": 142.83333333333334,
+          "over_125us": 8
+        },
+        "can_capture": {
+          "count": 2843,
+          "mean_us": 5.12332922968695,
+          "max_us": 119.41666666666667,
+          "over_125us": 0
+        },
+        "can_encode": {
+          "count": 2843,
+          "mean_us": 5.32719251963888,
+          "max_us": 106.625,
+          "over_125us": 0
+        },
+        "late_refresh": {
+          "count": 7962,
+          "mean_us": 11.370452357029222,
+          "max_us": 133.25,
+          "over_125us": 1
+        }
+      },
+      "stdout": "Configuration loaded: /home/wbr-infantry/dust-control/config\nChassis: 1 kHz, IgH EtherCAT / CAN, output=disabled\nEtherCAT adapter base ready\n",
+      "stderr": "[ERROR] [1793814017.996625156] [dust_control]: EtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\nEtherCAT: base: EtherCAT OP/WKC lost (operational=1, complete=0)\n"
+    }
+  ],
+  "excluded": "All earlier snapshots without explicit cache writeback, including the inconsistent post-power-loss trial, and SSH connection failures are excluded.",
+  "power_loss_integrity": {
+    "verified_flash_bytes": 196080,
+    "verified_hex_sha256": "cdae70fcda59b218fba95d40b13ea319e3066536ff695ac22047e61c0992d4a6",
+    "result": "verified 196080 bytes; no program-image differences",
+    "host_master_cpp_sha256": "03fef2910269b6885c9c10d126a8049da528320bd17a266faa5bb700fbb3c5a1",
+    "host_config_sha256": "2e9e77de7a9a8f74639459db9cc511d29c3ecd7e95be3cb331df4014e8e4fb83",
+    "host_build_exit": 0
+  },
+  "final_deployment": {
+    "hex_sha256": "f58a005bc3dcd934957687e569d023bea872b330808274cf61e31064f2f0b11b",
+    "bench_timing_enabled": false,
+    "observed_al": "OP",
+    "observed_wkc": "3/3",
+    "imu_fresh": true,
+    "remote_fresh": true,
+    "output_requested": false,
+    "motor_stale_mask": 44,
+    "result": "Failed before 20-second cap: OP/WKC lost (operational=1, complete=0)",
+    "final_master": "Idle",
+    "final_slave": "PREOP",
+    "aspm_after_power_restored": [
+      0,
+      0,
+      0
+    ]
+  }
+}

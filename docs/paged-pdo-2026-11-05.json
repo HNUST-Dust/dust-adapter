@@ -1,0 +1,1152 @@
+{
+  "physical_tx_bytes": 192,
+  "logical_host_cache_bytes": 410,
+  "rx_bytes": 131,
+  "cycle_us": 125,
+  "motor_output": false,
+  "schedule": [
+    "CAN0",
+    "UART2",
+    "CAN3",
+    "UART2",
+    "IMU"
+  ],
+  "uart5_period_us": 5000,
+  "sessions": {
+    "interleaved-drop-timing": {
+      "loop_body": {
+        "count": 85733,
+        "mean_us": 215.19215033884268,
+        "max_us": 645.7916666666666,
+        "over_125us": 79504
+      },
+      "loop_interval": {
+        "count": 85732,
+        "mean_us": 234.9492459058461,
+        "max_us": 572.4583333333334,
+        "over_125us": 83918
+      },
+      "pdo_input_mapping": {
+        "count": 85733,
+        "mean_us": 40.15846095824634,
+        "max_us": 185.29166666666666,
+        "over_125us": 262
+      },
+      "pdo_output_mapping": {
+        "count": 85619,
+        "mean_us": 24.557979731913086,
+        "max_us": 150.66666666666666,
+        "over_125us": 31
+      },
+      "esc_read_131": {
+        "count": 85619,
+        "mean_us": 23.28588183308222,
+        "max_us": 149.54166666666666,
+        "over_125us": 25
+      },
+      "esc_write_410": {
+        "count": 85733,
+        "mean_us": 28.557665465262307,
+        "max_us": 160.58333333333334,
+        "over_125us": 38
+      },
+      "lifecycle": {
+        "count": 85733,
+        "mean_us": 1.2329854509543194,
+        "max_us": 113.33333333333333,
+        "over_125us": 0
+      },
+      "poll_before": {
+        "count": 85733,
+        "mean_us": 5.2764313819260575,
+        "max_us": 194.125,
+        "over_125us": 20
+      },
+      "ssc_step": {
+        "count": 85733,
+        "mean_us": 148.53246318998129,
+        "max_us": 404.7916666666667,
+        "over_125us": 61333
+      },
+      "poll_after": {
+        "count": 85733,
+        "mean_us": 4.2907150688766285,
+        "max_us": 196.375,
+        "over_125us": 22
+      },
+      "sensors": {
+        "count": 85733,
+        "mean_us": 42.787311575861494,
+        "max_us": 232.58333333333334,
+        "over_125us": 1435
+      },
+      "board_outputs": {
+        "count": 85733,
+        "mean_us": 5.3250090396930005,
+        "max_us": 220.75,
+        "over_125us": 653
+      },
+      "poll_watchdog": {
+        "count": 171466,
+        "mean_us": 0.769950991255798,
+        "max_us": 107.83333333333333,
+        "over_125us": 0
+      },
+      "io_service": {
+        "count": 85733,
+        "mean_us": 5.936573917472463,
+        "max_us": 131.625,
+        "over_125us": 2
+      },
+      "can_pump": {
+        "count": 85733,
+        "mean_us": 1.0962212139238487,
+        "max_us": 102.0,
+        "over_125us": 0
+      },
+      "uart_service": {
+        "count": 85733,
+        "mean_us": 4.351626075529065,
+        "max_us": 130.29166666666666,
+        "over_125us": 1
+      },
+      "can_drain": {
+        "count": 117497,
+        "mean_us": 2.8107228269657947,
+        "max_us": 118.375,
+        "over_125us": 0
+      },
+      "application": {
+        "count": 85733,
+        "mean_us": 62.23017828607421,
+        "max_us": 239.70833333333334,
+        "over_125us": 2683
+      },
+      "rx_process": {
+        "count": 85619,
+        "mean_us": 14.328830341396186,
+        "max_us": 138.45833333333334,
+        "over_125us": 4
+      },
+      "dispatch": {
+        "count": 85619,
+        "mean_us": 1.870607478090922,
+        "max_us": 99.58333333333333,
+        "over_125us": 0
+      },
+      "regular_capture": {
+        "count": 35383,
+        "mean_us": 22.43480037494465,
+        "max_us": 167.16666666666666,
+        "over_125us": 24
+      },
+      "regular_encode": {
+        "count": 35383,
+        "mean_us": 21.75616586119511,
+        "max_us": 141.41666666666666,
+        "over_125us": 13
+      },
+      "can_capture": {
+        "count": 55221,
+        "mean_us": 6.88458346160579,
+        "max_us": 143.25,
+        "over_125us": 1
+      },
+      "can_encode": {
+        "count": 55221,
+        "mean_us": 13.282373704448188,
+        "max_us": 140.875,
+        "over_125us": 8
+      },
+      "late_refresh": {
+        "count": 31764,
+        "mean_us": 5.566422155060236,
+        "max_us": 135.79166666666666,
+        "over_125us": 2
+      }
+    },
+    "interleaved-drop": {
+      "tx_bytes": 410,
+      "hi91_valid": 19989,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 12806,
+        "mean_us": 497.048,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1600
+      },
+      "hi91_reassembly_wait": {
+        "count": 19989,
+        "mean_us": 1000.12,
+        "p50_upper_us": 1300,
+        "p99_upper_us": 2300,
+        "max_us": 2799
+      },
+      "started": true,
+      "active_seconds": 20.0001,
+      "error": "",
+      "cycles": 160631,
+      "missed_periods": 0,
+      "max_lateness_us": 25.67,
+      "received": 160657,
+      "incomplete_including_startup_shutdown": 623,
+      "protected_images": 24,
+      "fault_flags": 6,
+      "right_age": {
+        "count": 15735,
+        "mean_us": 547.092,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "left_age": {
+        "count": 15622,
+        "mean_us": 536.519,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1025,
+        "max_us": 1800
+      },
+      "right_arrival_interval": {
+        "count": 15734,
+        "mean_us": 1270.52,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 1900,
+        "max_us": 2875
+      },
+      "left_arrival_interval": {
+        "count": 15621,
+        "mean_us": 1279.72,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2000,
+        "max_us": 3000
+      },
+      "status_rtt": {
+        "count": 2857,
+        "mean_us": 522.369,
+        "p50_upper_us": 525,
+        "p99_upper_us": 825,
+        "max_us": 935
+      },
+      "imu_updates": 15713,
+      "imu_missing": 5,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 15713,
+        "mean_us": 782.984,
+        "p50_upper_us": 750,
+        "p99_upper_us": 1225,
+        "max_us": 1508
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 12806,
+          "bytes": 1639168,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 1696,
+          "bytes": 35700,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        25,
+        31750,
+        15713,
+        35331,
+        2857
+      ],
+      "skipped_publications": 110,
+      "discarded_uart_test_pages": 1
+    },
+    "paged-1": {
+      "tx_bytes": 410,
+      "hi91_valid": 7694,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 4930,
+        "mean_us": 817.972,
+        "p50_upper_us": 825,
+        "p99_upper_us": 1925,
+        "max_us": 2300
+      },
+      "hi91_reassembly_wait": {
+        "count": 7694,
+        "mean_us": 976.652,
+        "p50_upper_us": 1150,
+        "p99_upper_us": 2800,
+        "max_us": 3499
+      },
+      "started": true,
+      "active_seconds": 7.70271,
+      "error": "base: EtherCAT slave reports protection/fault",
+      "cycles": 62509,
+      "missed_periods": 0,
+      "max_lateness_us": 26.17,
+      "received": 62534,
+      "incomplete_including_startup_shutdown": 881,
+      "protected_images": 26,
+      "right_age": {
+        "count": 6017,
+        "mean_us": 548.978,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "left_age": {
+        "count": 6017,
+        "mean_us": 547.781,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1300
+      },
+      "right_arrival_interval": {
+        "count": 6016,
+        "mean_us": 1279.25,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2025,
+        "max_us": 2749
+      },
+      "left_arrival_interval": {
+        "count": 6016,
+        "mean_us": 1279.23,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2025,
+        "max_us": 3499
+      },
+      "status_rtt": {
+        "count": 1518,
+        "mean_us": 566.334,
+        "p50_upper_us": 575,
+        "p99_upper_us": 875,
+        "max_us": 975
+      },
+      "imu_updates": 6048,
+      "imu_missing": 4,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 6048,
+        "mean_us": 847.94,
+        "p50_upper_us": 825,
+        "p99_upper_us": 1275,
+        "max_us": 1464
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 4930,
+          "bytes": 631040,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 652,
+          "bytes": 13725,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        26,
+        12096,
+        6048,
+        6808,
+        1518
+      ],
+      "skipped_publications": 24,
+      "discarded_uart_test_pages": 0
+    },
+    "paged-drop": {
+      "tx_bytes": 410,
+      "hi91_valid": 4725,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 3028,
+        "mean_us": 824.306,
+        "p50_upper_us": 825,
+        "p99_upper_us": 1925,
+        "max_us": 2700
+      },
+      "hi91_reassembly_wait": {
+        "count": 4725,
+        "mean_us": 973.132,
+        "p50_upper_us": 1150,
+        "p99_upper_us": 2900,
+        "max_us": 3377
+      },
+      "started": true,
+      "active_seconds": 4.73166,
+      "error": "base: EtherCAT slave reports protection/fault",
+      "cycles": 38456,
+      "missed_periods": 0,
+      "max_lateness_us": 33.701,
+      "received": 38481,
+      "incomplete_including_startup_shutdown": 596,
+      "protected_images": 26,
+      "fault_flags": 13,
+      "right_age": {
+        "count": 3723,
+        "mean_us": 559.119,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1200
+      },
+      "left_age": {
+        "count": 3710,
+        "mean_us": 533.962,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1300
+      },
+      "right_arrival_interval": {
+        "count": 3722,
+        "mean_us": 1269.94,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2025,
+        "max_us": 2875
+      },
+      "left_arrival_interval": {
+        "count": 3709,
+        "mean_us": 1274.22,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2125,
+        "max_us": 3124
+      },
+      "status_rtt": {
+        "count": 932,
+        "mean_us": 568.483,
+        "p50_upper_us": 575,
+        "p99_upper_us": 875,
+        "max_us": 1408
+      },
+      "imu_updates": 3736,
+      "imu_missing": 4,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 3736,
+        "mean_us": 845.669,
+        "p50_upper_us": 800,
+        "p99_upper_us": 1300,
+        "max_us": 1430
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 3028,
+          "bytes": 387584,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 400,
+          "bytes": 8425,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        26,
+        7472,
+        3736,
+        4202,
+        932
+      ],
+      "skipped_publications": 23,
+      "discarded_uart_test_pages": 1
+    },
+    "paged-4": {
+      "tx_bytes": 410,
+      "hi91_valid": 20003,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 12815,
+        "mean_us": 719.298,
+        "p50_upper_us": 725,
+        "p99_upper_us": 1825,
+        "max_us": 2700
+      },
+      "hi91_reassembly_wait": {
+        "count": 20003,
+        "mean_us": 999.37,
+        "p50_upper_us": 1300,
+        "p99_upper_us": 2700,
+        "max_us": 3595
+      },
+      "started": true,
+      "active_seconds": 20,
+      "error": "",
+      "cycles": 160609,
+      "missed_periods": 0,
+      "max_lateness_us": 25.961,
+      "received": 160635,
+      "incomplete_including_startup_shutdown": 602,
+      "protected_images": 24,
+      "fault_flags": 6,
+      "right_age": {
+        "count": 13490,
+        "mean_us": 549.244,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "left_age": {
+        "count": 13412,
+        "mean_us": 542.052,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1700
+      },
+      "right_arrival_interval": {
+        "count": 13489,
+        "mean_us": 1482.12,
+        "p50_upper_us": 1500,
+        "p99_upper_us": 2250,
+        "max_us": 3500
+      },
+      "left_arrival_interval": {
+        "count": 13411,
+        "mean_us": 1490.61,
+        "p50_upper_us": 1500,
+        "p99_upper_us": 2250,
+        "max_us": 3375
+      },
+      "status_rtt": {
+        "count": 3938,
+        "mean_us": 552.944,
+        "p50_upper_us": 550,
+        "p99_upper_us": 875,
+        "max_us": 1335
+      },
+      "imu_updates": 13430,
+      "imu_missing": 4,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 13430,
+        "mean_us": 803.073,
+        "p50_upper_us": 750,
+        "p99_upper_us": 1275,
+        "max_us": 1487
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 12815,
+          "bytes": 1640320,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 1696,
+          "bytes": 35725,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        25,
+        27118,
+        13430,
+        30764,
+        3938
+      ],
+      "skipped_publications": 39,
+      "discarded_uart_test_pages": 0
+    },
+    "paged-2": {
+      "tx_bytes": 410,
+      "hi91_valid": 2992,
+      "hi91_crc_errors": 5,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 1923,
+        "mean_us": 1161.26,
+        "p50_upper_us": 925,
+        "p99_upper_us": 11925,
+        "max_us": 20000
+      },
+      "hi91_reassembly_wait": {
+        "count": 2992,
+        "mean_us": 1006.11,
+        "p50_upper_us": 1175,
+        "p99_upper_us": 3050,
+        "max_us": 3537
+      },
+      "started": true,
+      "active_seconds": 3.02848,
+      "error": "base: EtherCAT UART sample too old",
+      "cycles": 51228,
+      "missed_periods": 0,
+      "max_lateness_us": 32.752,
+      "received": 51253,
+      "incomplete_including_startup_shutdown": 26993,
+      "protected_images": 24,
+      "fault_flags": 13,
+      "right_age": {
+        "count": 2191,
+        "mean_us": 548.927,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1200
+      },
+      "left_age": {
+        "count": 2184,
+        "mean_us": 549.405,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "right_arrival_interval": {
+        "count": 2190,
+        "mean_us": 1380.94,
+        "p50_upper_us": 1375,
+        "p99_upper_us": 2375,
+        "max_us": 3250
+      },
+      "left_arrival_interval": {
+        "count": 2183,
+        "mean_us": 1385.43,
+        "p50_upper_us": 1375,
+        "p99_upper_us": 2375,
+        "max_us": 3375
+      },
+      "status_rtt": {
+        "count": 597,
+        "mean_us": 562.457,
+        "p50_upper_us": 575,
+        "p99_upper_us": 925,
+        "max_us": 994
+      },
+      "imu_updates": 2195,
+      "imu_missing": 4,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 2195,
+        "mean_us": 845.782,
+        "p50_upper_us": 825,
+        "p99_upper_us": 1300,
+        "max_us": 1573
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 1922,
+          "bytes": 246016,
+          "discontinuities": 5,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 257,
+          "bytes": 5400,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        25,
+        4390,
+        2195,
+        3165,
+        597
+      ],
+      "skipped_publications": 14,
+      "discarded_uart_test_pages": 0
+    },
+    "interleaved-1": {
+      "tx_bytes": 410,
+      "hi91_valid": 19981,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 12801,
+        "mean_us": 526.021,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1525,
+        "max_us": 3500
+      },
+      "hi91_reassembly_wait": {
+        "count": 19981,
+        "mean_us": 1000.56,
+        "p50_upper_us": 1300,
+        "p99_upper_us": 2425,
+        "max_us": 3627
+      },
+      "started": true,
+      "active_seconds": 20,
+      "error": "",
+      "cycles": 175025,
+      "missed_periods": 0,
+      "max_lateness_us": 24.208,
+      "received": 175051,
+      "incomplete_including_startup_shutdown": 15017,
+      "protected_images": 24,
+      "fault_flags": 6,
+      "right_age": {
+        "count": 15270,
+        "mean_us": 546.811,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "left_age": {
+        "count": 15191,
+        "mean_us": 535.712,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1025,
+        "max_us": 1500
+      },
+      "right_arrival_interval": {
+        "count": 15269,
+        "mean_us": 1309.25,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2775,
+        "max_us": 4249
+      },
+      "left_arrival_interval": {
+        "count": 15190,
+        "mean_us": 1316.04,
+        "p50_upper_us": 1250,
+        "p99_upper_us": 2875,
+        "max_us": 4125
+      },
+      "status_rtt": {
+        "count": 1785,
+        "mean_us": 547.844,
+        "p50_upper_us": 550,
+        "p99_upper_us": 950,
+        "max_us": 1070
+      },
+      "imu_updates": 15253,
+      "imu_missing": 6,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 15253,
+        "mean_us": 793.645,
+        "p50_upper_us": 750,
+        "p99_upper_us": 1275,
+        "max_us": 1630
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 12801,
+          "bytes": 1638528,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 1695,
+          "bytes": 35675,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        25,
+        30827,
+        15253,
+        34412,
+        1785
+      ],
+      "skipped_publications": 110,
+      "discarded_uart_test_pages": 0
+    },
+    "restored": {
+      "tx_bytes": 410,
+      "hi91_valid": 10003,
+      "hi91_crc_errors": 0,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 6410,
+        "mean_us": 289.782,
+        "p50_upper_us": 325,
+        "p99_upper_us": 725,
+        "max_us": 900
+      },
+      "hi91_reassembly_wait": {
+        "count": 10003,
+        "mean_us": 999.199,
+        "p50_upper_us": 1450,
+        "p99_upper_us": 1975,
+        "max_us": 2288
+      },
+      "started": true,
+      "active_seconds": 10,
+      "error": "",
+      "cycles": 97420,
+      "missed_periods": 0,
+      "max_lateness_us": 24.727,
+      "received": 97446,
+      "incomplete_including_startup_shutdown": 17412,
+      "protected_images": 24,
+      "fault_flags": 6,
+      "right_age": {
+        "count": 10046,
+        "mean_us": 198.845,
+        "p50_upper_us": 225,
+        "p99_upper_us": 525,
+        "max_us": 1200
+      },
+      "left_age": {
+        "count": 10021,
+        "mean_us": 182.956,
+        "p50_upper_us": 225,
+        "p99_upper_us": 525,
+        "max_us": 800
+      },
+      "right_arrival_interval": {
+        "count": 10045,
+        "mean_us": 995.034,
+        "p50_upper_us": 1000,
+        "p99_upper_us": 1400,
+        "max_us": 2250
+      },
+      "left_arrival_interval": {
+        "count": 10020,
+        "mean_us": 997.453,
+        "p50_upper_us": 1000,
+        "p99_upper_us": 1400,
+        "max_us": 2374
+      },
+      "status_rtt": {
+        "count": 1972,
+        "mean_us": 668.525,
+        "p50_upper_us": 675,
+        "p99_upper_us": 1125,
+        "max_us": 1327
+      },
+      "imu_updates": 22513,
+      "imu_missing": 6929,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 22513,
+        "mean_us": 849.988,
+        "p50_upper_us": 875,
+        "p99_upper_us": 1400,
+        "max_us": 2032
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 6409,
+          "bytes": 820352,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 849,
+          "bytes": 17850,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": false,
+      "page_counts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "skipped_publications": 0,
+      "discarded_uart_test_pages": 0
+    },
+    "paged-3": {
+      "tx_bytes": 410,
+      "hi91_valid": 19839,
+      "hi91_crc_errors": 67,
+      "hi91_nonadvancing": 0,
+      "uart2_age": {
+        "count": 12748,
+        "mean_us": 1499.26,
+        "p50_upper_us": 725,
+        "p99_upper_us": 13925,
+        "max_us": 18600
+      },
+      "hi91_reassembly_wait": {
+        "count": 19839,
+        "mean_us": 1000.36,
+        "p50_upper_us": 1300,
+        "p99_upper_us": 2850,
+        "max_us": 4241
+      },
+      "started": true,
+      "active_seconds": 20.0001,
+      "error": "",
+      "cycles": 189798,
+      "missed_periods": 0,
+      "max_lateness_us": 24.311,
+      "received": 189824,
+      "incomplete_including_startup_shutdown": 29792,
+      "protected_images": 24,
+      "fault_flags": 6,
+      "right_age": {
+        "count": 13449,
+        "mean_us": 549.818,
+        "p50_upper_us": 625,
+        "p99_upper_us": 1125,
+        "max_us": 1400
+      },
+      "left_age": {
+        "count": 13373,
+        "mean_us": 540.657,
+        "p50_upper_us": 525,
+        "p99_upper_us": 1125,
+        "max_us": 1800
+      },
+      "right_arrival_interval": {
+        "count": 13448,
+        "mean_us": 1486.66,
+        "p50_upper_us": 1400,
+        "p99_upper_us": 3625,
+        "max_us": 4625
+      },
+      "left_arrival_interval": {
+        "count": 13372,
+        "mean_us": 1495.07,
+        "p50_upper_us": 1400,
+        "p99_upper_us": 3625,
+        "max_us": 4856
+      },
+      "status_rtt": {
+        "count": 1233,
+        "mean_us": 597.766,
+        "p50_upper_us": 575,
+        "p99_upper_us": 1125,
+        "max_us": 1308
+      },
+      "imu_updates": 13386,
+      "imu_missing": 4,
+      "imu_same_sequence_mutations": 0,
+      "imu_age": {
+        "count": 13386,
+        "mean_us": 810.453,
+        "p50_upper_us": 775,
+        "p99_upper_us": 1325,
+        "max_us": 1926
+      },
+      "uart": [
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 12748,
+          "bytes": 1631744,
+          "discontinuities": 68,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 1698,
+          "bytes": 35725,
+          "discontinuities": 0,
+          "queue_drops": 0
+        },
+        {
+          "chunks": 0,
+          "bytes": 0,
+          "discontinuities": 0,
+          "queue_drops": 0
+        }
+      ],
+      "paged": true,
+      "page_counts": [
+        25,
+        27031,
+        13386,
+        30675,
+        1233
+      ],
+      "skipped_publications": 34,
+      "discarded_uart_test_pages": 1
+    }
+  }
+}

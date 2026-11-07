@@ -1,0 +1,2659 @@
+{
+  "date": "2026-11-05",
+  "configuration": {
+    "cycle_us": 125,
+    "cpu": 3,
+    "rtprio": 80,
+    "motor_sources": 0,
+    "rx_bytes": 131,
+    "tx_bytes": 410,
+    "tail_bytes": 2,
+    "dma": "HDMA0",
+    "uart0_disabled_in_both": true,
+    "tick_us": 100,
+    "wkc_policy": "unchanged, first incomplete Active exchange stops"
+  },
+  "normal_trials": {
+    "cpu": {
+      "runs": [
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20,
+            "error": "",
+            "cycles": 160908,
+            "missed_periods": 0,
+            "max_lateness_us": 29.338,
+            "received": 160934,
+            "incomplete_including_startup_shutdown": 897,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20093,
+              "mean_us": 293.222,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 700
+            },
+            "left_age": {
+              "count": 20046,
+              "mean_us": 284.291,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 1200
+            },
+            "right_arrival_interval": {
+              "count": 20092,
+              "mean_us": 994.917,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2125
+            },
+            "left_arrival_interval": {
+              "count": 20045,
+              "mean_us": 997.256,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2874
+            },
+            "status_rtt": {
+              "count": 3934,
+              "mean_us": 716.898,
+              "p50_upper_us": 725,
+              "p99_upper_us": 1075,
+              "max_us": 1216
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 52273,
+              "mean_us": 352.702463508886,
+              "max_us": 708.9166666666666,
+              "over_125us": 52273
+            },
+            "loop_interval": {
+              "count": 52272,
+              "mean_us": 383.59471052061014,
+              "max_us": 726.9166666666666,
+              "over_125us": 52272
+            },
+            "pdo_input_mapping": {
+              "count": 52273,
+              "mean_us": 83.92730313291119,
+              "max_us": 264.25,
+              "over_125us": 3244
+            },
+            "pdo_output_mapping": {
+              "count": 52273,
+              "mean_us": 28.266185060483743,
+              "max_us": 163.83333333333334,
+              "over_125us": 77
+            },
+            "esc_read_131": {
+              "count": 52273,
+              "mean_us": 25.510086469114075,
+              "max_us": 149.5,
+              "over_125us": 54
+            },
+            "esc_write_410": {
+              "count": 52273,
+              "mean_us": 65.37897034160402,
+              "max_us": 202.79166666666666,
+              "over_125us": 1887
+            },
+            "lifecycle": {
+              "count": 52273,
+              "mean_us": 0.33356608574216134,
+              "max_us": 98.83333333333333,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 52273,
+              "mean_us": 6.125452751261008,
+              "max_us": 201.41666666666666,
+              "over_125us": 12
+            },
+            "ssc_step": {
+              "count": 52273,
+              "mean_us": 250.92908305116092,
+              "max_us": 495.5,
+              "over_125us": 52273
+            },
+            "poll_after": {
+              "count": 52273,
+              "mean_us": 8.48210357163354,
+              "max_us": 222.625,
+              "over_125us": 28
+            },
+            "sensors": {
+              "count": 52273,
+              "mean_us": 63.461477882144386,
+              "max_us": 257.8333333333333,
+              "over_125us": 2437
+            },
+            "board_outputs": {
+              "count": 52273,
+              "mean_us": 10.246074295844252,
+              "max_us": 253.75,
+              "over_125us": 783
+            },
+            "poll_watchdog": {
+              "count": 104546,
+              "mean_us": 1.5453014303113781,
+              "max_us": 111.33333333333333,
+              "over_125us": 0
+            },
+            "io_service": {
+              "count": 52273,
+              "mean_us": 11.167525140448541,
+              "max_us": 138.08333333333334,
+              "over_125us": 3
+            },
+            "can_pump": {
+              "count": 52273,
+              "mean_us": 1.2731556762892253,
+              "max_us": 113.125,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 52273,
+              "mean_us": 9.38077257857785,
+              "max_us": 136.5,
+              "over_125us": 3
+            },
+            "can_drain": {
+              "count": 104545,
+              "mean_us": 3.316627608525834,
+              "max_us": 111.45833333333333,
+              "over_125us": 0
+            },
+            "application": {
+              "count": 52273,
+              "mean_us": 104.72910808001582,
+              "max_us": 279.2083333333333,
+              "over_125us": 9282
+            },
+            "rx_process": {
+              "count": 52273,
+              "mean_us": 27.086773605239163,
+              "max_us": 163.58333333333334,
+              "over_125us": 57
+            },
+            "dispatch": {
+              "count": 52273,
+              "mean_us": 7.258607853640184,
+              "max_us": 147.0,
+              "over_125us": 3
+            },
+            "regular_capture": {
+              "count": 52273,
+              "mean_us": 29.00927661826692,
+              "max_us": 165.29166666666666,
+              "over_125us": 91
+            },
+            "regular_encode": {
+              "count": 52273,
+              "mean_us": 21.17152736594418,
+              "max_us": 159.08333333333334,
+              "over_125us": 42
+            },
+            "can_capture": {
+              "count": 15663,
+              "mean_us": 3.979620230266658,
+              "max_us": 114.0,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 15663,
+              "mean_us": 4.400455425737938,
+              "max_us": 106.91666666666667,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 52273,
+              "mean_us": 10.886310810552292,
+              "max_us": 178.45833333333334,
+              "over_125us": 13
+            }
+          }
+        },
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20.0001,
+            "error": "",
+            "cycles": 160828,
+            "missed_periods": 0,
+            "max_lateness_us": 25.543,
+            "received": 160854,
+            "incomplete_including_startup_shutdown": 819,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20075,
+              "mean_us": 301.938,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 800
+            },
+            "left_age": {
+              "count": 20045,
+              "mean_us": 290.9,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 800
+            },
+            "right_arrival_interval": {
+              "count": 20074,
+              "mean_us": 995.805,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2375
+            },
+            "left_arrival_interval": {
+              "count": 20044,
+              "mean_us": 997.294,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2375
+            },
+            "status_rtt": {
+              "count": 3930,
+              "mean_us": 720.101,
+              "p50_upper_us": 725,
+              "p99_upper_us": 1100,
+              "max_us": 1241
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 50683,
+              "mean_us": 366.49790363632775,
+              "max_us": 765.1666666666666,
+              "over_125us": 50683
+            },
+            "loop_interval": {
+              "count": 50682,
+              "mean_us": 395.6918629888323,
+              "max_us": 786.375,
+              "over_125us": 50682
+            },
+            "pdo_input_mapping": {
+              "count": 50683,
+              "mean_us": 86.47006063834684,
+              "max_us": 232.33333333333334,
+              "over_125us": 3406
+            },
+            "pdo_output_mapping": {
+              "count": 50683,
+              "mean_us": 28.41833882498405,
+              "max_us": 154.91666666666666,
+              "over_125us": 79
+            },
+            "esc_read_131": {
+              "count": 50683,
+              "mean_us": 25.633025373399363,
+              "max_us": 153.16666666666666,
+              "over_125us": 56
+            },
+            "esc_write_410": {
+              "count": 50683,
+              "mean_us": 65.48511499582372,
+              "max_us": 208.08333333333334,
+              "over_125us": 1858
+            },
+            "lifecycle": {
+              "count": 50683,
+              "mean_us": 0.3351246966438451,
+              "max_us": 101.75,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 50683,
+              "mean_us": 6.653171839341264,
+              "max_us": 183.625,
+              "over_125us": 11
+            },
+            "ssc_step": {
+              "count": 50683,
+              "mean_us": 256.77523775230355,
+              "max_us": 475.875,
+              "over_125us": 50683
+            },
+            "poll_after": {
+              "count": 50683,
+              "mean_us": 10.800846273240863,
+              "max_us": 209.125,
+              "over_125us": 43
+            },
+            "sensors": {
+              "count": 50683,
+              "mean_us": 65.31799123966616,
+              "max_us": 265.8333333333333,
+              "over_125us": 2611
+            },
+            "board_outputs": {
+              "count": 50683,
+              "mean_us": 11.695985340252156,
+              "max_us": 243.70833333333334,
+              "over_125us": 812
+            },
+            "poll_watchdog": {
+              "count": 101366,
+              "mean_us": 1.5909784839097922,
+              "max_us": 120.29166666666667,
+              "over_125us": 0
+            },
+            "io_service": {
+              "count": 50683,
+              "mean_us": 11.351374392465587,
+              "max_us": 160.0,
+              "over_125us": 21
+            },
+            "can_pump": {
+              "count": 50683,
+              "mean_us": 1.2674557215108289,
+              "max_us": 117.66666666666667,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 50683,
+              "mean_us": 9.566497477786767,
+              "max_us": 158.54166666666666,
+              "over_125us": 13
+            },
+            "can_drain": {
+              "count": 101365,
+              "mean_us": 3.45150035350795,
+              "max_us": 137.75,
+              "over_125us": 3
+            },
+            "application": {
+              "count": 50683,
+              "mean_us": 106.9612871508527,
+              "max_us": 277.7083333333333,
+              "over_125us": 10144
+            },
+            "rx_process": {
+              "count": 50683,
+              "mean_us": 27.229574841005203,
+              "max_us": 161.66666666666666,
+              "over_125us": 42
+            },
+            "dispatch": {
+              "count": 50683,
+              "mean_us": 7.2693449151260445,
+              "max_us": 127.41666666666667,
+              "over_125us": 1
+            },
+            "regular_capture": {
+              "count": 50683,
+              "mean_us": 29.569257278903514,
+              "max_us": 169.45833333333334,
+              "over_125us": 116
+            },
+            "regular_encode": {
+              "count": 50683,
+              "mean_us": 21.80855678103769,
+              "max_us": 183.95833333333334,
+              "over_125us": 52
+            },
+            "can_capture": {
+              "count": 15230,
+              "mean_us": 4.0474666228934115,
+              "max_us": 111.25,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 15230,
+              "mean_us": 4.6543061939155175,
+              "max_us": 111.66666666666667,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 50683,
+              "mean_us": 13.23497934876257,
+              "max_us": 155.54166666666666,
+              "over_125us": 27
+            }
+          }
+        },
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20.0001,
+            "error": "",
+            "cycles": 161005,
+            "missed_periods": 0,
+            "max_lateness_us": 24.881,
+            "received": 161031,
+            "incomplete_including_startup_shutdown": 994,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20078,
+              "mean_us": 293.998,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 900
+            },
+            "left_age": {
+              "count": 20042,
+              "mean_us": 278.605,
+              "p50_upper_us": 325,
+              "p99_upper_us": 625,
+              "max_us": 900
+            },
+            "right_arrival_interval": {
+              "count": 20077,
+              "mean_us": 995.661,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2250
+            },
+            "left_arrival_interval": {
+              "count": 20041,
+              "mean_us": 997.433,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2375
+            },
+            "status_rtt": {
+              "count": 3940,
+              "mean_us": 710.14,
+              "p50_upper_us": 725,
+              "p99_upper_us": 1100,
+              "max_us": 1223
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 52683,
+              "mean_us": 349.26419496485266,
+              "max_us": 738.3333333333334,
+              "over_125us": 52683
+            },
+            "loop_interval": {
+              "count": 52682,
+              "mean_us": 380.6306012173671,
+              "max_us": 757.9166666666666,
+              "over_125us": 52682
+            },
+            "pdo_input_mapping": {
+              "count": 52683,
+              "mean_us": 83.79271301938006,
+              "max_us": 230.45833333333334,
+              "over_125us": 3359
+            },
+            "pdo_output_mapping": {
+              "count": 52683,
+              "mean_us": 28.160451821903333,
+              "max_us": 169.25,
+              "over_125us": 84
+            },
+            "esc_read_131": {
+              "count": 52683,
+              "mean_us": 25.464613822295618,
+              "max_us": 165.91666666666666,
+              "over_125us": 62
+            },
+            "esc_write_410": {
+              "count": 52683,
+              "mean_us": 65.42142784832552,
+              "max_us": 208.0,
+              "over_125us": 1899
+            },
+            "lifecycle": {
+              "count": 52683,
+              "mean_us": 0.32834121063720745,
+              "max_us": 71.41666666666667,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 52683,
+              "mean_us": 6.069890508639726,
+              "max_us": 166.0,
+              "over_125us": 13
+            },
+            "ssc_step": {
+              "count": 52683,
+              "mean_us": 249.10773557567592,
+              "max_us": 475.0416666666667,
+              "over_125us": 52683
+            },
+            "poll_after": {
+              "count": 52683,
+              "mean_us": 8.44036817695778,
+              "max_us": 215.29166666666666,
+              "over_125us": 37
+            },
+            "sensors": {
+              "count": 52683,
+              "mean_us": 62.80395874064373,
+              "max_us": 249.5,
+              "over_125us": 2257
+            },
+            "board_outputs": {
+              "count": 52683,
+              "mean_us": 9.850259255041157,
+              "max_us": 231.33333333333334,
+              "over_125us": 739
+            },
+            "poll_watchdog": {
+              "count": 105366,
+              "mean_us": 1.5356950217970375,
+              "max_us": 145.83333333333334,
+              "over_125us": 1
+            },
+            "io_service": {
+              "count": 52683,
+              "mean_us": 10.943979398794044,
+              "max_us": 141.95833333333334,
+              "over_125us": 10
+            },
+            "can_pump": {
+              "count": 52683,
+              "mean_us": 1.2738992337819284,
+              "max_us": 118.125,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 52683,
+              "mean_us": 9.154724958715335,
+              "max_us": 140.45833333333334,
+              "over_125us": 10
+            },
+            "can_drain": {
+              "count": 105365,
+              "mean_us": 3.364487733118208,
+              "max_us": 131.45833333333334,
+              "over_125us": 2
+            },
+            "application": {
+              "count": 52683,
+              "mean_us": 103.49313978576264,
+              "max_us": 272.0,
+              "over_125us": 8950
+            },
+            "rx_process": {
+              "count": 52683,
+              "mean_us": 26.71418990313131,
+              "max_us": 159.95833333333334,
+              "over_125us": 45
+            },
+            "dispatch": {
+              "count": 52683,
+              "mean_us": 6.969531600959196,
+              "max_us": 154.33333333333334,
+              "over_125us": 3
+            },
+            "regular_capture": {
+              "count": 52683,
+              "mean_us": 28.880522021651515,
+              "max_us": 167.58333333333334,
+              "over_125us": 97
+            },
+            "regular_encode": {
+              "count": 52683,
+              "mean_us": 20.91747733297901,
+              "max_us": 174.5,
+              "over_125us": 34
+            },
+            "can_capture": {
+              "count": 15336,
+              "mean_us": 3.9865023474178405,
+              "max_us": 110.04166666666667,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 15336,
+              "mean_us": 4.353199443575031,
+              "max_us": 118.0,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 52683,
+              "mean_us": 10.652227315579346,
+              "max_us": 149.79166666666666,
+              "over_125us": 21
+            }
+          }
+        }
+      ],
+      "aggregate_timing": {
+        "loop_body": {
+          "count": 155639,
+          "mean_us": 356.0310379039529,
+          "max_us": 765.1666666666666
+        },
+        "loop_interval": {
+          "count": 155636,
+          "mean_us": 386.53074508254304,
+          "max_us": 786.375
+        },
+        "pdo_input_mapping": {
+          "count": 155639,
+          "mean_us": 84.70978032498282,
+          "max_us": 264.25
+        },
+        "pdo_output_mapping": {
+          "count": 155639,
+          "mean_us": 28.279942955600248,
+          "max_us": 169.25
+        },
+        "esc_read_131": {
+          "count": 155639,
+          "mean_us": 25.53472860272811,
+          "max_us": 165.91666666666666
+        },
+        "esc_write_410": {
+          "count": 155639,
+          "mean_us": 65.42790742251836,
+          "max_us": 208.08333333333334
+        },
+        "lifecycle": {
+          "count": 155639,
+          "mean_us": 0.3323050456505118,
+          "max_us": 101.75
+        },
+        "poll_before": {
+          "count": 155639,
+          "mean_us": 6.278494089956031,
+          "max_us": 201.41666666666666
+        },
+        "ssc_step": {
+          "count": 155639,
+          "mean_us": 252.2163350231412,
+          "max_us": 495.5
+        },
+        "poll_after": {
+          "count": 155639,
+          "mean_us": 9.223062396528718,
+          "max_us": 222.625
+        },
+        "sensors": {
+          "count": 155639,
+          "mean_us": 63.84347458970225,
+          "max_us": 265.8333333333333
+        },
+        "board_outputs": {
+          "count": 155639,
+          "mean_us": 10.584248645904946,
+          "max_us": 253.75
+        },
+        "poll_watchdog": {
+          "count": 311278,
+          "mean_us": 1.5569241963775147,
+          "max_us": 145.83333333333334
+        },
+        "io_service": {
+          "count": 155639,
+          "mean_us": 11.151725574352614,
+          "max_us": 160.0
+        },
+        "can_pump": {
+          "count": 155639,
+          "mean_us": 1.2715512071738662,
+          "max_us": 118.125
+        },
+        "uart_service": {
+          "count": 155639,
+          "mean_us": 9.364736933973274,
+          "max_us": 158.54166666666666
+        },
+        "can_drain": {
+          "count": 311275,
+          "mean_us": 3.376748587797499,
+          "max_us": 137.75
+        },
+        "application": {
+          "count": 155639,
+          "mean_us": 105.0376362394173,
+          "max_us": 279.2083333333333
+        },
+        "rx_process": {
+          "count": 155639,
+          "mean_us": 27.00715839217677,
+          "max_us": 163.58333333333334
+        },
+        "dispatch": {
+          "count": 155639,
+          "mean_us": 7.164253496874177,
+          "max_us": 154.33333333333334
+        },
+        "regular_capture": {
+          "count": 155639,
+          "mean_us": 29.148048528967674,
+          "max_us": 169.45833333333334
+        },
+        "regular_encode": {
+          "count": 155639,
+          "mean_us": 21.292977927554574,
+          "max_us": 183.95833333333334
+        },
+        "can_capture": {
+          "count": 46229,
+          "mean_us": 4.004255085191835,
+          "max_us": 114.0
+        },
+        "can_encode": {
+          "count": 46229,
+          "mean_us": 4.468409079437871,
+          "max_us": 118.0
+        },
+        "late_refresh": {
+          "count": 155639,
+          "mean_us": 11.571905981148683,
+          "max_us": 178.45833333333334
+        }
+      },
+      "aggregate_latency": {
+        "right_age": {
+          "count": 60246,
+          "mean_us": 296.38493576337015,
+          "max_us": 900,
+          "per_trial_p99_upper_us": [
+            625,
+            625,
+            625
+          ]
+        },
+        "left_age": {
+          "count": 60133,
+          "mean_us": 284.59896057073485,
+          "max_us": 1200,
+          "per_trial_p99_upper_us": [
+            625,
+            625,
+            625
+          ]
+        },
+        "right_arrival_interval": {
+          "count": 60243,
+          "mean_us": 995.4608474179573,
+          "max_us": 2375,
+          "per_trial_p99_upper_us": [
+            1400,
+            1400,
+            1400
+          ]
+        },
+        "left_arrival_interval": {
+          "count": 60130,
+          "mean_us": 997.3276602195243,
+          "max_us": 2874,
+          "per_trial_p99_upper_us": [
+            1400,
+            1400,
+            1400
+          ]
+        },
+        "status_rtt": {
+          "count": 11804,
+          "mean_us": 715.708680277872,
+          "max_us": 1241,
+          "per_trial_p99_upper_us": [
+            1075,
+            1100,
+            1100
+          ]
+        }
+      }
+    },
+    "dma": {
+      "runs": [
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20.0001,
+            "error": "",
+            "cycles": 161268,
+            "missed_periods": 0,
+            "max_lateness_us": 37.108,
+            "received": 161294,
+            "incomplete_including_startup_shutdown": 1258,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20053,
+              "mean_us": 361.502,
+              "p50_upper_us": 425,
+              "p99_upper_us": 725,
+              "max_us": 1000
+            },
+            "left_age": {
+              "count": 20044,
+              "mean_us": 351.971,
+              "p50_upper_us": 325,
+              "p99_upper_us": 725,
+              "max_us": 900
+            },
+            "right_arrival_interval": {
+              "count": 20052,
+              "mean_us": 996.901,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2274
+            },
+            "left_arrival_interval": {
+              "count": 20043,
+              "mean_us": 997.322,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2374
+            },
+            "status_rtt": {
+              "count": 3942,
+              "mean_us": 784.246,
+              "p50_upper_us": 800,
+              "p99_upper_us": 1125,
+              "max_us": 1304
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 54982,
+              "mean_us": 350.36859714694504,
+              "max_us": 711.125,
+              "over_125us": 54982
+            },
+            "loop_interval": {
+              "count": 54981,
+              "mean_us": 364.98508424122275,
+              "max_us": 723.9583333333334,
+              "over_125us": 54981
+            },
+            "pdo_input_mapping": {
+              "count": 54982,
+              "mean_us": 48.36061271567665,
+              "max_us": 193.625,
+              "over_125us": 284
+            },
+            "pdo_output_mapping": {
+              "count": 54982,
+              "mean_us": 24.012391934330022,
+              "max_us": 123.75,
+              "over_125us": 0
+            },
+            "esc_read_131": {
+              "count": 54982,
+              "mean_us": 22.439620390915813,
+              "max_us": 119.66666666666667,
+              "over_125us": 0
+            },
+            "esc_write_410": {
+              "count": 54982,
+              "mean_us": 30.95883046572818,
+              "max_us": 151.04166666666666,
+              "over_125us": 21
+            },
+            "lifecycle": {
+              "count": 54982,
+              "mean_us": 0.673285499496805,
+              "max_us": 110.70833333333333,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 54982,
+              "mean_us": 14.093161549840554,
+              "max_us": 175.54166666666666,
+              "over_125us": 36
+            },
+            "ssc_step": {
+              "count": 54982,
+              "mean_us": 205.1782393934985,
+              "max_us": 448.875,
+              "over_125us": 54775
+            },
+            "poll_after": {
+              "count": 54982,
+              "mean_us": 24.993998035720782,
+              "max_us": 199.91666666666666,
+              "over_125us": 119
+            },
+            "sensors": {
+              "count": 54982,
+              "mean_us": 63.437133971117824,
+              "max_us": 225.41666666666666,
+              "over_125us": 1446
+            },
+            "board_outputs": {
+              "count": 54982,
+              "mean_us": 10.080235349750827,
+              "max_us": 235.29166666666666,
+              "over_125us": 976
+            },
+            "poll_watchdog": {
+              "count": 109964,
+              "mean_us": 2.1022440677555077,
+              "max_us": 119.375,
+              "over_125us": 0
+            },
+            "io_service": {
+              "count": 54982,
+              "mean_us": 7.864935342475719,
+              "max_us": 121.0,
+              "over_125us": 0
+            },
+            "can_pump": {
+              "count": 54982,
+              "mean_us": 2.155185636511343,
+              "max_us": 116.375,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 54982,
+              "mean_us": 5.2124142143489385,
+              "max_us": 119.625,
+              "over_125us": 0
+            },
+            "can_drain": {
+              "count": 109963,
+              "mean_us": 2.875659691593233,
+              "max_us": 92.08333333333333,
+              "over_125us": 0
+            },
+            "application": {
+              "count": 54982,
+              "mean_us": 94.98461314612055,
+              "max_us": 279.125,
+              "over_125us": 5879
+            },
+            "rx_process": {
+              "count": 54982,
+              "mean_us": 21.168906035914787,
+              "max_us": 134.95833333333334,
+              "over_125us": 4
+            },
+            "dispatch": {
+              "count": 54982,
+              "mean_us": 6.599833430334777,
+              "max_us": 139.625,
+              "over_125us": 1
+            },
+            "regular_capture": {
+              "count": 54982,
+              "mean_us": 20.43096528560862,
+              "max_us": 139.625,
+              "over_125us": 5
+            },
+            "regular_encode": {
+              "count": 54982,
+              "mean_us": 22.709879293829495,
+              "max_us": 159.625,
+              "over_125us": 8
+            },
+            "can_capture": {
+              "count": 14912,
+              "mean_us": 4.575043030221746,
+              "max_us": 106.41666666666667,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 14912,
+              "mean_us": 4.417387562589413,
+              "max_us": 98.70833333333333,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 54982,
+              "mean_us": 11.6233221781674,
+              "max_us": 138.66666666666666,
+              "over_125us": 6
+            }
+          },
+          "cumulative_stats": {
+            "magic": 827872321,
+            "submitted": 54982,
+            "committed": 54982,
+            "queued": 477,
+            "full": 0,
+            "callbacks": 54982,
+            "stale_callbacks": 0,
+            "cancels": 6,
+            "owned_cancels": 0,
+            "busy_aborts": 0,
+            "abort_failures": 0,
+            "timeouts": 0,
+            "errors": 0,
+            "epoch": 54982,
+            "last_commit_epoch": 54982,
+            "max_submit_cycles": 3445,
+            "max_commit_cycles": 3156,
+            "max_age_cycles": 10478,
+            "inflight": 0,
+            "pending": 0,
+            "last_fault": 0,
+            "hook_events": 0,
+            "last_cancel_epoch": 0,
+            "last_cancel_committed": 0
+          }
+        },
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20,
+            "error": "",
+            "cycles": 160955,
+            "missed_periods": 0,
+            "max_lateness_us": 24.429,
+            "received": 160981,
+            "incomplete_including_startup_shutdown": 943,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20056,
+              "mean_us": 362.241,
+              "p50_upper_us": 425,
+              "p99_upper_us": 725,
+              "max_us": 900
+            },
+            "left_age": {
+              "count": 20032,
+              "mean_us": 350.948,
+              "p50_upper_us": 325,
+              "p99_upper_us": 725,
+              "max_us": 1100
+            },
+            "right_arrival_interval": {
+              "count": 20055,
+              "mean_us": 996.744,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2250
+            },
+            "left_arrival_interval": {
+              "count": 20031,
+              "mean_us": 998.002,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2374
+            },
+            "status_rtt": {
+              "count": 3939,
+              "mean_us": 781.341,
+              "p50_upper_us": 800,
+              "p99_upper_us": 1125,
+              "max_us": 1343
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 56032,
+              "mean_us": 343.72455769322295,
+              "max_us": 735.5,
+              "over_125us": 56032
+            },
+            "loop_interval": {
+              "count": 56031,
+              "mean_us": 358.1095807082984,
+              "max_us": 749.0833333333334,
+              "over_125us": 56031
+            },
+            "pdo_input_mapping": {
+              "count": 56032,
+              "mean_us": 47.44972515705311,
+              "max_us": 186.08333333333334,
+              "over_125us": 308
+            },
+            "pdo_output_mapping": {
+              "count": 56032,
+              "mean_us": 23.90512787335808,
+              "max_us": 141.45833333333334,
+              "over_125us": 4
+            },
+            "esc_read_131": {
+              "count": 56032,
+              "mean_us": 22.357670616790404,
+              "max_us": 140.29166666666666,
+              "over_125us": 3
+            },
+            "esc_write_410": {
+              "count": 56032,
+              "mean_us": 30.459285170378834,
+              "max_us": 158.75,
+              "over_125us": 31
+            },
+            "lifecycle": {
+              "count": 56032,
+              "mean_us": 0.6426089853417094,
+              "max_us": 98.91666666666667,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 56032,
+              "mean_us": 13.587450772177803,
+              "max_us": 197.83333333333334,
+              "over_125us": 23
+            },
+            "ssc_step": {
+              "count": 56032,
+              "mean_us": 200.64871561488675,
+              "max_us": 429.2083333333333,
+              "over_125us": 55733
+            },
+            "poll_after": {
+              "count": 56032,
+              "mean_us": 24.49061325076147,
+              "max_us": 223.54166666666666,
+              "over_125us": 141
+            },
+            "sensors": {
+              "count": 56032,
+              "mean_us": 62.491271356843704,
+              "max_us": 239.29166666666666,
+              "over_125us": 1418
+            },
+            "board_outputs": {
+              "count": 56032,
+              "mean_us": 9.872065664858177,
+              "max_us": 247.375,
+              "over_125us": 908
+            },
+            "poll_watchdog": {
+              "count": 112064,
+              "mean_us": 2.008378396868456,
+              "max_us": 145.0,
+              "over_125us": 1
+            },
+            "io_service": {
+              "count": 56032,
+              "mean_us": 7.6593464448886355,
+              "max_us": 109.20833333333333,
+              "over_125us": 0
+            },
+            "can_pump": {
+              "count": 56032,
+              "mean_us": 2.1525831965067583,
+              "max_us": 98.29166666666667,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 56032,
+              "mean_us": 5.007831834189986,
+              "max_us": 107.875,
+              "over_125us": 0
+            },
+            "can_drain": {
+              "count": 112063,
+              "mean_us": 2.842201113064377,
+              "max_us": 99.125,
+              "over_125us": 0
+            },
+            "application": {
+              "count": 56032,
+              "mean_us": 92.73372879188084,
+              "max_us": 272.0,
+              "over_125us": 5485
+            },
+            "rx_process": {
+              "count": 56032,
+              "mean_us": 20.728712313201978,
+              "max_us": 145.41666666666666,
+              "over_125us": 4
+            },
+            "dispatch": {
+              "count": 56032,
+              "mean_us": 6.363712551161242,
+              "max_us": 126.70833333333333,
+              "over_125us": 2
+            },
+            "regular_capture": {
+              "count": 56032,
+              "mean_us": 19.669042541166952,
+              "max_us": 146.16666666666666,
+              "over_125us": 11
+            },
+            "regular_encode": {
+              "count": 56032,
+              "mean_us": 22.31470855939463,
+              "max_us": 143.83333333333334,
+              "over_125us": 7
+            },
+            "can_capture": {
+              "count": 14150,
+              "mean_us": 4.52087750294464,
+              "max_us": 104.0,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 14150,
+              "mean_us": 4.439752650176678,
+              "max_us": 115.91666666666667,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 56032,
+              "mean_us": 11.21911065700552,
+              "max_us": 138.5,
+              "over_125us": 3
+            }
+          },
+          "cumulative_stats": {
+            "magic": 827872321,
+            "submitted": 111014,
+            "committed": 111014,
+            "queued": 1163,
+            "full": 0,
+            "callbacks": 111014,
+            "stale_callbacks": 0,
+            "cancels": 11,
+            "owned_cancels": 0,
+            "busy_aborts": 0,
+            "abort_failures": 0,
+            "timeouts": 0,
+            "errors": 0,
+            "epoch": 111014,
+            "last_commit_epoch": 111014,
+            "max_submit_cycles": 3445,
+            "max_commit_cycles": 3156,
+            "max_age_cycles": 11638,
+            "inflight": 0,
+            "pending": 0,
+            "last_fault": 0,
+            "hook_events": 0,
+            "last_cancel_epoch": 0,
+            "last_cancel_committed": 0
+          }
+        },
+        {
+          "host": {
+            "started": true,
+            "active_seconds": 20,
+            "error": "",
+            "cycles": 160925,
+            "missed_periods": 0,
+            "max_lateness_us": 24.399,
+            "received": 160951,
+            "incomplete_including_startup_shutdown": 914,
+            "protected_images": 24,
+            "right_age": {
+              "count": 20067,
+              "mean_us": 359.994,
+              "p50_upper_us": 425,
+              "p99_upper_us": 725,
+              "max_us": 900
+            },
+            "left_age": {
+              "count": 20038,
+              "mean_us": 352.515,
+              "p50_upper_us": 325,
+              "p99_upper_us": 725,
+              "max_us": 900
+            },
+            "right_arrival_interval": {
+              "count": 20066,
+              "mean_us": 996.174,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2374
+            },
+            "left_arrival_interval": {
+              "count": 20037,
+              "mean_us": 997.647,
+              "p50_upper_us": 1025,
+              "p99_upper_us": 1400,
+              "max_us": 2374
+            },
+            "status_rtt": {
+              "count": 3943,
+              "mean_us": 782.796,
+              "p50_upper_us": 775,
+              "p99_upper_us": 1150,
+              "max_us": 1340
+            }
+          },
+          "timing": {
+            "loop_body": {
+              "count": 56199,
+              "mean_us": 342.68982395890794,
+              "max_us": 699.9583333333334,
+              "over_125us": 56199
+            },
+            "loop_interval": {
+              "count": 56198,
+              "mean_us": 357.0660106528109,
+              "max_us": 726.0416666666666,
+              "over_125us": 56198
+            },
+            "pdo_input_mapping": {
+              "count": 56199,
+              "mean_us": 47.569162707521485,
+              "max_us": 179.04166666666666,
+              "over_125us": 249
+            },
+            "pdo_output_mapping": {
+              "count": 56199,
+              "mean_us": 23.84349143223189,
+              "max_us": 136.66666666666666,
+              "over_125us": 3
+            },
+            "esc_read_131": {
+              "count": 56199,
+              "mean_us": 22.29233171408744,
+              "max_us": 127.125,
+              "over_125us": 2
+            },
+            "esc_write_410": {
+              "count": 56199,
+              "mean_us": 30.531802167298352,
+              "max_us": 165.91666666666666,
+              "over_125us": 13
+            },
+            "lifecycle": {
+              "count": 56199,
+              "mean_us": 0.6252520804047521,
+              "max_us": 81.70833333333333,
+              "over_125us": 0
+            },
+            "poll_before": {
+              "count": 56199,
+              "mean_us": 13.56313502019609,
+              "max_us": 197.95833333333334,
+              "over_125us": 24
+            },
+            "ssc_step": {
+              "count": 56199,
+              "mean_us": 199.99837408138936,
+              "max_us": 434.25,
+              "over_125us": 55861
+            },
+            "poll_after": {
+              "count": 56199,
+              "mean_us": 24.260080250538266,
+              "max_us": 225.54166666666666,
+              "over_125us": 121
+            },
+            "sensors": {
+              "count": 56199,
+              "mean_us": 62.36827316025789,
+              "max_us": 265.8333333333333,
+              "over_125us": 1322
+            },
+            "board_outputs": {
+              "count": 56199,
+              "mean_us": 9.862672526794665,
+              "max_us": 261.375,
+              "over_125us": 932
+            },
+            "poll_watchdog": {
+              "count": 112398,
+              "mean_us": 1.9995781360285179,
+              "max_us": 104.91666666666667,
+              "over_125us": 0
+            },
+            "io_service": {
+              "count": 56199,
+              "mean_us": 7.664291179558355,
+              "max_us": 135.29166666666666,
+              "over_125us": 1
+            },
+            "can_pump": {
+              "count": 56199,
+              "mean_us": 2.1562505560597165,
+              "max_us": 122.79166666666667,
+              "over_125us": 0
+            },
+            "uart_service": {
+              "count": 56199,
+              "mean_us": 5.014087587560869,
+              "max_us": 106.45833333333333,
+              "over_125us": 0
+            },
+            "can_drain": {
+              "count": 112397,
+              "mean_us": 2.852504589387024,
+              "max_us": 109.91666666666667,
+              "over_125us": 0
+            },
+            "application": {
+              "count": 56199,
+              "mean_us": 92.41673710089741,
+              "max_us": 305.0833333333333,
+              "over_125us": 5347
+            },
+            "rx_process": {
+              "count": 56199,
+              "mean_us": 20.67957911469362,
+              "max_us": 123.5,
+              "over_125us": 0
+            },
+            "dispatch": {
+              "count": 56199,
+              "mean_us": 6.263173425387166,
+              "max_us": 121.54166666666667,
+              "over_125us": 0
+            },
+            "regular_capture": {
+              "count": 56199,
+              "mean_us": 19.523006785411365,
+              "max_us": 145.33333333333334,
+              "over_125us": 3
+            },
+            "regular_encode": {
+              "count": 56199,
+              "mean_us": 22.411484931523102,
+              "max_us": 148.625,
+              "over_125us": 3
+            },
+            "can_capture": {
+              "count": 14312,
+              "mean_us": 4.614472703558785,
+              "max_us": 93.0,
+              "over_125us": 0
+            },
+            "can_encode": {
+              "count": 14312,
+              "mean_us": 4.42586931712316,
+              "max_us": 77.54166666666667,
+              "over_125us": 0
+            },
+            "late_refresh": {
+              "count": 56199,
+              "mean_us": 11.280123608367882,
+              "max_us": 133.25,
+              "over_125us": 2
+            }
+          },
+          "cumulative_stats": {
+            "magic": 827872321,
+            "submitted": 183191,
+            "committed": 183190,
+            "queued": 2077,
+            "full": 0,
+            "callbacks": 183190,
+            "stale_callbacks": 0,
+            "cancels": 22,
+            "owned_cancels": 1,
+            "busy_aborts": 1,
+            "abort_failures": 0,
+            "timeouts": 0,
+            "errors": 0,
+            "epoch": 183192,
+            "last_commit_epoch": 183192,
+            "max_submit_cycles": 3663,
+            "max_commit_cycles": 3395,
+            "max_age_cycles": 11638,
+            "inflight": 0,
+            "pending": 0,
+            "last_fault": 4294967156,
+            "hook_events": 1,
+            "last_cancel_epoch": 126993,
+            "last_cancel_committed": 126991
+          }
+        }
+      ],
+      "aggregate_timing": {
+        "loop_body": {
+          "count": 167213,
+          "mean_us": 345.56144583056744,
+          "max_us": 735.5
+        },
+        "loop_interval": {
+          "count": 167210,
+          "mean_us": 360.0196070809162,
+          "max_us": 749.0833333333334
+        },
+        "pdo_input_mapping": {
+          "count": 167213,
+          "mean_us": 47.789379912646346,
+          "max_us": 193.625
+        },
+        "pdo_output_mapping": {
+          "count": 167213,
+          "mean_us": 23.919682281481304,
+          "max_us": 141.45833333333334
+        },
+        "esc_read_131": {
+          "count": 167213,
+          "mean_us": 22.362656960483534,
+          "max_us": 140.29166666666666
+        },
+        "esc_write_410": {
+          "count": 167213,
+          "mean_us": 30.64791513419013,
+          "max_us": 165.91666666666666
+        },
+        "lifecycle": {
+          "count": 167213,
+          "mean_us": 0.6468623352650013,
+          "max_us": 110.70833333333333
+        },
+        "poll_before": {
+          "count": 167213,
+          "mean_us": 13.745563293523828,
+          "max_us": 197.95833333333334
+        },
+        "ssc_step": {
+          "count": 167213,
+          "mean_us": 201.91951233855426,
+          "max_us": 448.875
+        },
+        "poll_after": {
+          "count": 167213,
+          "mean_us": 24.578652925709527,
+          "max_us": 225.54166666666666
+        },
+        "sensors": {
+          "count": 167213,
+          "mean_us": 62.7609456202568,
+          "max_us": 265.8333333333333
+        },
+        "board_outputs": {
+          "count": 167213,
+          "mean_us": 9.937357840997212,
+          "max_us": 261.375
+        },
+        "poll_watchdog": {
+          "count": 334426,
+          "mean_us": 2.0362850575812486,
+          "max_us": 145.0
+        },
+        "io_service": {
+          "count": 167213,
+          "mean_us": 7.728608870123734,
+          "max_us": 135.29166666666666
+        },
+        "can_pump": {
+          "count": 167213,
+          "mean_us": 2.1546714868660533,
+          "max_us": 122.79166666666667
+        },
+        "uart_service": {
+          "count": 167213,
+          "mean_us": 5.077203925532106,
+          "max_us": 119.625
+        },
+        "can_drain": {
+          "count": 334423,
+          "mean_us": 2.85666568487614,
+          "max_us": 109.91666666666667
+        },
+        "application": {
+          "count": 167213,
+          "mean_us": 93.36731294815594,
+          "max_us": 305.0833333333333
+        },
+        "rx_process": {
+          "count": 167213,
+          "mean_us": 20.856940947573854,
+          "max_us": 145.41666666666666
+        },
+        "dispatch": {
+          "count": 167213,
+          "mean_us": 6.407562011725564,
+          "max_us": 139.625
+        },
+        "regular_capture": {
+          "count": 167213,
+          "mean_us": 19.87049202713505,
+          "max_us": 146.16666666666666
+        },
+        "regular_encode": {
+          "count": 167213,
+          "mean_us": 22.477172079922017,
+          "max_us": 159.625
+        },
+        "can_capture": {
+          "count": 43374,
+          "mean_us": 4.570382986735525,
+          "max_us": 106.41666666666667
+        },
+        "can_encode": {
+          "count": 43374,
+          "mean_us": 4.427482477982202,
+          "max_us": 115.91666666666667
+        },
+        "late_refresh": {
+          "count": 167213,
+          "mean_us": 11.372527106146054,
+          "max_us": 138.66666666666666
+        }
+      },
+      "aggregate_latency": {
+        "right_age": {
+          "count": 60176,
+          "mean_us": 361.24542508641315,
+          "max_us": 1000,
+          "per_trial_p99_upper_us": [
+            725,
+            725,
+            725
+          ]
+        },
+        "left_age": {
+          "count": 60114,
+          "mean_us": 351.81143543933194,
+          "max_us": 1100,
+          "per_trial_p99_upper_us": [
+            725,
+            725,
+            725
+          ]
+        },
+        "right_arrival_interval": {
+          "count": 60173,
+          "mean_us": 996.606239609127,
+          "max_us": 2374,
+          "per_trial_p99_upper_us": [
+            1400,
+            1400,
+            1400
+          ]
+        },
+        "left_arrival_interval": {
+          "count": 60111,
+          "mean_us": 997.6569321255678,
+          "max_us": 2374,
+          "per_trial_p99_upper_us": [
+            1400,
+            1400,
+            1400
+          ]
+        },
+        "status_rtt": {
+          "count": 11824,
+          "mean_us": 782.7947022158322,
+          "max_us": 1343,
+          "per_trial_p99_upper_us": [
+            1125,
+            1125,
+            1150
+          ]
+        }
+      }
+    }
+  },
+  "fault_trials": {
+    "abort": {
+      "case": "abort",
+      "before": {
+        "magic": 827872321,
+        "submitted": 183191,
+        "committed": 183190,
+        "queued": 2077,
+        "full": 0,
+        "callbacks": 183190,
+        "stale_callbacks": 0,
+        "cancels": 22,
+        "owned_cancels": 1,
+        "busy_aborts": 1,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 183192,
+        "last_commit_epoch": 183192,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967156,
+        "hook_events": 1,
+        "last_cancel_epoch": 126993,
+        "last_cancel_committed": 126991
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 0.317463,
+        "error": "base: EtherCAT slave reports protection/fault",
+        "cycles": 3469,
+        "missed_periods": 0,
+        "max_lateness_us": 23.495,
+        "received": 3494,
+        "incomplete_including_startup_shutdown": 916,
+        "protected_images": 26,
+        "right_age": {
+          "count": 318,
+          "mean_us": 352.83,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "left_age": {
+          "count": 319,
+          "mean_us": 348.276,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1300
+        },
+        "right_arrival_interval": {
+          "count": 317,
+          "mean_us": 996.019,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2124
+        },
+        "left_arrival_interval": {
+          "count": 318,
+          "mean_us": 993.981,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 2000
+        },
+        "status_rtt": {
+          "count": 63,
+          "mean_us": 760.619,
+          "p50_upper_us": 750,
+          "p99_upper_us": 1250,
+          "max_us": 1235
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 184082,
+        "committed": 184080,
+        "queued": 2090,
+        "full": 0,
+        "callbacks": 184080,
+        "stale_callbacks": 0,
+        "cancels": 28,
+        "owned_cancels": 2,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 184083,
+        "last_commit_epoch": 184082,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967156,
+        "hook_events": 2,
+        "last_cancel_epoch": 184084,
+        "last_cancel_committed": 184080
+      }
+    },
+    "timeout": {
+      "case": "timeout",
+      "before": {
+        "magic": 827872321,
+        "submitted": 184082,
+        "committed": 184080,
+        "queued": 2090,
+        "full": 0,
+        "callbacks": 184080,
+        "stale_callbacks": 0,
+        "cancels": 28,
+        "owned_cancels": 2,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 184083,
+        "last_commit_epoch": 184082,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967156,
+        "hook_events": 2,
+        "last_cancel_epoch": 184084,
+        "last_cancel_committed": 184080
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 0.207746,
+        "error": "base: EtherCAT slave reports protection/fault",
+        "cycles": 2535,
+        "missed_periods": 0,
+        "max_lateness_us": 16.152,
+        "received": 2560,
+        "incomplete_including_startup_shutdown": 861,
+        "protected_images": 26,
+        "right_age": {
+          "count": 206,
+          "mean_us": 360.68,
+          "p50_upper_us": 325,
+          "p99_upper_us": 725,
+          "max_us": 800
+        },
+        "left_age": {
+          "count": 207,
+          "mean_us": 366.184,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 205,
+          "mean_us": 996.478,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1525,
+          "max_us": 1874
+        },
+        "left_arrival_interval": {
+          "count": 206,
+          "mean_us": 991.631,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 1500
+        },
+        "status_rtt": {
+          "count": 41,
+          "mean_us": 747.927,
+          "p50_upper_us": 775,
+          "p99_upper_us": 1100,
+          "max_us": 1079
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 184643,
+        "committed": 184640,
+        "queued": 2098,
+        "full": 0,
+        "callbacks": 184641,
+        "stale_callbacks": 0,
+        "cancels": 34,
+        "owned_cancels": 3,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 184645,
+        "last_commit_epoch": 184644,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 3,
+        "last_cancel_epoch": 184646,
+        "last_cancel_committed": 184640
+      }
+    },
+    "stale": {
+      "case": "stale",
+      "before": {
+        "magic": 827872321,
+        "submitted": 184643,
+        "committed": 184640,
+        "queued": 2098,
+        "full": 0,
+        "callbacks": 184641,
+        "stale_callbacks": 0,
+        "cancels": 34,
+        "owned_cancels": 3,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 184645,
+        "last_commit_epoch": 184644,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 3,
+        "last_cancel_epoch": 184646,
+        "last_cancel_committed": 184640
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 3.00012,
+        "error": "",
+        "cycles": 24948,
+        "missed_periods": 0,
+        "max_lateness_us": 22.225,
+        "received": 24974,
+        "incomplete_including_startup_shutdown": 935,
+        "protected_images": 24,
+        "right_age": {
+          "count": 3011,
+          "mean_us": 360.412,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 1200
+        },
+        "left_age": {
+          "count": 3007,
+          "mean_us": 346.791,
+          "p50_upper_us": 325,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "right_arrival_interval": {
+          "count": 3010,
+          "mean_us": 996.091,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "left_arrival_interval": {
+          "count": 3006,
+          "mean_us": 997.581,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2125
+        },
+        "status_rtt": {
+          "count": 591,
+          "mean_us": 775.02,
+          "p50_upper_us": 775,
+          "p99_upper_us": 1125,
+          "max_us": 1336
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 193066,
+        "committed": 193063,
+        "queued": 2204,
+        "full": 0,
+        "callbacks": 193065,
+        "stale_callbacks": 1,
+        "cancels": 39,
+        "owned_cancels": 3,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 193069,
+        "last_commit_epoch": 193069,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 4,
+        "last_cancel_epoch": 184646,
+        "last_cancel_committed": 184640
+      }
+    },
+    "stop-held": {
+      "case": "stop-held",
+      "before": {
+        "magic": 827872321,
+        "submitted": 193892,
+        "committed": 193888,
+        "queued": 2215,
+        "full": 0,
+        "callbacks": 193891,
+        "stale_callbacks": 1,
+        "cancels": 44,
+        "owned_cancels": 4,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 193895,
+        "last_commit_epoch": 193894,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 5,
+        "last_cancel_epoch": 193896,
+        "last_cancel_committed": 193888
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 0.208876,
+        "error": "",
+        "cycles": 2494,
+        "missed_periods": 0,
+        "max_lateness_us": 24.881,
+        "received": 2520,
+        "incomplete_including_startup_shutdown": 812,
+        "protected_images": 24,
+        "right_age": {
+          "count": 208,
+          "mean_us": 363.462,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 800
+        },
+        "left_age": {
+          "count": 208,
+          "mean_us": 358.173,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 800
+        },
+        "right_arrival_interval": {
+          "count": 207,
+          "mean_us": 994.058,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 1500
+        },
+        "left_arrival_interval": {
+          "count": 207,
+          "mean_us": 994.063,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 1500
+        },
+        "status_rtt": {
+          "count": 41,
+          "mean_us": 766.537,
+          "p50_upper_us": 775,
+          "p99_upper_us": 1400,
+          "max_us": 1390
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 194468,
+        "committed": 194463,
+        "queued": 2223,
+        "full": 0,
+        "callbacks": 194467,
+        "stale_callbacks": 1,
+        "cancels": 49,
+        "owned_cancels": 5,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 194472,
+        "last_commit_epoch": 194471,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 6,
+        "last_cancel_epoch": 194473,
+        "last_cancel_committed": 194463
+      }
+    },
+    "silence": {
+      "case": "silence",
+      "before": {
+        "magic": 827872321,
+        "submitted": 194468,
+        "committed": 194463,
+        "queued": 2223,
+        "full": 0,
+        "callbacks": 194467,
+        "stale_callbacks": 1,
+        "cancels": 49,
+        "owned_cancels": 5,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 194472,
+        "last_commit_epoch": 194471,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 6,
+        "last_cancel_epoch": 194473,
+        "last_cancel_committed": 194463
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 1.02032,
+        "error": "base: EtherCAT feedback stream stale/reordered",
+        "cycles": 9135,
+        "missed_periods": 0,
+        "max_lateness_us": 20.125,
+        "received": 9160,
+        "incomplete_including_startup_shutdown": 962,
+        "protected_images": 0,
+        "right_age": {
+          "count": 1005,
+          "mean_us": 358.905,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "left_age": {
+          "count": 1003,
+          "mean_us": 349.252,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1100
+        },
+        "right_arrival_interval": {
+          "count": 1004,
+          "mean_us": 995.384,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "left_arrival_interval": {
+          "count": 1002,
+          "mean_us": 996.989,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2124
+        },
+        "status_rtt": {
+          "count": 197,
+          "mean_us": 783.579,
+          "p50_upper_us": 800,
+          "p99_upper_us": 1200,
+          "max_us": 1340
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 197330,
+        "committed": 197324,
+        "queued": 2282,
+        "full": 0,
+        "callbacks": 197329,
+        "stale_callbacks": 1,
+        "cancels": 54,
+        "owned_cancels": 6,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 197335,
+        "last_commit_epoch": 197334,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 6,
+        "last_cancel_epoch": 197336,
+        "last_cancel_committed": 197324
+      }
+    },
+    "reset": {
+      "case": "reset",
+      "before": {
+        "magic": 827872321,
+        "submitted": 8521,
+        "committed": 8521,
+        "queued": 146,
+        "full": 0,
+        "callbacks": 8521,
+        "stale_callbacks": 0,
+        "cancels": 6,
+        "owned_cancels": 0,
+        "busy_aborts": 0,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 8521,
+        "last_commit_epoch": 8521,
+        "max_submit_cycles": 3213,
+        "max_commit_cycles": 3341,
+        "max_age_cycles": 11388,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 0,
+        "hook_events": 0,
+        "last_cancel_epoch": 0,
+        "last_cancel_committed": 0
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 1.18922,
+        "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+        "cycles": 10370,
+        "missed_periods": 0,
+        "max_lateness_us": 22.811,
+        "received": 10395,
+        "incomplete_including_startup_shutdown": 868,
+        "protected_images": 0,
+        "right_age": {
+          "count": 1194,
+          "mean_us": 371.524,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 1700
+        },
+        "left_age": {
+          "count": 1192,
+          "mean_us": 363.255,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 900
+        },
+        "right_arrival_interval": {
+          "count": 1193,
+          "mean_us": 996.011,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1500,
+          "max_us": 2000
+        },
+        "left_arrival_interval": {
+          "count": 1191,
+          "mean_us": 997.688,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 2000
+        },
+        "status_rtt": {
+          "count": 234,
+          "mean_us": 772.876,
+          "p50_upper_us": 775,
+          "p99_upper_us": 1050,
+          "max_us": 1118
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 0,
+        "committed": 0,
+        "queued": 0,
+        "full": 0,
+        "callbacks": 0,
+        "stale_callbacks": 0,
+        "cancels": 1,
+        "owned_cancels": 0,
+        "busy_aborts": 0,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 0,
+        "last_commit_epoch": 0,
+        "max_submit_cycles": 0,
+        "max_commit_cycles": 0,
+        "max_age_cycles": 0,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 0,
+        "hook_events": 0,
+        "last_cancel_epoch": 0,
+        "last_cancel_committed": 0
+      }
+    }
+  },
+  "excluded": {
+    "overlap": {
+      "host": {
+        "started": true,
+        "active_seconds": 5.75744,
+        "error": "base: EtherCAT slave reports protection/fault",
+        "cycles": 47306,
+        "missed_periods": 0,
+        "max_lateness_us": 22.71,
+        "received": 47331,
+        "incomplete_including_startup_shutdown": 1236,
+        "protected_images": 26,
+        "right_age": {
+          "count": 5772,
+          "mean_us": 361.227,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 1100
+        },
+        "left_age": {
+          "count": 5762,
+          "mean_us": 344.412,
+          "p50_upper_us": 325,
+          "p99_upper_us": 625,
+          "max_us": 1000
+        },
+        "right_arrival_interval": {
+          "count": 5771,
+          "mean_us": 996.857,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2125
+        },
+        "left_arrival_interval": {
+          "count": 5761,
+          "mean_us": 998.621,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2250
+        },
+        "status_rtt": {
+          "count": 1134,
+          "mean_us": 795.779,
+          "p50_upper_us": 800,
+          "p99_upper_us": 1175,
+          "max_us": 1484
+        }
+      },
+      "reason": "fault injection overlapped normal trial; replaced with a fresh full 20-second trial"
+    },
+    "excluded-debug-reset": {
+      "case": "reset",
+      "before": {
+        "magic": 827872321,
+        "submitted": 197330,
+        "committed": 197324,
+        "queued": 2282,
+        "full": 0,
+        "callbacks": 197329,
+        "stale_callbacks": 1,
+        "cancels": 54,
+        "owned_cancels": 6,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 197335,
+        "last_commit_epoch": 197334,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 6,
+        "last_cancel_epoch": 197336,
+        "last_cancel_committed": 197324
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 0.324416,
+        "error": "base: EtherCAT OP/WKC lost (operational=1, complete=0)",
+        "cycles": 3544,
+        "missed_periods": 0,
+        "max_lateness_us": 16.036,
+        "received": 3569,
+        "incomplete_including_startup_shutdown": 963,
+        "protected_images": 0,
+        "right_age": {
+          "count": 325,
+          "mean_us": 379.385,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 1300
+        },
+        "left_age": {
+          "count": 327,
+          "mean_us": 379.205,
+          "p50_upper_us": 425,
+          "p99_upper_us": 725,
+          "max_us": 1200
+        },
+        "right_arrival_interval": {
+          "count": 324,
+          "mean_us": 998.281,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1500,
+          "max_us": 2104
+        },
+        "left_arrival_interval": {
+          "count": 326,
+          "mean_us": 992.156,
+          "p50_upper_us": 1000,
+          "p99_upper_us": 1400,
+          "max_us": 1500
+        },
+        "status_rtt": {
+          "count": 64,
+          "mean_us": 840.812,
+          "p50_upper_us": 850,
+          "p99_upper_us": 1125,
+          "max_us": 1114
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 198240,
+        "committed": 198234,
+        "queued": 2300,
+        "full": 0,
+        "callbacks": 198239,
+        "stale_callbacks": 1,
+        "cancels": 54,
+        "owned_cancels": 6,
+        "busy_aborts": 2,
+        "abort_failures": 0,
+        "timeouts": 1,
+        "errors": 0,
+        "epoch": 198246,
+        "last_commit_epoch": 198246,
+        "max_submit_cycles": 3663,
+        "max_commit_cycles": 3395,
+        "max_age_cycles": 11638,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 4294967180,
+        "hook_events": 0,
+        "last_cancel_epoch": 0,
+        "last_cancel_committed": 0
+      }
+    },
+    "excluded-sdk-helper-no-reset": {
+      "case": "reset",
+      "before": {
+        "magic": 827872321,
+        "submitted": 0,
+        "committed": 0,
+        "queued": 0,
+        "full": 0,
+        "callbacks": 0,
+        "stale_callbacks": 0,
+        "cancels": 1,
+        "owned_cancels": 0,
+        "busy_aborts": 0,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 0,
+        "last_commit_epoch": 0,
+        "max_submit_cycles": 0,
+        "max_commit_cycles": 0,
+        "max_age_cycles": 0,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 0,
+        "hook_events": 0,
+        "last_cancel_epoch": 0,
+        "last_cancel_committed": 0
+      },
+      "held": null,
+      "host": {
+        "started": true,
+        "active_seconds": 3.00003,
+        "error": "",
+        "cycles": 24927,
+        "missed_periods": 0,
+        "max_lateness_us": 22.548,
+        "received": 24953,
+        "incomplete_including_startup_shutdown": 913,
+        "protected_images": 24,
+        "right_age": {
+          "count": 3008,
+          "mean_us": 356.051,
+          "p50_upper_us": 425,
+          "p99_upper_us": 625,
+          "max_us": 1400
+        },
+        "left_age": {
+          "count": 3003,
+          "mean_us": 354.412,
+          "p50_upper_us": 325,
+          "p99_upper_us": 725,
+          "max_us": 1600
+        },
+        "right_arrival_interval": {
+          "count": 3007,
+          "mean_us": 997.138,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2374
+        },
+        "left_arrival_interval": {
+          "count": 3002,
+          "mean_us": 998.706,
+          "p50_upper_us": 1025,
+          "p99_upper_us": 1400,
+          "max_us": 2375
+        },
+        "status_rtt": {
+          "count": 590,
+          "mean_us": 783.369,
+          "p50_upper_us": 800,
+          "p99_upper_us": 1125,
+          "max_us": 1361
+        }
+      },
+      "stderr": "",
+      "exit_code": 0,
+      "after": {
+        "magic": 827872321,
+        "submitted": 8521,
+        "committed": 8521,
+        "queued": 146,
+        "full": 0,
+        "callbacks": 8521,
+        "stale_callbacks": 0,
+        "cancels": 6,
+        "owned_cancels": 0,
+        "busy_aborts": 0,
+        "abort_failures": 0,
+        "timeouts": 0,
+        "errors": 0,
+        "epoch": 8521,
+        "last_commit_epoch": 8521,
+        "max_submit_cycles": 3213,
+        "max_commit_cycles": 3341,
+        "max_age_cycles": 11388,
+        "inflight": 0,
+        "pending": 0,
+        "last_fault": 0,
+        "hook_events": 0,
+        "last_cancel_epoch": 0,
+        "last_cancel_committed": 0
+      }
+    }
+  },
+  "reset_recovery": {
+    "started": true,
+    "active_seconds": 3.00003,
+    "error": "",
+    "cycles": 24876,
+    "missed_periods": 0,
+    "max_lateness_us": 25.275,
+    "received": 24902,
+    "incomplete_including_startup_shutdown": 863,
+    "protected_images": 24,
+    "right_age": {
+      "count": 3011,
+      "mean_us": 360.379,
+      "p50_upper_us": 425,
+      "p99_upper_us": 725,
+      "max_us": 800
+    },
+    "left_age": {
+      "count": 3011,
+      "mean_us": 348.987,
+      "p50_upper_us": 325,
+      "p99_upper_us": 625,
+      "max_us": 1200
+    },
+    "right_arrival_interval": {
+      "count": 3010,
+      "mean_us": 996.126,
+      "p50_upper_us": 1025,
+      "p99_upper_us": 1400,
+      "max_us": 2124
+    },
+    "left_arrival_interval": {
+      "count": 3010,
+      "mean_us": 996.599,
+      "p50_upper_us": 1025,
+      "p99_upper_us": 1400,
+      "max_us": 2250
+    },
+    "status_rtt": {
+      "count": 591,
+      "mean_us": 793.425,
+      "p50_upper_us": 800,
+      "p99_upper_us": 1175,
+      "max_us": 1302
+    }
+  },
+  "artifacts": {
+    "cpu": {
+      "build": "dust-adapter/build/tx-cpu/zephyr/zephyr.hex",
+      "sha256": "730451c3505fd847d126c651b989d1ef8a025901a7ce1b2a57f1397c634e3eaf"
+    },
+    "dma": {
+      "build": "dust-adapter/build/tx-dma/zephyr/zephyr.hex",
+      "sha256": "e0fd65882e3c28e8dc264c142805cbcac70a326d4e2551d77728ce3bc3c09557"
+    },
+    "normal": {
+      "build": "dust-adapter/build/verify_committed/zephyr/zephyr.hex",
+      "sha256": "142cf1da7ef60197f0d2f82d085c95a2b19dc094c3982e5d01536059f71ec675"
+    }
+  },
+  "restored_normal_smoke": {
+    "started": true,
+    "active_seconds": 10.0001,
+    "error": "",
+    "cycles": 81287,
+    "missed_periods": 0,
+    "max_lateness_us": 24.433,
+    "received": 81313,
+    "incomplete_including_startup_shutdown": 1279,
+    "protected_images": 24,
+    "right_age": {
+      "count": 10033,
+      "mean_us": 180.315,
+      "p50_upper_us": 225,
+      "p99_upper_us": 425,
+      "max_us": 1000
+    },
+    "left_age": {
+      "count": 10018,
+      "mean_us": 163.496,
+      "p50_upper_us": 125,
+      "p99_upper_us": 425,
+      "max_us": 700
+    },
+    "right_arrival_interval": {
+      "count": 10032,
+      "mean_us": 996.29,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1400,
+      "max_us": 2749
+    },
+    "left_arrival_interval": {
+      "count": 10017,
+      "mean_us": 997.81,
+      "p50_upper_us": 1000,
+      "p99_upper_us": 1400,
+      "max_us": 2999
+    },
+    "status_rtt": {
+      "count": 1970,
+      "mean_us": 646.19,
+      "p50_upper_us": 650,
+      "p99_upper_us": 975,
+      "max_us": 1143
+    }
+  },
+  "final_state": {
+    "master": "Idle",
+    "slave": "PREOP",
+    "motor_output_enabled": false,
+    "experimental_switches": false
+  }
+}

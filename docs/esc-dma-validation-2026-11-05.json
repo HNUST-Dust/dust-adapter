@@ -1,0 +1,855 @@
+{
+  "clock_hz": 24000000,
+  "scratch_offset": 16384,
+  "sm2_offset": 4352,
+  "sm3_offset": 7424,
+  "sm2_control": 36,
+  "sm3_control": 32,
+  "initial_scratch": {
+    "magic": 826363204,
+    "phase": 10,
+    "checks": 1792,
+    "failures": 0,
+    "dma_errors": 0,
+    "callbacks": 3584,
+    "last_error": 0,
+    "selected_dma": 1,
+    "owner_rejections": 0,
+    "tx_sequence": 0,
+    "rx_sequence": 0,
+    "guard_errors": 0,
+    "stress_published": 0,
+    "timings": {
+      "hdma6_cached_tx_8": {
+        "count": 64,
+        "mean_us": 21.554036458333332,
+        "max_us": 48.208333333333336,
+        "setup_max_us": 33.291666666666664
+      },
+      "hdma6_cached_tx_31": {
+        "count": 64,
+        "mean_us": 21.790364583333332,
+        "max_us": 23.0,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_32": {
+        "count": 64,
+        "mean_us": 21.125651041666668,
+        "max_us": 22.25,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_tx_128": {
+        "count": 64,
+        "mean_us": 25.734375,
+        "max_us": 27.083333333333332,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_131": {
+        "count": 64,
+        "mean_us": 26.595703125,
+        "max_us": 27.875,
+        "setup_max_us": 2.8333333333333335
+      },
+      "hdma6_cached_tx_410": {
+        "count": 64,
+        "mean_us": 59.893880208333336,
+        "max_us": 61.166666666666664,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_512": {
+        "count": 64,
+        "mean_us": 71.89388020833333,
+        "max_us": 73.16666666666667,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_8": {
+        "count": 64,
+        "mean_us": 22.296875,
+        "max_us": 40.083333333333336,
+        "setup_max_us": 8.375
+      },
+      "hdma6_cached_rx_31": {
+        "count": 64,
+        "mean_us": 23.158203125,
+        "max_us": 24.541666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_32": {
+        "count": 64,
+        "mean_us": 22.36328125,
+        "max_us": 23.541666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_128": {
+        "count": 64,
+        "mean_us": 29.569661458333332,
+        "max_us": 29.75,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_131": {
+        "count": 64,
+        "mean_us": 30.641276041666668,
+        "max_us": 31.875,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_410": {
+        "count": 64,
+        "mean_us": 69.5,
+        "max_us": 70.70833333333333,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_512": {
+        "count": 64,
+        "mean_us": 83.42252604166667,
+        "max_us": 84.54166666666667,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_8": {
+        "count": 64,
+        "mean_us": 20.973958333333332,
+        "max_us": 22.166666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_31": {
+        "count": 64,
+        "mean_us": 21.763671875,
+        "max_us": 23.0,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_32": {
+        "count": 64,
+        "mean_us": 21.078125,
+        "max_us": 22.25,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_128": {
+        "count": 64,
+        "mean_us": 25.86328125,
+        "max_us": 27.041666666666668,
+        "setup_max_us": 3.8333333333333335
+      },
+      "hdma6_noncached_tx_131": {
+        "count": 64,
+        "mean_us": 26.709635416666668,
+        "max_us": 27.833333333333332,
+        "setup_max_us": 3.875
+      },
+      "hdma6_noncached_tx_410": {
+        "count": 64,
+        "mean_us": 60.076822916666664,
+        "max_us": 61.166666666666664,
+        "setup_max_us": 3.875
+      },
+      "hdma6_noncached_tx_512": {
+        "count": 64,
+        "mean_us": 71.96940104166667,
+        "max_us": 73.125,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_8": {
+        "count": 64,
+        "mean_us": 21.012369791666668,
+        "max_us": 22.291666666666668,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_31": {
+        "count": 64,
+        "mean_us": 22.091145833333332,
+        "max_us": 23.375,
+        "setup_max_us": 3.9583333333333335
+      },
+      "hdma6_noncached_rx_32": {
+        "count": 64,
+        "mean_us": 20.814453125,
+        "max_us": 22.166666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_128": {
+        "count": 64,
+        "mean_us": 28.498697916666668,
+        "max_us": 30.708333333333332,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_131": {
+        "count": 64,
+        "mean_us": 29.462890625,
+        "max_us": 31.75,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_410": {
+        "count": 64,
+        "mean_us": 68.294921875,
+        "max_us": 69.45833333333333,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_512": {
+        "count": 64,
+        "mean_us": 82.12044270833333,
+        "max_us": 83.33333333333333,
+        "setup_max_us": 2.7916666666666665
+      },
+      "xdma6_cached_tx_8": {
+        "count": 64,
+        "mean_us": 9.370442708333334,
+        "max_us": 10.458333333333334,
+        "setup_max_us": 10.125
+      },
+      "xdma6_cached_tx_31": {
+        "count": 64,
+        "mean_us": 23.533854166666668,
+        "max_us": 25.708333333333332,
+        "setup_max_us": 4.75
+      },
+      "xdma6_cached_tx_32": {
+        "count": 64,
+        "mean_us": 22.625651041666668,
+        "max_us": 24.875,
+        "setup_max_us": 4.625
+      },
+      "xdma6_cached_tx_128": {
+        "count": 64,
+        "mean_us": 27.7109375,
+        "max_us": 29.25,
+        "setup_max_us": 5.208333333333333
+      },
+      "xdma6_cached_tx_131": {
+        "count": 64,
+        "mean_us": 28.42578125,
+        "max_us": 29.666666666666668,
+        "setup_max_us": 4.583333333333333
+      },
+      "xdma6_cached_tx_410": {
+        "count": 64,
+        "mean_us": 69.20377604166667,
+        "max_us": 70.41666666666667,
+        "setup_max_us": 3.625
+      },
+      "xdma6_cached_tx_512": {
+        "count": 64,
+        "mean_us": 83.19075520833333,
+        "max_us": 84.45833333333333,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_cached_rx_8": {
+        "count": 64,
+        "mean_us": 10.91796875,
+        "max_us": 12.166666666666666,
+        "setup_max_us": 10.625
+      },
+      "xdma6_cached_rx_31": {
+        "count": 64,
+        "mean_us": 25.52734375,
+        "max_us": 28.791666666666668,
+        "setup_max_us": 13.291666666666666
+      },
+      "xdma6_cached_rx_32": {
+        "count": 64,
+        "mean_us": 24.455078125,
+        "max_us": 25.708333333333332,
+        "setup_max_us": 5.25
+      },
+      "xdma6_cached_rx_128": {
+        "count": 64,
+        "mean_us": 31.15234375,
+        "max_us": 32.541666666666664,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_cached_rx_131": {
+        "count": 64,
+        "mean_us": 32.305338541666664,
+        "max_us": 33.75,
+        "setup_max_us": 6.083333333333333
+      },
+      "xdma6_cached_rx_410": {
+        "count": 64,
+        "mean_us": 78.66080729166667,
+        "max_us": 80.0,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_cached_rx_512": {
+        "count": 64,
+        "mean_us": 94.79231770833333,
+        "max_us": 96.04166666666667,
+        "setup_max_us": 5.25
+      },
+      "xdma6_noncached_tx_8": {
+        "count": 64,
+        "mean_us": 9.249348958333334,
+        "max_us": 10.333333333333334,
+        "setup_max_us": 10.041666666666666
+      },
+      "xdma6_noncached_tx_31": {
+        "count": 64,
+        "mean_us": 23.384765625,
+        "max_us": 24.541666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_32": {
+        "count": 64,
+        "mean_us": 22.5859375,
+        "max_us": 23.791666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_128": {
+        "count": 64,
+        "mean_us": 27.7890625,
+        "max_us": 28.958333333333332,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_noncached_tx_131": {
+        "count": 64,
+        "mean_us": 28.322265625,
+        "max_us": 29.666666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_410": {
+        "count": 64,
+        "mean_us": 69.17643229166667,
+        "max_us": 70.45833333333333,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_noncached_tx_512": {
+        "count": 64,
+        "mean_us": 83.26822916666667,
+        "max_us": 84.45833333333333,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_rx_8": {
+        "count": 64,
+        "mean_us": 9.570963541666666,
+        "max_us": 10.791666666666666,
+        "setup_max_us": 10.5
+      },
+      "xdma6_noncached_rx_31": {
+        "count": 64,
+        "mean_us": 24.049479166666668,
+        "max_us": 25.333333333333332,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_noncached_rx_32": {
+        "count": 64,
+        "mean_us": 22.987630208333332,
+        "max_us": 24.375,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_noncached_rx_128": {
+        "count": 64,
+        "mean_us": 29.954427083333332,
+        "max_us": 31.25,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_noncached_rx_131": {
+        "count": 64,
+        "mean_us": 30.927734375,
+        "max_us": 32.25,
+        "setup_max_us": 5.208333333333333
+      },
+      "xdma6_noncached_rx_410": {
+        "count": 64,
+        "mean_us": 77.49739583333333,
+        "max_us": 78.66666666666667,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_noncached_rx_512": {
+        "count": 64,
+        "mean_us": 93.462890625,
+        "max_us": 94.75,
+        "setup_max_us": 4.208333333333333
+      }
+    },
+    "cpu": {
+      "tx410": {
+        "count": 256,
+        "mean_us": 49.71533203125,
+        "max_us": 51.708333333333336,
+        "setup_max_us": 0.0
+      },
+      "rx131": {
+        "count": 256,
+        "mean_us": 19.06591796875,
+        "max_us": 26.291666666666668,
+        "setup_max_us": 0.0
+      }
+    },
+    "reload_irq": {
+      "tx410": {
+        "count": 0,
+        "mean_us": 0,
+        "max_us": 0.0,
+        "setup_max_us": 0.0
+      },
+      "rx131": {
+        "count": 0,
+        "mean_us": 0,
+        "max_us": 0.0,
+        "setup_max_us": 0.0
+      }
+    }
+  },
+  "host_runs": [
+    {
+      "held_tx_reads": 64,
+      "committed_tx_reads": 128,
+      "rx_handoffs": [
+        [
+          100,
+          104
+        ],
+        [
+          200,
+          204
+        ],
+        [
+          300,
+          304
+        ],
+        [
+          400,
+          404
+        ]
+      ],
+      "stress_reads": 34,
+      "stress_unique_sequences": 34
+    },
+    {
+      "held_tx_reads": 64,
+      "committed_tx_reads": 128,
+      "rx_handoffs": [
+        [
+          100,
+          104
+        ],
+        [
+          200,
+          204
+        ],
+        [
+          300,
+          304
+        ],
+        [
+          400,
+          404
+        ]
+      ],
+      "stress_reads": 100,
+      "stress_unique_sequences": 88
+    },
+    {
+      "held_tx_reads": 64,
+      "committed_tx_reads": 128,
+      "rx_handoffs": [
+        [
+          100,
+          104
+        ],
+        [
+          200,
+          204
+        ],
+        [
+          300,
+          304
+        ],
+        [
+          400,
+          404
+        ]
+      ],
+      "stress_reads": 100,
+      "stress_unique_sequences": 87
+    }
+  ],
+  "final_probe_result": {
+    "magic": 826363204,
+    "phase": 15,
+    "checks": 1816,
+    "failures": 0,
+    "dma_errors": 0,
+    "callbacks": 9656,
+    "last_error": 0,
+    "selected_dma": 0,
+    "owner_rejections": 6048,
+    "tx_sequence": 2016,
+    "rx_sequence": 404,
+    "guard_errors": 0,
+    "stress_published": 6000,
+    "timings": {
+      "hdma6_cached_tx_8": {
+        "count": 64,
+        "mean_us": 21.554036458333332,
+        "max_us": 48.208333333333336,
+        "setup_max_us": 33.291666666666664
+      },
+      "hdma6_cached_tx_31": {
+        "count": 64,
+        "mean_us": 21.790364583333332,
+        "max_us": 23.0,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_32": {
+        "count": 64,
+        "mean_us": 21.125651041666668,
+        "max_us": 22.25,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_tx_128": {
+        "count": 64,
+        "mean_us": 25.734375,
+        "max_us": 27.083333333333332,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_131": {
+        "count": 64,
+        "mean_us": 26.595703125,
+        "max_us": 27.875,
+        "setup_max_us": 2.8333333333333335
+      },
+      "hdma6_cached_tx_410": {
+        "count": 64,
+        "mean_us": 59.893880208333336,
+        "max_us": 61.166666666666664,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_cached_tx_512": {
+        "count": 64,
+        "mean_us": 71.89388020833333,
+        "max_us": 73.16666666666667,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_8": {
+        "count": 64,
+        "mean_us": 22.296875,
+        "max_us": 40.083333333333336,
+        "setup_max_us": 8.375
+      },
+      "hdma6_cached_rx_31": {
+        "count": 64,
+        "mean_us": 23.158203125,
+        "max_us": 24.541666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_32": {
+        "count": 64,
+        "mean_us": 22.36328125,
+        "max_us": 23.541666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_128": {
+        "count": 64,
+        "mean_us": 29.569661458333332,
+        "max_us": 29.75,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_cached_rx_131": {
+        "count": 64,
+        "mean_us": 30.641276041666668,
+        "max_us": 31.875,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_410": {
+        "count": 64,
+        "mean_us": 69.5,
+        "max_us": 70.70833333333333,
+        "setup_max_us": 3.875
+      },
+      "hdma6_cached_rx_512": {
+        "count": 64,
+        "mean_us": 83.42252604166667,
+        "max_us": 84.54166666666667,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_8": {
+        "count": 64,
+        "mean_us": 20.973958333333332,
+        "max_us": 22.166666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_31": {
+        "count": 64,
+        "mean_us": 21.763671875,
+        "max_us": 23.0,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_32": {
+        "count": 64,
+        "mean_us": 21.078125,
+        "max_us": 22.25,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_tx_128": {
+        "count": 64,
+        "mean_us": 25.86328125,
+        "max_us": 27.041666666666668,
+        "setup_max_us": 3.8333333333333335
+      },
+      "hdma6_noncached_tx_131": {
+        "count": 64,
+        "mean_us": 26.709635416666668,
+        "max_us": 27.833333333333332,
+        "setup_max_us": 3.875
+      },
+      "hdma6_noncached_tx_410": {
+        "count": 64,
+        "mean_us": 60.076822916666664,
+        "max_us": 61.166666666666664,
+        "setup_max_us": 3.875
+      },
+      "hdma6_noncached_tx_512": {
+        "count": 64,
+        "mean_us": 71.96940104166667,
+        "max_us": 73.125,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_8": {
+        "count": 64,
+        "mean_us": 21.012369791666668,
+        "max_us": 22.291666666666668,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_31": {
+        "count": 64,
+        "mean_us": 22.091145833333332,
+        "max_us": 23.375,
+        "setup_max_us": 3.9583333333333335
+      },
+      "hdma6_noncached_rx_32": {
+        "count": 64,
+        "mean_us": 20.814453125,
+        "max_us": 22.166666666666668,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_128": {
+        "count": 64,
+        "mean_us": 28.498697916666668,
+        "max_us": 30.708333333333332,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_131": {
+        "count": 64,
+        "mean_us": 29.462890625,
+        "max_us": 31.75,
+        "setup_max_us": 3.9166666666666665
+      },
+      "hdma6_noncached_rx_410": {
+        "count": 64,
+        "mean_us": 68.294921875,
+        "max_us": 69.45833333333333,
+        "setup_max_us": 2.7916666666666665
+      },
+      "hdma6_noncached_rx_512": {
+        "count": 64,
+        "mean_us": 82.12044270833333,
+        "max_us": 83.33333333333333,
+        "setup_max_us": 2.7916666666666665
+      },
+      "xdma6_cached_tx_8": {
+        "count": 64,
+        "mean_us": 9.370442708333334,
+        "max_us": 10.458333333333334,
+        "setup_max_us": 10.125
+      },
+      "xdma6_cached_tx_31": {
+        "count": 64,
+        "mean_us": 23.533854166666668,
+        "max_us": 25.708333333333332,
+        "setup_max_us": 4.75
+      },
+      "xdma6_cached_tx_32": {
+        "count": 64,
+        "mean_us": 22.625651041666668,
+        "max_us": 24.875,
+        "setup_max_us": 4.625
+      },
+      "xdma6_cached_tx_128": {
+        "count": 64,
+        "mean_us": 27.7109375,
+        "max_us": 29.25,
+        "setup_max_us": 5.208333333333333
+      },
+      "xdma6_cached_tx_131": {
+        "count": 64,
+        "mean_us": 28.42578125,
+        "max_us": 29.666666666666668,
+        "setup_max_us": 4.583333333333333
+      },
+      "xdma6_cached_tx_410": {
+        "count": 64,
+        "mean_us": 69.20377604166667,
+        "max_us": 70.41666666666667,
+        "setup_max_us": 3.625
+      },
+      "xdma6_cached_tx_512": {
+        "count": 64,
+        "mean_us": 83.19075520833333,
+        "max_us": 84.45833333333333,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_cached_rx_8": {
+        "count": 64,
+        "mean_us": 10.91796875,
+        "max_us": 12.166666666666666,
+        "setup_max_us": 10.625
+      },
+      "xdma6_cached_rx_31": {
+        "count": 64,
+        "mean_us": 25.52734375,
+        "max_us": 28.791666666666668,
+        "setup_max_us": 13.291666666666666
+      },
+      "xdma6_cached_rx_32": {
+        "count": 64,
+        "mean_us": 24.455078125,
+        "max_us": 25.708333333333332,
+        "setup_max_us": 5.25
+      },
+      "xdma6_cached_rx_128": {
+        "count": 64,
+        "mean_us": 31.15234375,
+        "max_us": 32.541666666666664,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_cached_rx_131": {
+        "count": 64,
+        "mean_us": 32.305338541666664,
+        "max_us": 33.75,
+        "setup_max_us": 6.083333333333333
+      },
+      "xdma6_cached_rx_410": {
+        "count": 64,
+        "mean_us": 78.66080729166667,
+        "max_us": 80.0,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_cached_rx_512": {
+        "count": 64,
+        "mean_us": 94.79231770833333,
+        "max_us": 96.04166666666667,
+        "setup_max_us": 5.25
+      },
+      "xdma6_noncached_tx_8": {
+        "count": 64,
+        "mean_us": 9.249348958333334,
+        "max_us": 10.333333333333334,
+        "setup_max_us": 10.041666666666666
+      },
+      "xdma6_noncached_tx_31": {
+        "count": 64,
+        "mean_us": 23.384765625,
+        "max_us": 24.541666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_32": {
+        "count": 64,
+        "mean_us": 22.5859375,
+        "max_us": 23.791666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_128": {
+        "count": 64,
+        "mean_us": 27.7890625,
+        "max_us": 28.958333333333332,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_noncached_tx_131": {
+        "count": 64,
+        "mean_us": 28.322265625,
+        "max_us": 29.666666666666668,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_tx_410": {
+        "count": 64,
+        "mean_us": 69.17643229166667,
+        "max_us": 70.45833333333333,
+        "setup_max_us": 3.5833333333333335
+      },
+      "xdma6_noncached_tx_512": {
+        "count": 64,
+        "mean_us": 83.26822916666667,
+        "max_us": 84.45833333333333,
+        "setup_max_us": 4.625
+      },
+      "xdma6_noncached_rx_8": {
+        "count": 64,
+        "mean_us": 9.570963541666666,
+        "max_us": 10.791666666666666,
+        "setup_max_us": 10.5
+      },
+      "xdma6_noncached_rx_31": {
+        "count": 64,
+        "mean_us": 24.049479166666668,
+        "max_us": 25.333333333333332,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_noncached_rx_32": {
+        "count": 64,
+        "mean_us": 22.987630208333332,
+        "max_us": 24.375,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_noncached_rx_128": {
+        "count": 64,
+        "mean_us": 29.954427083333332,
+        "max_us": 31.25,
+        "setup_max_us": 4.166666666666667
+      },
+      "xdma6_noncached_rx_131": {
+        "count": 64,
+        "mean_us": 30.927734375,
+        "max_us": 32.25,
+        "setup_max_us": 5.208333333333333
+      },
+      "xdma6_noncached_rx_410": {
+        "count": 64,
+        "mean_us": 77.49739583333333,
+        "max_us": 78.66666666666667,
+        "setup_max_us": 4.208333333333333
+      },
+      "xdma6_noncached_rx_512": {
+        "count": 64,
+        "mean_us": 93.462890625,
+        "max_us": 94.75,
+        "setup_max_us": 4.208333333333333
+      }
+    },
+    "cpu": {
+      "tx410": {
+        "count": 256,
+        "mean_us": 49.71533203125,
+        "max_us": 51.708333333333336,
+        "setup_max_us": 0.0
+      },
+      "rx131": {
+        "count": 256,
+        "mean_us": 19.06591796875,
+        "max_us": 26.291666666666668,
+        "setup_max_us": 0.0
+      }
+    },
+    "reload_irq": {
+      "tx410": {
+        "count": 6048,
+        "mean_us": 53.67759314373898,
+        "max_us": 60.041666666666664,
+        "setup_max_us": 8.0
+      },
+      "rx131": {
+        "count": 24,
+        "mean_us": 25.125,
+        "max_us": 26.0,
+        "setup_max_us": 5.0
+      }
+    }
+  },
+  "probe_hex_sha256": "3fb0ddce29159084df7c31571af0d55968d9c33cb74a9400e16bf0317e984a4c",
+  "restored_hex_sha256": "f58a005bc3dcd934957687e569d023bea872b330808274cf61e31064f2f0b11b",
+  "normal_smoke": {
+    "observed_al": "OP",
+    "observed_wkc": "3/3",
+    "output_enabled": false,
+    "duration_cap_s": 10,
+    "exit": 124,
+    "final_master": "Idle",
+    "final_slave": "PREOP"
+  }
+}

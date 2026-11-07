@@ -1,3 +1,5 @@
+> 当前 ethercat 分支正式运行 DTG1 固定 60 B 下行 / 180 B 上行，签名 `0x44544731`，包含真实 CAN 命令透传。当前布局、保护及实测限制以 [DTG1 正式版记录](gateway-dtg1-release-2026-11-07.md) 为准；下文保留通用布局设计说明。
+
 > 状态：living · 更新：2026-11-02 · 分支：ethercat
 
 # DTC EtherCAT PDO 协议（正式版 · ABI 5.0）
