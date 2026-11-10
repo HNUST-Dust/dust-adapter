@@ -224,14 +224,14 @@ void ConsumeHi91Bytes(uint32_t epoch, const uint8_t* data, size_t length,
 }  // namespace
 
 namespace {
-K_SEM_DEFINE(can0_tx_event, 0, 1);
+K_SEM_DEFINE(can2_tx_event, 0, 1);
 K_SEM_DEFINE(can3_tx_event, 0, 1);
 #if defined(CONFIG_ECAT_CAN_ISOLATION)
+K_SEM_DEFINE(can0_tx_event, 0, 1);
 K_SEM_DEFINE(can1_tx_event, 0, 1);
-K_SEM_DEFINE(can2_tx_event, 0, 1);
 k_sem* const can_tx_events[]{&can0_tx_event, &can1_tx_event, &can2_tx_event, &can3_tx_event};
 #else
-k_sem* const can_tx_events[]{&can0_tx_event, &can3_tx_event};
+k_sem* const can_tx_events[]{&can2_tx_event, &can3_tx_event};
 #endif
 
 struct GatewayCanTx {

@@ -21,7 +21,7 @@ can_buses:
         feedback_ids: [0x013]
         protection_frame:
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
-  - channel: 0
+  - channel: 2
     bitrate: 1000000
     devices:
       - name: right_wheel
@@ -39,7 +39,7 @@ can_buses:
         feedback_ids: [0x012]
         protection_frame:
           data: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd]
-  - channel: 2
+  - channel: 0
     bitrate: 1000000
     devices: []
   - channel: 1

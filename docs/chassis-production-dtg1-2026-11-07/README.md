@@ -29,7 +29,7 @@ ROS发布器消费控制观测后发布最新样本，订阅端采用 best-effor
 - 测试程序专用的SIGUSR1门控、起始±20°、摇杆中位限制、跳跃/爬楼/腿长额外禁令、2 ms决策过期即退出和5/30秒时间截止均没有带入正式节点。正式控制器原有倾倒、超时、状态锁存、遥控失能及20 ms链路看门狗保留。
 - 算法、校准、增益、Recovery、限幅没有修改：关节54 N·m，轮约4.749 N·m。此前某轮fault=6缺少触发帧，无法事后确定具体原因；没有将其认定为误保护，也未以关闭原控制器保护来绕过。
 
-默认 `config/dust_control.yaml` 保持 `enable_output: false`。此次显式实机配置在 `/tmp/dust-production-live-config`，仅把enable_output设为true，其余标定来自正式配置；其完整副本已归档。没有添加自动启动服务，没有提交或打Git标签。
+默认[主机配置](https://github.com/HNUST-Dust/dust-control/blob/dev/wbr_infantry_ethercat/config/dust_control.yaml)保持 `enable_output: false`。此次显式实机配置在 `/tmp/dust-production-live-config`，仅把enable_output设为true，其余标定来自正式配置；其完整副本已归档。没有添加自动启动服务，没有提交或打Git标签。
 
 ## 验证
 

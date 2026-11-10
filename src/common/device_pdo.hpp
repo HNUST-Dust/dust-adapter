@@ -51,11 +51,11 @@ constexpr std::array<uint8_t, 4> kTxBuses{0, 1, 2, 3};
 constexpr std::array<uint8_t, 4> kCanRxCounts{2, 1, 1, 2};
 #else
 constexpr std::array<CanRoute, 6> kRoutes{{
-    {0, 0x200, 0x201}, {0, 0x001, 0x011}, {0, 0x002, 0x012},
+    {2, 0x200, 0x201}, {2, 0x001, 0x011}, {2, 0x002, 0x012},
     {3, 0x200, 0x201}, {3, 0x000, 0x010}, {3, 0x003, 0x013},
 }};
-constexpr std::array<uint8_t, 2> kTxBuses{0, 3};
-constexpr std::array<uint8_t, 4> kCanRxCounts{3, 0, 0, 3};
+constexpr std::array<uint8_t, 2> kTxBuses{2, 3};
+constexpr std::array<uint8_t, 4> kCanRxCounts{0, 0, 3, 3};
 #endif
 
 constexpr size_t BusLane(uint8_t bus) {

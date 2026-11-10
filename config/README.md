@@ -55,9 +55,9 @@ The default robot profile contains:
 | CAN3 | left wheel |0x200 |0x201 | eight zero bytes |
 | CAN3 | left joint B |0x000 |0x010 | FF FF FF FF FF FF FF FD |
 | CAN3 | left joint D |0x003 |0x013 | FF FF FF FF FF FF FF FD |
-| CAN0 | right wheel |0x200 |0x201 | eight zero bytes |
-| CAN0 | right joint B |0x001 |0x011 | FF FF FF FF FF FF FF FD |
-| CAN0 | right joint D |0x002 |0x012 | FF FF FF FF FF FF FF FD |
+| CAN2 | right wheel |0x200 |0x201 | eight zero bytes |
+| CAN2 | right joint B |0x001 |0x011 | FF FF FF FF FF FF FF FD |
+| CAN2 | right joint D |0x002 |0x012 | FF FF FF FF FF FF FF FD |
 
 Custom profile selection:
 
