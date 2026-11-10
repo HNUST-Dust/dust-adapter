@@ -58,7 +58,13 @@ Error LayoutService::GenerateMapping(const Limits& limits) {
             return Error::Mapping;
         }
     }
-    return BuildLayout(cfg, limits, prepared_);
+    // DTG1 physical layout always reserves the compact onboard page. An explicit
+    // no-sensor build may omit only its logical resource, never claim it ready.
+    auto resources = cfg;
+#if defined(CONFIG_ECAT_ALLOW_MISSING_ONBOARD_IMU)
+    resources.imu = cfg.imu && limits.imu;
+#endif
+    return BuildLayout(resources, limits, prepared_);
 }
 
 void LayoutService::Freeze() {

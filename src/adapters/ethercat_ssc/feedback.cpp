@@ -31,7 +31,7 @@ bool FeedbackAggregator::CanCapacityValid(const Configuration& value) const {
 }
 
 void FeedbackAggregator::Configure(const Configuration& value) {
-    imu_enabled_ = value.imu;
+    imu_enabled_ = value.imu && imu_ready_;
 }
 
 bool FeedbackAggregator::DrainCan(uint64_t now) {

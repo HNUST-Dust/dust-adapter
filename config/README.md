@@ -89,3 +89,10 @@ submitted on each trigger (and on startup when enabled).
 | `labs/can_bench_rx_only.yaml` | 只接收不发送的台架首轮验证 |
 
 默认构建仍使用 `config/can_devices.yaml`；台架 profile 不得合并进默认拓扑。
+
+## 未焊接板载 IMU 的替换板
+
+构建时追加 `-DEXTRA_CONF_FILE=config/no_onboard_imu.conf`。
+该 profile 关闭板载 SPI 采集和 IMU 加热，并显式允许固定 DTG1 页保留但无传感器。
+28 字节板载区域保持无效/零值，HI91、CAN 保护、布局签名与 20 ms 看门狗不变。
+装回板载 IMU 后重新使用默认 `prj.conf` 构建，不要沿用此 profile。

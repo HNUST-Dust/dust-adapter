@@ -411,6 +411,11 @@ int ImuSensor::TryStartAsync() {
 #else
 
 namespace drivers {
+// 未安装传感器时保留工作线程接口，但不轮询或占用 CPU。
+void ImuSensor::WaitForEvent() {
+    k_sleep(K_FOREVER);
+}
+
 
 /**
  * @brief 初始化传感器寄存器、SPI 和 DRDY 状态；返回零或负 errno。
